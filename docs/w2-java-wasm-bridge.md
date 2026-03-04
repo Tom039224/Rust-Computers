@@ -6,7 +6,7 @@ RustComputers の核となる Java と WASM の相互呼び出し機構を詳細
 
 **確定事項**:
 - ✅ 固定 Shared Buffer 方式（案①）採用
-- ✅ すべての干渉結果は Future として返却（`parallel!` で一括待暖）
+- ✅ すべての干渉結果は Future として返却（`parallel!` に `.await` **なし**で渡す）
 - ✅ Timeout + Fuel 上限で悪意あるプログラム対策
 - ✅ Feature ベース mod 検出関数を用意
 
@@ -80,11 +80,11 @@ pub extern fn host_do_action(
 // Before: Fire and forget
 // host_fire_and_forget(peripheral_id, method_id, args_ptr)
 
-// After: parallel! で一括制御
+// After: parallel! で一括制御（引数は Future、.await なし）
 parallel!(
-    action1.do_action(...).await,
-    action2.do_action(...).await,
-    action3.do_action(...).await,
+    action1.do_action(...),
+    action2.do_action(...),
+    action3.do_action(...),
 )
 ```
 
