@@ -80,10 +80,29 @@ let (a, b) = parallel!(getInfoA.get(), getInfoB.get());
 
 ## 3. WASM ランタイム
 
-- **ランタイム**: 未定（GraalVM Wasm / Wasmtime via JNI / Wasmer via JNI 等を検討中）
-- **JIT**: 対応ランタイムを選定
-- **インスタンス分離**: コンピューター 1 台 = WASM インスタンス 1 つ（メモリ完全分離）
-- **スレッド**: 複数コンピューターは並列 poll 可（スレッドプール）。1 コンピューター内はシングルスレッド
+### 3.1 選定: Wasmtime (via JNI)
+
+| 項目 | 仕様 |
+|---|---|
+| **ランタイム** | **Wasmtime** (Bytecode Alliance / Apache-2.0) |
+| **JIT** | Cranelift (最高性能、形式検証済み) |
+| **統合方式** | C API + JNI ブリッジ（自作） |
+| **採用理由** | セキュリティ最高、 Minecraft Tick Loop での実行効率最高、長期メンテナンス |
+
+### 3.2 インスタンス分離
+
+- **コンピューター 1 台** = **WASM インスタンス 1 つ** (メモリ完全分離)
+- 複数コンピューターは スレッドプール で並列 poll
+- 1 コンピューター内は シングルスレッド
+
+### 3.3 ランタイム選定の詳細
+
+詳細比較は [docs/wasm-runtime-comparison.md](./wasm-runtime-comparison.md) を参照。
+
+**対象候補:**
+- Wasmtime (選定: ✅ 最高性能・最高セキュリティ・長期保守)
+- Wasmer (検討: ⚠️ 公式Java JNI あるが保守停滞)
+- GraalVM (検討: ⚠️ Java統合は簡単だが複雑性・メモリ overhead)
 
 ---
 
