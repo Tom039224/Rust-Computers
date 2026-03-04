@@ -1,0 +1,35 @@
+name: Bug report
+description: Report some misbehaviour in the mod
+labels: [ bug ]
+type: bug
+body:
+- type: dropdown
+  id: mc-version
+  attributes:
+    label: Minecraft Version
+    description: |
+        What version of Minecraft are you using? If your version is not listed, please try to reproduce on one of the supported versions.
+    options:
+      - 1.20.1
+      - 1.21.1
+      - 1.21.7
+  validations:
+    required: true
+- type: input
+  id: version
+  attributes:
+    label: Version
+    description: "What version of CC: Tweaked are you using?"
+    placeholder: "e.g. 1.96.0"
+  validations:
+    required: true
+- type: textarea
+  id: details
+  attributes:
+    label: Details
+    description: |
+      Description of the bug. Please include the following:
+      - Logs: These will be located in the `logs/` directory of your Minecraft instance. This is always useful, even if it doesn't include errors, so please upload this!
+      - Detailed reproduction steps: sometimes I can spot a bug pretty easily, but often it's much more obscure. The more information I have to help reproduce it, the quicker it'll get fixed.
+
+      ![A gif of burning text reading "Upload your logs!!!"](https://tweaked.cc/images/logs.gif)

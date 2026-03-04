@@ -1,0 +1,108 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Clone repository
+      uses: actions/checkout@v4
+
+    - name: 📥 Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: 25
+        distribution: 'temurin'
+
+    - name: 📥 Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/mc-') }}
+
+    - name: Disable Gradle daemon
+      run: |
+        mkdir -p ~/.gradle
+        echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+
+    - name: ⚒️ Build
+      run: ./gradlew assemble || ./gradlew assemble
+
+    - name: 📦 Prepare Jars
+      run: |
+        # Find the main jar and append the git hash onto it.
+        mkdir -p jars
+        find projects/forge/build/libs projects/fabric/build/libs -type f -regex '.*[0-9.]+\(-SNAPSHOT\)?\.jar$' -exec bash -c 'cp {} "jars/$(basename {} .jar)-$(git rev-parse HEAD).jar"' \;
+
+    - name: 📤 Upload Jar
+      uses: actions/upload-artifact@v4
+      with:
+        name: CC-Tweaked
+        path: ./jars
+
+    - name: Cache pre-commit
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
+    - name: 💡 Lint
+      run: |
+        pipx install pre-commit
+        pre-commit run --show-diff-on-failure --color=always
+
+    - name: 🧪 Run tests
+      run: ./gradlew test validateMixinNames checkChangelog
+
+    - name: 📥 Download assets for game tests
+      run: ./gradlew downloadAssets || ./gradlew downloadAssets
+
+    - name: 🧪 Run integration tests
+      run: ./gradlew runGametest
+
+    - name: 🧪 Parse test reports
+      run: ./tools/parse-reports.py
+      if: ${{ failure() }}
+
+  build-core:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - name: Windows
+          uses: windows-latest
+
+        - name: macOS
+          uses: macos-latest
+
+    name: Test on ${{ matrix.name }}
+    runs-on: ${{ matrix.uses }}
+
+    steps:
+    - name: 📥 Clone repository
+      uses: actions/checkout@v4
+
+    - name: 📥 Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: 25
+        distribution: 'temurin'
+
+    - name: 📥 Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/mc-') }}
+
+    - name: ⚒️ Build
+      run: |
+        ./gradlew --configure-on-demand :core:assemble
+
+    - name: 🧪 Run tests
+      run: |
+        ./gradlew --configure-on-demand :core:test
+
+    - name: 🧪 Parse test reports
+      run: python3 ./tools/parse-reports.py
+      if: ${{ failure() }}

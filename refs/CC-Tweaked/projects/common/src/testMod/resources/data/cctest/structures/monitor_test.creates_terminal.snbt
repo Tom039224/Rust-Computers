@@ -1,0 +1,41 @@
+{
+    DataVersion: 3465,
+    size: [5, 5, 5],
+    data: [
+        {pos: [0, 0, 0], state: "minecraft:polished_andesite"},
+        {pos: [0, 0, 1], state: "minecraft:polished_andesite"},
+        {pos: [0, 0, 2], state: "minecraft:polished_andesite"},
+        {pos: [0, 0, 3], state: "minecraft:polished_andesite"},
+        {pos: [0, 0, 4], state: "minecraft:polished_andesite"},
+        {pos: [1, 0, 0], state: "minecraft:polished_andesite"},
+        {pos: [1, 0, 1], state: "minecraft:polished_andesite"},
+        {pos: [1, 0, 2], state: "minecraft:polished_andesite"},
+        {pos: [1, 0, 3], state: "minecraft:polished_andesite"},
+        {pos: [1, 0, 4], state: "minecraft:polished_andesite"},
+        {pos: [2, 0, 0], state: "minecraft:polished_andesite"},
+        {pos: [2, 0, 1], state: "minecraft:polished_andesite"},
+        {pos: [2, 0, 2], state: "minecraft:polished_andesite"},
+        {pos: [2, 0, 3], state: "minecraft:polished_andesite"},
+        {pos: [2, 0, 4], state: "minecraft:polished_andesite"},
+        {pos: [3, 0, 0], state: "minecraft:polished_andesite"},
+        {pos: [3, 0, 1], state: "minecraft:polished_andesite"},
+        {pos: [3, 0, 2], state: "minecraft:polished_andesite"},
+        {pos: [3, 0, 3], state: "minecraft:polished_andesite"},
+        {pos: [3, 0, 4], state: "minecraft:polished_andesite"},
+        {pos: [4, 0, 0], state: "minecraft:polished_andesite"},
+        {pos: [4, 0, 1], state: "minecraft:polished_andesite"},
+        {pos: [4, 0, 2], state: "minecraft:polished_andesite"},
+        {pos: [4, 0, 3], state: "minecraft:polished_andesite"},
+        {pos: [4, 0, 4], state: "minecraft:polished_andesite"},
+        {pos: [1, 1, 2], state: "computercraft:monitor_advanced{facing:north,orientation:north,state:l}", nbt: {Height: 1, Width: 3, XIndex: 2, YIndex: 0, id: "computercraft:monitor_advanced"}},
+        {pos: [2, 1, 2], state: "computercraft:monitor_advanced{facing:north,orientation:north,state:lr}", nbt: {Height: 1, Width: 3, XIndex: 1, YIndex: 0, id: "computercraft:monitor_advanced"}},
+        {pos: [3, 1, 2], state: "computercraft:monitor_advanced{facing:north,orientation:north,state:r}", nbt: {Height: 1, Width: 3, XIndex: 0, YIndex: 0, id: "computercraft:monitor_advanced"}}
+    ],
+    entities: [],
+    palette: [
+        "minecraft:polished_andesite",
+        "computercraft:monitor_advanced{facing:north,orientation:north,state:l}",
+        "computercraft:monitor_advanced{facing:north,orientation:north,state:lr}",
+        "computercraft:monitor_advanced{facing:north,orientation:north,state:r}"
+    ]
+}

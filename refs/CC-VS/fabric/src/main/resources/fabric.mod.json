@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "cc_vs",
+  "version": "${version}",
+  "name": "CC: VS",
+  "description": "ComputerCraft addon for Valkyrien Skies 2",
+  "authors": [
+    "TechTastic"
+  ],
+  "contact": {
+    "homepage": "https://techtastic.github.io/CC-VS/",
+    "sources": "https://github.com/TechTastic/CC-VS"
+  },
+  "license": "Apache-2.0",
+  "icon": "assets/cc_vs/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "io.github.techtastic.cc_vs.fabric.CCVSModFabric"
+    ],
+    "client": [
+      "io.github.techtastic.cc_vs.fabric.CCVSModFabric${'$'}Client"
+    ],
+    "preLaunch": [
+      "io.github.techtastic.cc_vs.fabric.ValkyrienPreLaunch"
+    ]
+  },
+  "mixins": [
+    "cc_vs-common.mixins.json",
+    "cc_vs.mixins.json"
+  ],
+  "depends": {
+    "minecraft": ">=1.18.2",
+    "valkyrienskies": ">=${vs2_version}",
+    "fabricloader": ">=0.14.21",
+    "computercraft": ">=1.116.2"
+  }
+}

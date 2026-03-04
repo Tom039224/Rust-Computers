@@ -1,0 +1,259 @@
+package com.verr1.controlcraft.foundation.cimulink.core.components.analog;
+
+
+
+import com.verr1.controlcraft.foundation.cimulink.core.components.NamedComponent;
+import com.verr1.controlcraft.foundation.cimulink.core.components.general.Combinational;
+import com.verr1.controlcraft.foundation.cimulink.core.registry.CimulinkFactory;
+import com.verr1.controlcraft.foundation.cimulink.core.registry.Factory;
+import com.verr1.controlcraft.foundation.cimulink.core.utils.ArrayUtils;
+import com.verr1.controlcraft.utils.CompoundTagBuilder;
+import com.verr1.controlcraft.utils.MathUtils;
+import com.verr1.controlcraft.utils.SerializeUtils;
+import net.minecraft.nbt.CompoundTag;
+
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+public class Functions {
+
+
+
+    public static final Function<Integer, FunctionN> PRODUCT = n -> new FunctionN(n) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(inputs.stream().reduce(1.0, (a, b) -> a * b));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.PRODUCT;
+        }
+    };
+
+    public static final Supplier<FunctionN> DIV = () -> new FunctionN(2) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(MathUtils.safeDiv(inputs.get(0), inputs.get(1)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.DIV;
+        }
+    };
+
+    public static final Function<Integer, FunctionN> MAX = n -> new FunctionN(n) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(inputs.stream().max(Double::compareTo).orElse(0.0));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.MAX;
+        }
+    };
+
+    public static final Function<Integer, FunctionN> MIN = n -> new FunctionN(n) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(inputs.stream().min(Double::compareTo).orElse(0.0));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.MIN;
+        }
+    };
+
+    public static final Supplier<FunctionN> ANGLE_FIX = () -> new FunctionN(1) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(MathUtils.radErrFix(inputs.get(0)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.ANGLE_FIX;
+        }
+    };
+
+    public static final Supplier<FunctionN> RAD = () -> new FunctionN(1) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(Math.toRadians(inputs.get(0)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.RAD;
+        }
+    };
+
+    public static final Supplier<FunctionN> DEG = () -> new FunctionN(1) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(Math.toDegrees(inputs.get(0)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.DEG;
+        }
+    };
+
+
+    public static final Supplier<FunctionN> POWER = () -> new FunctionN(2) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            double base = inputs.get(0);
+            double exponent = inputs.get(1);
+            int floorExponent = (int) Math.floor(exponent);
+            if(Math.abs(exponent - floorExponent) < 1e-10) {
+                // If exponent is an integer, use Math.pow
+                boolean odd = (floorExponent % 2) != 0;
+                double sign = odd ? Math.signum(base) : 1.0;
+                return List.of(sign * Math.pow(Math.abs(base), floorExponent));
+            }else {
+                double sign = Math.signum(base);
+                return List.of(sign * Math.pow(Math.abs(base), exponent));
+            }
+
+
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.POWER;
+        }
+    };
+
+    public static final Supplier<FunctionN> LOGARITHMIC = () -> new FunctionN(2) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            double base = inputs.get(0);
+            double target = inputs.get(1);
+
+            return List.of(MathUtils.safeDiv(
+                    Math.log(Math.abs(target)),
+                    Math.log(Math.abs(base)))
+            );
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.LOGARITHM;
+        }
+    };
+
+    public static final Supplier<FunctionN> ABS = () -> new FunctionN(1) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(Math.abs(inputs.get(0)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.ABS;
+        }
+    };
+
+    public static final Supplier<FunctionN> SIN = () -> new FunctionN(1) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(Math.sin(inputs.get(0)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.SIN;
+        }
+    };
+
+    public static final Supplier<FunctionN> COS = () -> new FunctionN(1) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(Math.cos(inputs.get(0)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.COS;
+        }
+    };
+
+    public static final Supplier<FunctionN> TAN = () -> new FunctionN(1) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(Math.tan(inputs.get(0)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.TAN;
+        }
+    };
+
+    public static final Supplier<FunctionN> ASIN = () -> new FunctionN(1) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(MathUtils.safeAsin(inputs.get(0)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.ASIN;
+        }
+    };
+
+    public static final Supplier<FunctionN> ACOS = () -> new FunctionN(1) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(MathUtils.safeAcos(inputs.get(0)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.ACOS;
+        }
+    };
+
+    public static final Supplier<FunctionN> ATAN = () -> new FunctionN(2) {
+        @Override
+        protected List<Double> transform(List<Double> inputs) {
+            return List.of(Math.atan2(inputs.get(0), inputs.get(1)));
+        }
+
+        @Override
+        public Factory<? extends NamedComponent> factory() {
+            return CimulinkFactory.ATAN;
+        }
+    };
+
+    public static int deserializeN(CompoundTag tag){
+        return SerializeUtils.INT.deserialize(tag.getCompound("n"));
+    }
+
+
+    public static abstract class FunctionN extends Combinational {
+        private final int n;
+
+        public FunctionN(int n) {
+            super(ArrayUtils.createInputNames(n), ArrayUtils.SINGLE_OUTPUT);
+            this.n = n;
+        }
+
+        public CompoundTag serialize(){
+            return CompoundTagBuilder.create()
+                    .withCompound("n", SerializeUtils.INT.serialize(n))
+                    .build();
+        }
+
+
+        // Functions Constants like PRODUCT, MIN, MAX are actually deserializers
+
+    }
+
+}

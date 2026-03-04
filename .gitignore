@@ -1,0 +1,22 @@
+# Rust
+target/
+Cargo.lock
+
+# Java / Gradle
+.gradle/
+build/
+*.class
+*.jar
+!refs/**/*.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Refs: exclude git metadata of subprojects (they are plain snapshots, not submodules)
+refs/**/.git
