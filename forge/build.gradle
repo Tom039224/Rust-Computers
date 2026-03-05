@@ -1,0 +1,125 @@
+// ------------------------------------------------------------------
+// RustComputers — Forge 1.20.1 Mod
+// Gradle ビルド構成 / Gradle build configuration
+// ------------------------------------------------------------------
+
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
+
+// ------------------------------------------------------------------
+// Minecraft / Forge 設定 / Minecraft / Forge configuration
+// ------------------------------------------------------------------
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+
+        server {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
+
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id, '--all',
+                 '--output', file('src/generated/resources/'),
+                 '--existing', file('src/main/resources/')
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// ------------------------------------------------------------------
+// 依存関係 / Dependencies
+// ------------------------------------------------------------------
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // Chicory WASM Runtime — 純 Java 実装
+    // Pure-Java WASM runtime (no JNI / native dependencies)
+    implementation "com.dylibso.chicory:runtime:${chicory_version}"
+    implementation "com.dylibso.chicory:wasm:${chicory_version}"
+    implementation "com.dylibso.chicory:compiler:${chicory_version}"
+    // Note: wasi は不使用 (no_std 採用) / WASI is not used (no_std approach)
+
+    // MessagePack — Java ↔ WASM シリアライゼーション
+    // MessagePack serialization for Java ↔ WASM bridge
+    implementation 'org.msgpack:msgpack-core:0.9.8'
+}
+
+// ------------------------------------------------------------------
+// リソース処理 / Resource processing
+// ------------------------------------------------------------------
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [
+        minecraft_version      : minecraft_version,
+        minecraft_version_range: minecraft_version_range,
+        forge_version          : forge_version,
+        forge_version_range    : forge_version_range,
+        loader_version_range   : loader_version_range,
+        mod_id                 : mod_id,
+        mod_name               : mod_name,
+        mod_license            : mod_license,
+        mod_version            : mod_version,
+        mod_authors            : mod_authors,
+        mod_description        : mod_description,
+    ]
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+// ------------------------------------------------------------------
+// JAR マニフェスト / JAR manifest
+// ------------------------------------------------------------------
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+            'Specification-Title'     : mod_id,
+            'Specification-Vendor'    : mod_authors,
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : project.jar.archiveVersion,
+            'Implementation-Vendor'   : mod_authors,
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+    finalizedBy 'reobfJar'
+}

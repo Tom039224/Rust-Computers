@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "rustcomputers:block/computer" }
+  }
+}

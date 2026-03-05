@@ -1,0 +1,23 @@
+[package]
+name = "rust-computers-api"
+version = "0.1.0"
+edition = "2021"
+description = "Core runtime crate for RustComputers — run async Rust on Minecraft WASM computers"
+license = "MIT"
+readme = "README.md"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+# カスタムアロケータ (no_std 用) / Custom allocator for no_std
+dlmalloc = { version = "0.2", features = ["global"] }
+
+[features]
+default = []
+
+[profile.release]
+opt-level = "s"       # サイズ最適化 / Optimize for size
+lto = true            # Link-Time Optimization
+strip = "debuginfo"   # デバッグ情報削除 / Strip debug info
+codegen-units = 1     # 単一コード生成ユニット / Single codegen unit (better optimization)

@@ -1,0 +1,16 @@
+{
+  "block.rustcomputers.computer": "Rust コンピューター",
+  "item.rustcomputers.computer": "Rust コンピューター",
+  "itemGroup.rustcomputers": "RustComputers",
+  "gui.rustcomputers.computer.title": "コンピューター #%d",
+  "gui.rustcomputers.computer.status.stopped": "停止中",
+  "gui.rustcomputers.computer.status.running": "実行中",
+  "gui.rustcomputers.computer.status.crashed": "クラッシュ",
+  "gui.rustcomputers.computer.input_placeholder": "ここに入力して Enter で送信...",
+  "gui.rustcomputers.computer.no_program": "(プログラム未選択)",
+  "gui.rustcomputers.computer.drag_drop": ".wasm ファイルをここにドラッグ＆ドロップ",
+  "message.rustcomputers.upload_success": "%s のアップロードに成功しました。",
+  "message.rustcomputers.upload_failed": "アップロード失敗: %s",
+  "message.rustcomputers.invalid_wasm": "無効な WASM バイナリです。",
+  "message.rustcomputers.file_too_large": "ファイルが大きすぎます（最大 %s）。"
+}

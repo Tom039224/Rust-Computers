@@ -9,6 +9,12 @@ build/
 *.jar
 !refs/**/*.jar
 
+# Forge runtime directories
+forge/run/
+forge/run-data/
+forge/logs/
+forge/src/generated/
+
 # IDE
 .idea/
 .vscode/
