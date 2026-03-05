@@ -40,6 +40,7 @@ pub mod executor;
 pub mod ffi;
 pub mod future;
 pub mod io;
+pub mod msgpack;
 pub mod panic;
 pub mod peripheral;
 

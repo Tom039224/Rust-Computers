@@ -8,8 +8,10 @@ import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.WasmModule;
 import com.rustcomputers.Config;
 import com.rustcomputers.peripheral.AttachedPeripheral;
+import com.rustcomputers.peripheral.KnownMod;
 import com.rustcomputers.peripheral.PeripheralException;
 import com.rustcomputers.peripheral.PeripheralProvider;
+import net.minecraftforge.fml.ModList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.slf4j.Logger;
@@ -496,9 +498,12 @@ public final class WasmEngine {
      * @return 利用可能なら true / true if available
      */
     public boolean isModAvailable(int modId) {
-        // TODO: 実際の Mod 存在確認を実装
-        // TODO: Implement actual mod availability check
-        return false;
+        String forgeModId = KnownMod.forKey(modId & 0xFFFF);
+        if (forgeModId == null) {
+            LOGGER.debug("isModAvailable: unknown modId key=0x{}", Integer.toHexString(modId & 0xFFFF));
+            return false;
+        }
+        return ModList.get().isLoaded(forgeModId);
     }
 
     // ------------------------------------------------------------------
