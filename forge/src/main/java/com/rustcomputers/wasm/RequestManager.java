@@ -104,7 +104,7 @@ public final class RequestManager {
             Map.Entry<Long, PendingResult> entry = it.next();
             PendingResult pr = entry.getValue();
             if (!pr.isCompleted() && (tick - pr.getIssuedAtTick()) > timeoutTicks) {
-                LOGGER.warn("Request {} timed out after {} ticks", pr.getRequestId(), timeoutTicks);
+                LOGGER.debug("Request {} ({}) timed out after {} ticks", pr.getRequestId(), pr.getType(), timeoutTicks);
                 pr.completeWithError(ErrorCodes.ERR_TIMEOUT);
             }
         }

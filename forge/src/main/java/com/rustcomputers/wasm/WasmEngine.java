@@ -289,6 +289,11 @@ public final class WasmEngine {
         String line = "[" + timestamp + "] " + message;
         logBuffer.append(line);
         pendingLog.add(line);
+        // ログストリーミングが有効な場合、Minecraft サーバーログにも出力
+        // If log streaming is enabled for any player, also write to the Minecraft server log
+        if (com.rustcomputers.command.RustComputersCommand.isStreamingFor(computerId)) {
+            LOGGER.info("Computer #{}: {}", computerId, line);
+        }
     }
 
     /**

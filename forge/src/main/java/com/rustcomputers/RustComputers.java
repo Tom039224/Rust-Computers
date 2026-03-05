@@ -1,9 +1,12 @@
 package com.rustcomputers;
 
+import com.rustcomputers.command.RustComputersCommand;
 import com.rustcomputers.computer.ComputerManager;
 import com.rustcomputers.network.NetworkHandler;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -58,6 +61,24 @@ public class RustComputers {
     private void commonSetup(final FMLCommonSetupEvent event) {
         LOGGER.info("RustComputers common setup");
         NetworkHandler.register();
+    }
+
+    /**
+     * コマンド登録 — /rc コマンドツリーを Brigadier に登録。
+     * Command registration — register the /rc command tree with Brigadier.
+     */
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event) {
+        RustComputersCommand.register(event.getDispatcher());
+    }
+
+    /**
+     * プレイヤーログアウト時 — ログストリーミング設定をリセット。
+     * Player logout — reset log streaming settings.
+     */
+    @SubscribeEvent
+    public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        RustComputersCommand.clearPlayerStreams(event.getEntity().getUUID());
     }
 
     /**
