@@ -4,13 +4,18 @@ import com.rustcomputers.peripheral.MsgPack;
 import com.rustcomputers.peripheral.PeripheralException;
 import com.rustcomputers.peripheral.PeripheralType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
+import java.util.ArrayDeque;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * CC:Tweaked モニター向けペリフェラル実装。
@@ -61,6 +66,8 @@ public class CcMonitorPeripheral implements PeripheralType {
             "setBackgroundColor", "setBackgroundColour",
             "scroll",
             "setTextScale", "getTextScale",
+            "isAdvanced",    // 高度モニター判定 / Advanced monitor check
+            "pollTouch",     // タッチイベントをデキュー / Dequeue a touch event
     };
 
     // ----------------------------------------------------------------
@@ -94,6 +101,28 @@ public class CcMonitorPeripheral implements PeripheralType {
     private static boolean reflectionOk = false;
 
     // ----------------------------------------------------------------
+    // タッチイベントキュー / Touch event queue
+    // ----------------------------------------------------------------
+
+    /**
+     * ブロック位置 → タッチイベントキュー（[u, v] 0.0–1.0 の正規化座標）。
+     * Block pos → touch event queue ([u, v] normalized 0.0–1.0 coordinates).
+     */
+    private static final Map<BlockPos, ArrayDeque<float[]>> TOUCH_QUEUE = new ConcurrentHashMap<>();
+
+    /**
+     * 右クリックイベントからタッチを積む（サーバーイベントハンドラーから呼ぶ）。
+     * Enqueue a touch event from a right-click (called from server event handler).
+     *
+     * @param pos ブロック位置 / block position
+     * @param u   面の水平方向 0.0–1.0 / horizontal face fraction
+     * @param v   面の垂直方向 0.0–1.0 / vertical face fraction
+     */
+    public static void queueTouchEvent(BlockPos pos, float u, float v) {
+        TOUCH_QUEUE.computeIfAbsent(pos, k -> new ArrayDeque<>()).offer(new float[]{u, v});
+    }
+
+    // ----------------------------------------------------------------
     // 初期化 / Initialization
     // ----------------------------------------------------------------
 
@@ -117,7 +146,9 @@ public class CcMonitorPeripheral implements PeripheralType {
             terminalClass = Class.forName(
                     "dan200.computercraft.core.terminal.Terminal");
 
-            mGetServerMonitor = monitorBeClass.getMethod("getServerMonitor");
+            // getServerMonitor は private なので getDeclaredMethod を使う
+            // getServerMonitor is private — must use getDeclaredMethod
+            mGetServerMonitor = monitorBeClass.getDeclaredMethod("getServerMonitor");
             mGetServerMonitor.setAccessible(true);
 
             mGetTerminal      = serverMonitorClass.getMethod("getTerminal");
@@ -178,6 +209,37 @@ public class CcMonitorPeripheral implements PeripheralType {
                     "No MonitorBlockEntity at " + peripheralPos);
         }
 
+        // isAdvanced / pollTouch は terminal 取得が不要なので先に処理
+        // Handle isAdvanced and pollTouch before requiring the terminal
+        if ("isAdvanced".equals(methodName)) {
+            ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(
+                    level.getBlockState(peripheralPos).getBlock());
+            return MsgPack.bool(rl != null && "monitor_advanced".equals(rl.getPath()));
+        }
+        if ("pollTouch".equals(methodName)) {
+            ArrayDeque<float[]> q = TOUCH_QUEUE.get(peripheralPos);
+            if (q == null || q.isEmpty()) return MsgPack.nil();
+            float[] frac = q.poll();
+            // ターミナルサイズでキャラクター座標変換 / convert fraction to char coords
+            try {
+                Object serverMonitor = mGetServerMonitor.invoke(be);
+                if (serverMonitor != null) {
+                    Object terminal = mGetTerminal.invoke(serverMonitor);
+                    if (terminal != null) {
+                        int w = (int) mTermGetWidth.invoke(terminal);
+                        int h = (int) mTermGetHeight.invoke(terminal);
+                        int cx = Math.max(1, Math.min(w, (int) (frac[0] * w) + 1));
+                        int cy = Math.max(1, Math.min(h, (int) (frac[1] * h) + 1));
+                        return MsgPack.array(MsgPack.int32(cx), MsgPack.int32(cy));
+                    }
+                }
+            } catch (Exception ignored) {}
+            // フォールバック: 正規化値を整数 ×100 で返す / fallback: fraction × 100
+            return MsgPack.array(
+                    MsgPack.int32((int) (frac[0] * 100)),
+                    MsgPack.int32((int) (frac[1] * 100)));
+        }
+
         try {
             Object serverMonitor = mGetServerMonitor.invoke(be);
             if (serverMonitor == null) {
@@ -207,6 +269,8 @@ public class CcMonitorPeripheral implements PeripheralType {
             case "getType":
             case "getSize":
             case "getTextScale":
+            case "isAdvanced":  // 読み取り専用 / read-only
+            case "pollTouch":   // キューからのデキュー / dequeue from queue
                 return callMethod(methodName, args, level, peripheralPos);
             default:
                 return null; // 書き込み系は即時呼び出し不可

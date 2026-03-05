@@ -7,15 +7,20 @@ import com.rustcomputers.peripheral.PeripheralProvider;
 import com.rustcomputers.peripheral.impl.CcMonitorPeripheral;
 import com.rustcomputers.peripheral.impl.VanillaInventoryPeripheral;
 import com.rustcomputers.peripheral.impl.VanillaRedstonePeripheral;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -198,6 +203,56 @@ public class RustComputers {
     @SubscribeEvent
     public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         RustComputersCommand.clearPlayerStreams(event.getEntity().getUUID());
+    }
+
+    /**
+     * CC:Tweaked 高度モニター右クリック → タッチイベントをキューに積む。
+     * CC:Tweaked advanced monitor right-click → enqueue a touch event.
+     *
+     * <p>右クリック位置をモニター面上の正規化 UV 座標 (0.0–1.0) に変換し、
+     * {@link CcMonitorPeripheral#queueTouchEvent} へ渡す。</p>
+     *
+     * <p>Converts the right-click hit position to normalized UV (0.0–1.0)
+     * on the monitor face, then calls {@link CcMonitorPeripheral#queueTouchEvent}.</p>
+     */
+    @SubscribeEvent
+    public void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        // サーバー側のみ処理 / Process on server side only
+        if (event.getSide() == LogicalSide.CLIENT) return;
+
+        net.minecraft.core.BlockPos pos = event.getPos();
+        net.minecraft.world.level.Level level = event.getLevel();
+
+        // CC:Tweaked advanced monitor かチェック / Check for CC:Tweaked advanced monitor
+        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(level.getBlockState(pos).getBlock());
+        if (rl == null || !"computercraft:monitor_advanced".equals(rl.toString())) return;
+
+        // ヒット位置からモニター面の UV を計算 / Compute face UV from hit position
+        BlockHitResult hit = event.getHitVec();
+        if (hit == null) return;
+
+        Vec3 loc = hit.getLocation();
+        Direction face = hit.getDirection();
+
+        // ブロック内相対座標 (0.0–1.0) / Relative coords within block (0.0–1.0)
+        double bx = loc.x - Math.floor(loc.x);
+        double by = loc.y - Math.floor(loc.y);
+        double bz = loc.z - Math.floor(loc.z);
+
+        // 面に応じて U/V を決定 / Determine U/V based on face
+        float u, v;
+        switch (face) {
+            case NORTH -> { u = (float)(1.0 - bx); v = (float)(1.0 - by); }
+            case SOUTH -> { u = (float)(bx);       v = (float)(1.0 - by); }
+            case EAST  -> { u = (float)(1.0 - bz); v = (float)(1.0 - by); }
+            case WEST  -> { u = (float)(bz);        v = (float)(1.0 - by); }
+            case UP    -> { u = (float)(bx);        v = (float)(bz);       }
+            case DOWN  -> { u = (float)(bx);        v = (float)(1.0 - bz); }
+            default    -> { u = 0.5f; v = 0.5f; }
+        }
+
+        CcMonitorPeripheral.queueTouchEvent(pos, u, v);
+        LOGGER.debug("Monitor touch queued at {} face={} u={} v={}", pos, face, u, v);
     }
 
     /**

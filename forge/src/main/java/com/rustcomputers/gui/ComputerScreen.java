@@ -26,6 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * コンピューター GUI 画面。
@@ -69,8 +71,15 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
     // フィールド / Fields
     // ------------------------------------------------------------------
 
-    /** クライアント側ログバッファ / Client-side log buffer */
-    private final LogBuffer clientLog = new LogBuffer(200);
+    /**
+     * コンピューター ID ごとにログバッファをキャッシュする。
+     * GUI を再度開いてもログが消えない。
+     * Cache log buffers per computer ID so logs survive GUI close/reopen.
+     */
+    private static final Map<Integer, LogBuffer> LOG_CACHE = new ConcurrentHashMap<>();
+
+    /** クライアント側ログバッファ（LOG_CACHE から取得） / Client-side log buffer (from LOG_CACHE) */
+    private LogBuffer clientLog;
 
     /** 入力フィールド / Input field */
     @Nullable
@@ -101,6 +110,10 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
     protected void init() {
         super.init();
         activeScreen = this;
+
+        // LOG_CACHE からログバッファを取得または新規作成（GUI 再オープン時もログを保持）
+        // Get or create log buffer from cache, preserving logs when GUI is reopened
+        this.clientLog = LOG_CACHE.computeIfAbsent(menu.getComputerId(), id -> new LogBuffer(200));
 
         // 入力フィールド / Input field
         int inputY = topPos + GUI_HEIGHT - 24;
@@ -205,6 +218,12 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // ESC (256) で GUI を閉じる（inputField のフォーカス状態に関わらず）
+        // ESC always closes the GUI regardless of input field focus
+        if (keyCode == 256) {
+            this.onClose();
+            return true;
+        }
         // Enter キーで入力を送信 / Send input on Enter key
         if (keyCode == 257 && inputField != null && inputField.isFocused()) {
             submitInput();
