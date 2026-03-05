@@ -97,6 +97,12 @@ public class CcMonitorPeripheral implements PeripheralType {
     @Nullable private static Method mBEGetTextScale;
     @Nullable private static Method mBESetTextScale;
 
+    /**
+     * ServerMonitor をオンデマンドで作成する private メソッド。
+     * Private method that creates a ServerMonitor on demand.
+     */
+    @Nullable private static Method mCreateServerMonitor;
+
     private static boolean reflectionInitialized = false;
     private static boolean reflectionOk = false;
 
@@ -174,6 +180,15 @@ public class CcMonitorPeripheral implements PeripheralType {
                 LOGGER.debug("CcMonitorPeripheral: setTextScale not found, skipping");
             }
 
+            // createServerMonitor も private — null 状態からの遅延初期化に使用
+            // createServerMonitor is also private — used to force-init from null state
+            try {
+                mCreateServerMonitor = monitorBeClass.getDeclaredMethod("createServerMonitor");
+                mCreateServerMonitor.setAccessible(true);
+            } catch (NoSuchMethodException ex) {
+                LOGGER.debug("CcMonitorPeripheral: createServerMonitor not found, skipping");
+            }
+
             reflectionOk = true;
             LOGGER.info("CcMonitorPeripheral: reflection initialized successfully");
 
@@ -209,6 +224,13 @@ public class CcMonitorPeripheral implements PeripheralType {
                     "No MonitorBlockEntity at " + peripheralPos);
         }
 
+        // terminal が不要なメソッドを先に処理
+        // Handle methods that don't need the terminal up-front
+        if ("getType".equals(methodName)) {
+            // MonitorBlockEntity であることは上で確認済み / Already confirmed it's a MonitorBlockEntity
+            return MsgPack.str("monitor");
+        }
+
         // isAdvanced / pollTouch は terminal 取得が不要なので先に処理
         // Handle isAdvanced and pollTouch before requiring the terminal
         if ("isAdvanced".equals(methodName)) {
@@ -242,8 +264,25 @@ public class CcMonitorPeripheral implements PeripheralType {
 
         try {
             Object serverMonitor = mGetServerMonitor.invoke(be);
+
+            // serverMonitor が null の場合は createServerMonitor() で強制初期化する。
+            // CC:Tweaked はモニターが画面レンダリングされるまで ServerMonitor を
+            // 遅延生成するため、プログラム実行時にはまだ null の場合がある。
+            // When serverMonitor is null, force-init via createServerMonitor().
+            // CC:Tweaked lazily creates ServerMonitor on first render, so it may
+            // still be null when a program runs.
+            if (serverMonitor == null && mCreateServerMonitor != null) {
+                LOGGER.debug("CcMonitorPeripheral: serverMonitor was null, calling createServerMonitor()");
+                // createServerMonitor は level のメインスレッドから初めて呼ぶ必要があるが、
+                // 我々はすでにサーバースレッド上にいるので直接呼んでよい。
+                // We are already on the server thread, so calling directly is safe.
+                mCreateServerMonitor.invoke(be);
+                serverMonitor = mGetServerMonitor.invoke(be);
+            }
+
             if (serverMonitor == null) {
-                throw new PeripheralException("Monitor not yet initialized (serverMonitor is null)");
+                throw new PeripheralException(
+                        "Monitor not yet initialized (serverMonitor is null even after createServerMonitor)");
             }
             Object terminal = mGetTerminal.invoke(serverMonitor);
             if (terminal == null) {
