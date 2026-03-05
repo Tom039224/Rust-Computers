@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+def chicoryVersion = '1.7.2'
+
+dependencies {
+    implementation "com.dylibso.chicory:runtime:${chicoryVersion}"
+    implementation "com.dylibso.chicory:wasm:${chicoryVersion}"
+    implementation "com.dylibso.chicory:compiler:${chicoryVersion}"
+    implementation "com.dylibso.chicory:wasi:${chicoryVersion}"
+}
+
+application {
+    mainClass = 'spike.ChicorySpikeTest'
+}
+
+// WASM バイナリを resources にコピー
+tasks.register('copyWasm', Copy) {
+    from '../rust-wasm-test/target/wasm32-wasip1/release/hello_wasm.wasm'
+    into 'src/main/resources'
+}
+
+processResources.dependsOn copyWasm
