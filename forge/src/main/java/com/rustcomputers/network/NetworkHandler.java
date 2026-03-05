@@ -62,6 +62,13 @@ public final class NetworkHandler {
                 .decoder(LogUpdatePacket::decode)
                 .consumerMainThread(LogUpdatePacket::handle)
                 .add();
+
+        // S2C: プログラム一覧更新 / Program list update
+        CHANNEL.messageBuilder(ProgramListPacket.class, nextPacketId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(ProgramListPacket::encode)
+                .decoder(ProgramListPacket::decode)
+                .consumerMainThread(ProgramListPacket::handle)
+                .add();
     }
 
     private NetworkHandler() { /* ユーティリティクラス / Utility class */ }

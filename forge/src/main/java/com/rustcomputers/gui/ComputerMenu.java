@@ -14,6 +14,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * コンピューター GUI のメニュー（サーバー/クライアント間の同期）。
@@ -39,6 +41,12 @@ public class ComputerMenu extends AbstractContainerMenu {
     /** ブロック位置（クライアント側の参照用） / Block position (for client-side reference) */
     private final BlockPos blockPos;
 
+    /** コンピューターディレクトリ内の .wasm ファイル一覧（クライアント側） / .wasm file list (client-side) */
+    private final List<String> programs;
+
+    /** 選択中のプログラムインデックス（クライアント側のみ） / Selected program index (client-side only) */
+    private int selectedProgramIndex = 0;
+
     // ------------------------------------------------------------------
     // コンストラクタ / Constructors
     // ------------------------------------------------------------------
@@ -51,6 +59,7 @@ public class ComputerMenu extends AbstractContainerMenu {
         super(ModRegistries.COMPUTER_MENU.get(), containerId);
         this.blockEntity = be;
         this.blockPos = be.getBlockPos();
+        this.programs = new ArrayList<>(); // サーバー側では不使用 / Unused on server side
 
         // ContainerData でサーバー→クライアントの基本状態を同期
         // Sync basic state from server to client via ContainerData
@@ -79,12 +88,19 @@ public class ComputerMenu extends AbstractContainerMenu {
      * クライアント側コンストラクタ（ネットワークから生成）。
      * Client-side constructor (created from network).
      */
-    private ComputerMenu(int containerId, Inventory playerInv, BlockPos pos, int computerId) {
+    private ComputerMenu(int containerId, Inventory playerInv, BlockPos pos, List<String> programs,
+                         @Nullable String selectedProgram) {
         super(ModRegistries.COMPUTER_MENU.get(), containerId);
         this.blockEntity = null;
         this.blockPos = pos;
         this.data = new SimpleContainerData(DATA_SIZE);
         addDataSlots(data);
+        this.programs = new ArrayList<>(programs);
+        // アップロード済みなら最初に一致するインデックスを選択 / Pre-select if already present
+        if (selectedProgram != null) {
+            int idx = this.programs.indexOf(selectedProgram);
+            this.selectedProgramIndex = idx >= 0 ? idx : 0;
+        }
     }
 
     /**
@@ -93,8 +109,12 @@ public class ComputerMenu extends AbstractContainerMenu {
      */
     public static ComputerMenu fromNetwork(int containerId, Inventory playerInv, FriendlyByteBuf buf) {
         BlockPos pos = buf.readBlockPos();
-        int computerId = buf.readInt();
-        return new ComputerMenu(containerId, playerInv, pos, computerId);
+        buf.readInt(); // computerId — ContainerData で同期するため不要 / Synced via ContainerData
+        int count = buf.readInt();
+        List<String> programs = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) programs.add(buf.readUtf(256));
+        String selectedProgram = buf.readBoolean() ? buf.readUtf(256) : null;
+        return new ComputerMenu(containerId, playerInv, pos, programs, selectedProgram);
     }
 
     // ------------------------------------------------------------------
@@ -140,5 +160,51 @@ public class ComputerMenu extends AbstractContainerMenu {
     @Nullable
     public ComputerBlockEntity getBlockEntity() {
         return blockEntity;
+    }
+
+    // ------------------------------------------------------------------
+    // プログラムリスト管理 / Program list management (client-side)
+    // ------------------------------------------------------------------
+
+    /** プログラム一覧を返す / Return the program list */
+    public List<String> getPrograms() {
+        return programs;
+    }
+
+    /** 選択中のプログラムインデックスを返す / Return the selected program index */
+    public int getSelectedProgramIndex() {
+        return selectedProgramIndex;
+    }
+
+    /** 選択中のプログラム名を返す（なければ null） / Return the selected program name (null if none) */
+    @Nullable
+    public String getSelectedProgram() {
+        if (programs.isEmpty()) return null;
+        int idx = Math.max(0, Math.min(selectedProgramIndex, programs.size() - 1));
+        return programs.get(idx);
+    }
+
+    /** 選択インデックスを設定する / Set the selected program index */
+    public void setSelectedProgramIndex(int index) {
+        if (!programs.isEmpty()) {
+            this.selectedProgramIndex = Math.max(0, Math.min(index, programs.size() - 1));
+        }
+    }
+
+    /**
+     * プログラム一覧を更新する（ProgramListPacket 受信時に呼ばれる）。
+     * Update the program list (called when ProgramListPacket is received).
+     */
+    public void updatePrograms(List<String> newPrograms) {
+        String currentSelection = getSelectedProgram();
+        programs.clear();
+        programs.addAll(newPrograms);
+        // 可能なら以前の選択を維持 / Try to keep the previous selection
+        if (currentSelection != null) {
+            int idx = programs.indexOf(currentSelection);
+            selectedProgramIndex = idx >= 0 ? idx : 0;
+        } else {
+            selectedProgramIndex = 0;
+        }
     }
 }

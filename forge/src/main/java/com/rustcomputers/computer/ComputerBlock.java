@@ -75,9 +75,19 @@ public class ComputerBlock extends Block implements EntityBlock {
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof ComputerBlockEntity computerBe && player instanceof ServerPlayer serverPlayer) {
             // GUI を開く / Open the GUI
+            String[] programs = computerBe.getEngine() != null
+                    ? computerBe.getEngine().listPrograms()
+                    : new String[0];
+            String selectedProgram = computerBe.getProgramName();
             NetworkHooks.openScreen(serverPlayer, computerBe, buf -> {
                 buf.writeBlockPos(pos);
                 buf.writeInt(computerBe.getComputerId());
+                // プログラム一覧 / Program list
+                buf.writeInt(programs.length);
+                for (String p : programs) buf.writeUtf(p, 256);
+                // 選択中のプログラム / Selected program
+                buf.writeBoolean(selectedProgram != null);
+                if (selectedProgram != null) buf.writeUtf(selectedProgram, 256);
             });
         }
 

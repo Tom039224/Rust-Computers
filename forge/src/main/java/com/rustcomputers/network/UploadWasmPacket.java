@@ -8,12 +8,15 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.PacketDistributor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -103,6 +106,12 @@ public record UploadWasmPacket(BlockPos pos, String fileName, byte[] data) {
                     player.getName().getString(), safeName, data.length, be.getComputerId());
             player.sendSystemMessage(Component.translatable(
                     "message.rustcomputers.upload_success", safeName));
+
+            // アップロード後にプログラム一覧を更新通知 / Notify client of updated program list
+            List<String> updatedPrograms = Arrays.asList(engine.listPrograms());
+            NetworkHandler.CHANNEL.send(
+                    PacketDistributor.PLAYER.with(() -> player),
+                    new ProgramListPacket(updatedPrograms));
 
         } catch (IOException e) {
             LOGGER.error("Failed to save uploaded WASM", e);

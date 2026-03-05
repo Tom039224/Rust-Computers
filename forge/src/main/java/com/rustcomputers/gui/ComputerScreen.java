@@ -62,7 +62,7 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
     private static final int MARGIN = 8;
 
     /** ヘッダー高さ / Header height */
-    private static final int HEADER_HEIGHT = 28;
+    private static final int HEADER_HEIGHT = 42;
 
     // ------------------------------------------------------------------
     // フィールド / Fields
@@ -118,6 +118,14 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
         addRenderableWidget(Button.builder(Component.literal("▶/■"), btn -> toggleRunning())
                 .bounds(leftPos + GUI_WIDTH - MARGIN - 44, topPos + 4, 40, 16)
                 .build());
+
+        // プログラム選択ボタン / Program selector buttons
+        addRenderableWidget(Button.builder(Component.literal("<"), btn -> prevProgram())
+                .bounds(leftPos + MARGIN, topPos + 28, 16, 14)
+                .build());
+        addRenderableWidget(Button.builder(Component.literal(">"), btn -> nextProgram())
+                .bounds(leftPos + MARGIN + 18, topPos + 28, 16, 14)
+                .build());
     }
 
     @Override
@@ -158,6 +166,13 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
         };
         String statusText = state.name();
         graphics.drawString(font, statusText, MARGIN, 18, stateColor, false);
+
+        // プログラム選択表示 / Program selector display
+        String prog = menu.getSelectedProgram();
+        String progLabel = prog != null ? prog : "(no program)";
+        int progColor = (prog != null) ? 0xFFFFFF : 0x888888;
+        // [<] [>] ボタンの右側に表示 (x = MARGIN + 18 + 18 + 4 = 40)
+        graphics.drawString(font, progLabel, MARGIN + 40, 32, progColor, false);
 
         // ログ描画 / Draw log lines
         String[] allLines = clientLog.snapshot();
@@ -238,11 +253,36 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
             NetworkHandler.CHANNEL.sendToServer(
                     new ComputerActionPacket(menu.getBlockPos(), ComputerActionPacket.Action.STOP, ""));
         } else {
-            // TODO: プログラム選択 UI を表示（今は最初の .wasm を開始）
-            // TODO: Show program selection UI (for now, start the first .wasm)
+            String selected = menu.getSelectedProgram();
+            if (selected == null) {
+                clientLog.append("[ERROR] No program selected. Upload a .wasm file first.");
+                return;
+            }
             NetworkHandler.CHANNEL.sendToServer(
-                    new ComputerActionPacket(menu.getBlockPos(), ComputerActionPacket.Action.START, ""));
+                    new ComputerActionPacket(menu.getBlockPos(), ComputerActionPacket.Action.START, selected));
         }
+    }
+
+    /**
+     * 前のプログラムに切り替える。
+     * Switch to the previous program.
+     */
+    private void prevProgram() {
+        List<String> programs = menu.getPrograms();
+        if (programs.isEmpty()) return;
+        int idx = menu.getSelectedProgramIndex();
+        menu.setSelectedProgramIndex((idx - 1 + programs.size()) % programs.size());
+    }
+
+    /**
+     * 次のプログラムに切り替える。
+     * Switch to the next program.
+     */
+    private void nextProgram() {
+        List<String> programs = menu.getPrograms();
+        if (programs.isEmpty()) return;
+        int idx = menu.getSelectedProgramIndex();
+        menu.setSelectedProgramIndex((idx + 1) % programs.size());
     }
 
     // ------------------------------------------------------------------
@@ -297,6 +337,17 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
             for (String line : lines) {
                 screen.clientLog.append(line);
             }
+        }
+    }
+
+    /**
+     * S2C プログラム一覧更新を処理する。
+     * Handle an S2C program list update.
+     */
+    public static void handleProgramListUpdate(List<String> programs) {
+        ComputerScreen screen = activeScreen;
+        if (screen != null) {
+            screen.menu.updatePrograms(programs);
         }
     }
 
