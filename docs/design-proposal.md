@@ -70,8 +70,9 @@
 ### スパイク実装後の確認項目
 
 - [x] Chicory Runtime Compiler で簡単な Rust WASM バイナリ実行
-- [x] WASI stdout キャプチャ動作確認
-- [x] 64 KB 超関数の自動フォールバック動作確認
+- [x] WASI stdout/stderr キャプチャ動作確認
+- [x] 64 KB 超関数の自動フォールバック動作確認（68 KB バイナリで確認）
+- [x] HostFunction (Rust→Java ポインタ渡し / 戻り値 / Java→WASM メモリ書き込み) 動作確認
 
 
 

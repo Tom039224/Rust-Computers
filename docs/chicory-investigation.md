@@ -211,12 +211,70 @@ RC_TEST = hello_from_java   ← Java 側で withEnvironment("RC_TEST", "hello_fr
 
 ## 次のステップ（実装本編へ）
 
+### Phase 2: Java ホスト関数統合（2026-03-05 実施）
+
+#### 検証内容
+
+| テスト | 内容 | 結果 |
+|---|---|---|
+| `log_str(ptr, len)` | Rust→Java ポインタ渡し、Java が WASM メモリから文字列を読む | ✅ PASS |
+| `compute(a, b) → i32` | Rust→Java→Rust 値渡し、Java が `a*b+1` を計算して返す | ✅ PASS |
+| `fill_buf(out_ptr, max_len) → i32` | Java→WASM メモリ書き込み、Rust が読み取り確認 | ✅ PASS |
+
+**Total elapsed: 305 ms**（Runtime Compiler モード、初回コンパイル込み）
+
+#### 確立した実装パターン
+
+```java
+// HostFunction：Rust から文字列ポインタを受け取り Java でメモリを読む
+var logStrFn = new HostFunction("env", "log_str",
+    FunctionType.of(List.of(ValType.I32, ValType.I32), List.of()),
+    (instance, args) -> {
+        String msg = instance.memory().readString((int) args[0], (int) args[1]);
+        // ... GUI ログへ書き込みなど
+        return null;
+    });
+
+// HostFunction：戻り値あり（i32 を Rust に返す）
+var computeFn = new HostFunction("env", "compute",
+    FunctionType.of(List.of(ValType.I32, ValType.I32), List.of(ValType.I32)),
+    (instance, args) -> new long[]{ (int) args[0] * (int) args[1] + 1 });
+
+// HostFunction：Java が WASM メモリに書き込む
+var fillBufFn = new HostFunction("env", "fill_buf",
+    FunctionType.of(List.of(ValType.I32, ValType.I32), List.of(ValType.I32)),
+    (instance, args) -> {
+        byte[] data = "message_from_java".getBytes(StandardCharsets.UTF_8);
+        int writeLen = Math.min(data.length, (int) args[1]);
+        instance.memory().write((int) args[0], data, 0, writeLen);
+        return new long[]{ writeLen };
+    });
+
+// WASI + カスタムホスト関数を混合登録
+ImportValues.builder()
+    .addFunction(wasi.toHostFunctions())
+    .addFunction(logStrFn, computeFn, fillBufFn)
+    .build();
+```
+
+#### Memory API まとめ（実証済み）
+
+| 操作 | API |
+|---|---|
+| 文字列読み取り（ptr, len） | `instance.memory().readString(ptr, len)` |
+| NUL終端文字列読み取り | `instance.memory().readCString(ptr)` |
+| バイト書き込み | `instance.memory().write(ptr, byte[], offset, len)` |
+| i32 読み取り | `instance.memory().readInt(addr)` |
+| i32 書き込み | `instance.memory().writeI32(addr, value)` |
+
+---
+
 ### Phase 2: Java ホスト関数統合
 
 ```
-[ ] Rust => Java 呼び出し（ホスト関数 FFI）
-[ ] WASM 線形メモリへの直接アクセス（Chicory Memory API）
-[ ] Shared Buffer 設計・実装
+[x] Rust => Java 呼び出し（HostFunction FFI） ✅
+[x] WASM 線形メモリへの直接アクセス（Chicory Memory API） ✅
+[ ] Shared Buffer 設計・実装（実装本編へ）
 ```
 
 ### Phase 3: Minecraft 統合
