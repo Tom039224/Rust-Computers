@@ -1,7 +1,9 @@
-# RustComputers 設計方針案（W-1 ～ W-5 rev.2）
+# RustComputers 設計方針案（W-1 ～ W-5 rev.3）
 
-> 2026-03-05 更新。前版から以下を変更：  
-> W-1 ランタイム再検討（Chicory AOT 方向）、W-2 メモリ動的化・タイムアウト変更・即時関数追加・Request ID u64化・Unload区別・UI stdin、W-3 method_id u32化・クレート公開方針、W-4 ファイル配置をコンピューター別ディレクトリに変更・d&d 対応
+> 2026-03-05 rev.3 更新。前版(rev.2)から以下を変更：  
+> **W-1** WASI 廃止（no_std 採用により不要）、  
+> **W-2** tick 実行モデル確定（`wasm_tick()` エクスポート + Rust mini-executor）、WASI 廃止→ホスト関数で代替、stdin を `Future<String>` に変更（Enter まで Pending）、result バッファを Rust 側で事前確保する方式に変更、ホスト関数全リスト整理、  
+> **W-4** GUI レイアウト更新（ID / ステータス / ファイル名 / ログ 15 行スクロール 200 行バッファ / 入力欄）
 
 ---
 
@@ -15,8 +17,8 @@
 - ✅ **純 Java** → GraalVM・JNI・ネイティブバイナリ不要
 - ✅ **Runtime Compilation** → メモリ上で WASM → Java Bytecode → JVM JIT
 - ✅ **動的ロード対応** → Minecraft サーバーで WASM バイナリをロード・スワップ可能
-- ✅ **WASI P1** → stdout/stderr/stdin キャプチャ標準実装
-- ✅ **完成度** → 2024 年に Compiler がexperimental を脱ぎ安定化、テストスイート 100% パス
+- ✅ **完成度** → 2024 年に Compiler が experimental を脱ぎ安定化、テストスイート 100% パス
+- ✅ **WASI 不要** → no_std 採用により `WasiPreview1` は使用しない。stdout/stdin はカスタムホスト関数で代替
 
 ### 実行モード選定根拠
 
@@ -42,29 +44,17 @@
 <dependency>
     <groupId>com.dylibso.chicory</groupId>
     <artifactId>runtime</artifactId>
-    <version>0.3.x</version>
+    <version>1.7.2</version>
 </dependency>
 
 <!-- JIT compilation -->
 <dependency>
     <groupId>com.dylibso.chicory</groupId>
     <artifactId>compiler</artifactId>
-    <version>0.3.x</version>
+    <version>1.7.2</version>
 </dependency>
 
-<!-- WASI (stdout/stderr/stdin) -->
-<dependency>
-    <groupId>com.dylibso.chicory</groupId>
-    <artifactId>wasi</artifactId>
-    <version>0.3.x</version>
-</dependency>
-
-<!-- ASM (Runtime Compiler が内部使用、別途明示的依存不要だが念のため) -->
-<dependency>
-    <groupId>org.ow2.asm</groupId>
-    <artifactId>asm</artifactId>
-    <version>9.x</version>
-</dependency>
+<!-- wasi は不使用（no_std 採用・カスタムホスト関数で代替） -->
 ```
 
 ### スパイク実装後の確認項目
@@ -76,61 +66,160 @@
 
 
 
-## ▶ W-2: Java ↔ WASM ブリッジ（rev.2）
+## ▶ W-2: Java ↔ WASM ブリッジ（rev.3）
 
-### 2-1. ホスト関数シグネチャ
+### 2-0. no_std 方針
 
-> `method_id` を u32 に拡張（CRC32 フル幅, W-3 参照）。  
-> `request_id` を i64 にしラップアラウンド問題を排除。
+**Rust プログラムは `#![no_std] + extern crate alloc` で動作させる。**
 
-```
-host_request_info(peripheral_id: u32, method_id: u32, arg_count: u16, args_ptr: i32) → i64
-  戻り値: request_id (>0) | error (<0)
-
-host_do_action(peripheral_id: u32, method_id: u32, arg_count: u16, args_ptr: i32) → i64
-  戻り値: request_id (>0) | error (<0)
-
-host_poll_result(request_id: i64) → i32
-  戻り値: result_addr (>0: ready) | 0 (pending) | error (<0)
-
-host_is_mod_available(mod_id: u16) → u32
-  戻り値: 1 (available) | 0 (not available)
-
-host_request_info_imm(peripheral_id: u32, method_id: u32, arg_count: u16, args_ptr: i32) → i32
-  戻り値: result_addr (>0: 即時結果) | error (<0)
-  用途: @LuaFunction(immediate=true) のメソッドのみ
-```
-
-### 2-2. 即時読み取り関数（`_imm` サフィックス）
-
-**通常の 1tick 遅れ関数は変わらず存在する。** `_imm` はあくまで追加の補助 API であり、全ての関数が `_imm` になるわけではない。
-
-| 種別 | サフィックス | 実装 | 用途 |
-|---|---|---|---|
-| **通常関数** | なし | `Future<T>`（1tick 遅れ）| ワールド状態を読む・変化させる全ての操作 |
-| **即時関数** | `_imm` | ブロッキング（同 tick 即返）| 不変メタ情報の取得のみ |
+WASI を使わないため `WasiPreview1` は Java 側に不要。stdout/stdin をはじめ全ての I/O はカスタムホスト関数で実装する。
+`rust-computers-api` クレートが以下をユーザーに提供する：
 
 ```rust
-// 通常: 1tick 遅れ（await 必要）— 通常の操作は全てこちら
-let temp: f64 = sensor.get_temp().await?;
-let blocks: Vec<Block> = radar.scan(64.0).await?;
-let _ = lamp.set_on(true).await?;
+#![no_std]
+extern crate alloc;   // Vec, String, HashMap などは alloc 経由で使える
+use alloc::string::String;
 
-// 即時: 同一tick 内に返る（await 不要）— 不変メタ情報のみ
-let kind: &str = peripheral.get_type_imm()?;
-let methods: &[&str] = peripheral.get_method_names_imm()?;
+// crate 提供マクロ（→ host_log に転送）
+println!("hello {}", name);   // std の println! と同じ書き味
+eprintln!("error: {}", msg);
 ```
 
-ルール:
-- `_imm` にできる条件: ワールドの状態変化が不要、かつ Java 側の実行コストが O(1)
-- Mod 開発者がアノテーション `@LuaFunction(immediate = true)` を付けることで宣言
-- 付けていないものは**全て通常（1tick 遅れ）**として扱う
-- `_imm` なしで呼べる即時関数は存在しない（明示的な宣言が必要）
+カスタムアロケータ（`dlmalloc` または `wee_alloc`）をクレート内で設定し、ユーザーは意識しない。
 
-### 2-3. parallel! マクロ使い方
+---
 
-`parallel!` の引数は **Future そのもの**（`.await` なし）。  
-内部で `join!` 相当の処理をして、まとめて 1tick 待機する。
+### 2-1. tick 実行モデル（核心部）
+
+Rust の `async/await` はコンパイル時に状態機械に変換されるため、スタック巻き戻し（Asyncify）は**不要**。
+
+**WASM がエクスポートする関数:**
+
+```
+wasm_init()  → void   // main() を executor に spawn（最初の tick の前に1回）
+wasm_tick()  → i32    // executor を一巡 poll: 1=継続, 0=main終了, -1=panic
+```
+
+**Java の ServerTickEvent での処理順:**
+
+```
+1. 前 tick に積まれた pending results（ペリフェラル応答 + stdin 入力）を
+   HashMap<requestId, Result> に格納する
+
+2. instance.export("wasm_tick").apply() を呼ぶ
+   → Rust の mini-executor が全 Future を一巡 poll()
+   → host_request_info 等が呼ばれた場合:
+       request_id を HashMap に予約してすぐリターン（ブロックしない）
+   → 全 Future が Pending になったら wasm_tick() からリターン
+
+3. wasm_tick() の戻り値:
+    1  → 次 tick も継続
+    0  → main() 正常終了 → clean shutdown
+   -1  → panic → クラッシュ処理（ログ保存 + GUI 表示）
+```
+
+**ユーザーが書く Rust（async/await は普通に使える）:**
+
+```rust
+async fn main() {
+    let radar: Radar = peripheral::wrap("radar_0");
+    loop {
+        // stdin: Enter まで Pending、Enter されたら Ready
+        let cmd = rc::read_line().await;
+
+        // ペリフェラル: 次 tick まで Pending
+        let blocks = radar.scan(64.0).await;
+
+        println!("cmd={} blocks={}", cmd, blocks.len()); // → host_log
+    }
+}
+```
+
+---
+
+### 2-2. ホスト関数シグネチャ（全リスト）
+
+> `method_id`: u32（CRC32 フル幅, W-3 参照）  
+> `request_id`: i64（モノトニック増加、ラップアラウンドなし）  
+> result バッファは **Rust 側が事前確保**し、Java は書き込むだけ（Java が alloc しない）
+
+```
+// ── ログ出力 ──
+host_log(ptr: i32, len: i32)
+  println! / eprintln! → GUI ログ欄に表示
+
+// ── stdin ──
+host_stdin_read_line() → i64
+  GUI 入力欄への Enter まで Pending の request_id を返す
+  結果は host_poll_result で取得（UTF-8 文字列が result_ptr に書かれる）
+
+// ── ペリフェラル操作 ──
+host_request_info(
+    periph_id: u32, method_id: u32,
+    args_ptr: i32, args_len: i32,       // 引数（MessagePack）: Rust が alloc
+    result_ptr: i32, result_buf_size: i32  // 結果バッファ: Rust が alloc
+) → i64
+  戻り値: request_id (>0) | error (<0)
+
+host_do_action(
+    periph_id: u32, method_id: u32,
+    args_ptr: i32, args_len: i32,
+    result_ptr: i32, result_buf_size: i32
+) → i64
+  戻り値: request_id (>0) | error (<0)
+
+host_request_info_imm(
+    periph_id: u32, method_id: u32,
+    args_ptr: i32, args_len: i32,
+    result_ptr: i32, result_buf_size: i32
+) → i32
+  戻り値: written_bytes (>=0: 即時書き込み済み) | error (<0)
+  用途: @LuaFunction(immediate=true) のメソッドのみ（同 tick 内即返）
+
+// ── ポーリング ──
+host_poll_result(request_id: i64, written_bytes_ptr: i32) → i32
+  written_bytes_ptr: Java が書いたバイト数を格納するアドレス（Rust が alloc）
+  戻り値: 0=pending, 1=ready, <0=error
+
+// ── メタ情報 ──
+host_is_mod_available(mod_id: u16) → i32   // 1=available, 0=not available
+host_get_computer_id() → i32
+```
+
+**result バッファ確保フロー（Java は書くだけ）:**
+
+```
+1. Rust: args_buf = alloc(args_len)  に引数を書き込む
+   Rust: result_buf = alloc(result_buf_size)  を事前確保
+   Rust: host_request_info(periph_id, method_id,
+                            args_ptr, args_len,
+                            result_ptr, result_buf_size) → request_id
+
+2. Java: args_ptr から args_len バイトを読んでペリフェラルを呼ぶ
+   Java: 結果を result_ptr に書き込む（result_buf_size を超えない範囲で）
+   Java: HashMap<request_id, written_bytes> に格納
+
+3. 次 tick: Rust が host_poll_result(request_id, written_bytes_ptr) を呼ぶ
+   Java: HashMap に結果があれば written_bytes を written_bytes_ptr に書く → 1 を返す
+   Rust: result_ptr から written_bytes 分を読む → args_buf / result_buf を free
+```
+
+---
+
+### 2-3. 即時関数（`_imm` サフィックス）
+
+| 種別 | API | 実装 | 用途 |
+|---|---|---|----- |
+| **通常関数** | `host_request_info` / `host_do_action` | Future（1tick 遅れ）| ワールド状態変化・読み取り全般 |
+| **即時関数** | `host_request_info_imm` | 同 tick 即返 | 変化なし・O(1) のメタ情報のみ |
+
+条件: Mod 開発者が `@LuaFunction(immediate = true)` を付けることで宣言。未付加は全て通常扱い。
+
+---
+
+### 2-4. parallel! マクロ
+
+`parallel!` の引数は **Future そのもの**（`.await` なし）。内部で join! 相当の処理をして、まとめて 1tick 待機する。
 
 ```rust
 // ✅ 正しい: Future を渡す
@@ -139,37 +228,22 @@ let (a, b, c) = parallel!(
     sensor.get_temp(),
     lamp.set_on(true),
 );
-
-// ❌ 誤り: .await を付けてはいけない
-let (a, b) = parallel!(
-    radar.scan(64.0).await,
-    sensor.get_temp().await,
-);
 ```
 
-### 2-4. メモリ管理方式（動的割り当て 案②）
+---
 
-**固定 Shared Buffer ではなく、動的 alloc/free 方式を採用する。**
-
-理由:
-- 大量スキャンデータ等が 64 KB を超えるケースに最初から対応
-- Chicory の場合は同一ヒープのため、動的割り当てのコストが FFI 越えコピーに比べて小さい
-
-```
-呼び出しフロー:
-  1. Rust が引数バッファを alloc() して args_ptr として渡す
-  2. Java が args_ptr から読み、result_ptr を alloc() して結果を書き込む
-  3. Rust が poll_result() → result_ptr を得て read → free
-```
-
-### 2-5. Request ID 管理（u64 モノトニック）
+### 2-5. Request ID 管理
 
 ```java
 private final AtomicLong nextRequestId = new AtomicLong(1L);
 public long issueRequestId() { return nextRequestId.getAndIncrement(); }
+// 使用中 ID は HashMap<Long, PendingResult> で管理。Timeout 後に自動破棄。
 ```
 
-使用中 ID は HashMap で管理。Timeout 後に自動破棄。
+`host_stdin_read_line()` の request_id も同じ HashMap で管理する。
+GUI 入力欄で Enter が押された時点で該当 ID の result に文字列を格納する。
+
+---
 
 ### 2-6. エラーコード
 
@@ -180,10 +254,12 @@ ERR_METHOD_NOT_FOUND   = -3
 ERR_JAVA_EXCEPTION     = -4
 ERR_TIMEOUT            = -5
 ERR_FUEL_EXHAUSTED     = -6
-ERR_ALLOC_FAILED       = -7   // 動的確保失敗（旧 BUFFER_OVERFLOW）
+ERR_RESULT_BUF_TOO_SMALL = -7  // result_buf_size が結果サイズより小さい
 ERR_MOD_NOT_AVAILABLE  = -8
 ERR_RESULT_LOST        = -9
 ```
+
+---
 
 ### 2-7. タイムアウト・Fuel 切れ・Panic 時の挙動
 
@@ -405,43 +481,40 @@ SCP / FTP / SFTP 等で `saves/<world>/rust computers/computer/<id>/` に `.wasm
 ### 4-3. コンピューター GUI
 
 ```
-┌────────────────────────────────────────────┐
-│  RustComputer #12                          │
-├────────────────────────────────────────────┤
-│  Program: [my_program.wasm              ▼] │  ← ドロップダウン（d&d で追加）
-│                                            │
-│  Status:  RUNNING                          │
-│  Fuel used last tick:  1,234,567           │
-│  Uptime:  384 ticks                        │
-├────────────────────────────────────────────┤
-│  ── Log ──────────────────────────────── ↑ │
-│  [11:32:01] Program started               │  ← 最新10行表示
-│  [11:32:02] Hello, world!                 │    スクロールで上下
-│  [11:32:03] Scanning at range 64...       │
-│  [11:32:04] Found 342 blocks              │
-│  [11:32:05] ...                           │
-│  [11:32:06] ...                           │
-│  [11:32:07] ...                           │
-│  [11:32:08] ...                           │
-│  [11:32:09] ...                           │
-│  [11:32:10] ...                           │ ↓ │
-├────────────────────────────────────────────┤
-│  stdin>  [                              ] │  ← stdin 送信欄
-│                                            │
-├────────────────────────────────────────────┤
-│  [Load]    [Restart]    [Stop]            │
-└────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  Computer #12                                │  ← コンピューター ID
+│  Status: RUNNING   my_program.wasm           │  ← ステータス + 実行ファイル名
+├──────────────────────────────────────────────┤
+│  ── Log ────────────────────────────────── ↑ │
+│  [11:32:01]  Program started                 │  ← 15行表示（バッファ200行）
+│  [11:32:02]  Hello, world!                   │    スクロールで上下
+│  [11:32:03]  Scanning at range 64...         │
+│  [11:32:04]  Found 342 blocks                │
+│  [11:32:05]  ...                             │
+│  [11:32:06]  ...                             │
+│  [11:32:07]  ...                             │
+│  [11:32:08]  ...                             │
+│  [11:32:09]  ...                             │
+│  [11:32:10]  ...                             │
+│  [11:32:11]  ...                             │
+│  [11:32:12]  ...                             │
+│  [11:32:13]  ...                             │
+│  [11:32:14]  ...                             │
+│  [11:32:15]  ...                             │ ↓
+├──────────────────────────────────────────────┤
+│  > [                                      ]  │  ← 入力欄（Enter で送信）
+└──────────────────────────────────────────────┘
 ```
 
-**ログ欄**:
-- 直近 10 行を常時表示（上下スクロール可）
-- `println!` / `eprintln!` のキャプチャ出力 + クラッシュ情報を流す
-- タイムスタンプ付き
+**レイアウト（上から順）:**
+1. `Computer #<id>` — ブロックに割り当てられた ID
+2. `Status: <状態>  <実行ファイル名>` — RUNNING / STOPPED / CRASHED + 選択中ファイル名
+3. ログ欄 — 表示 15 行、バッファ 200 行（古い行は自動削除）。スクロール可。`println!` / `eprintln!` 出力 + クラッシュ情報を流す。タイムスタンプ付き
+4. 入力欄 — Enter で送信。`host_stdin_read_line()` が返した request_id に対して Enter が押された時点で結果を確定させる。WASM が `read_line().await` していない間の入力は**破棄**（バッファリングしない）
 
-**stdin 送信欄**:
-- `IO::stdin()` の読み込み待ちのとき、この欄からテキストを送信可能
-- Enter キー or 送信ボタンで WASM の stdin バッファに書き込み
-- 実装上はホスト関数 `host_stdin_write(ptr: i32, len: i32)` を追加
+**実行ファイル選択:**  
+画面外（別ボタンまたは右クリックメニュー等）でドロップダウン選択 + Drag & Drop による追加。  
+メイン画面はシンプルに保ち、ファイル管理 UI は分離する（詳細は別途）。
 
 ### 4-4. Drag & Drop 実装方針（Java）
 
@@ -536,9 +609,12 @@ void validateWasm(Path wasmPath, long maxSize) throws ValidationException {
 
 | # | 項目 | 決定内容 |
 |---|---|---|
-| **W-1** | WASM ランタイム | **Chicory AOT 方向で検討中**（スパイク実装で検証） |
-| **W-2** | ホスト関数 | method_id=u32, request_id=i64, + _imm 即時関数追加 |
-| | メモリ管理 | **動的割り当て（案②）** |
+| **W-1** | WASM ランタイム | **Chicory Runtime Compiler 1.7.2 確定**（スパイク Phase 1/2 完了） |
+| **W-2** | Rust 方針 | **no_std + alloc**（WASI 廃止） |
+| | tick 実行モデル | **`wasm_tick()` エクスポート + Rust mini-executor** |
+| | ホスト関数 | method_id=u32, request_id=i64, `_imm` 即時関数, `host_log`, `host_stdin_read_line` |
+| | メモリ管理 | **result バッファは Rust が事前確保**、Java は書き込むだけ |
+| | stdin | **`Future<String>`（Enter まで Pending）** |
 | | タイムアウト | **ビジー 20tick（1秒）** |
 | | parallel! | 引数は Future（`.await` なし） |
 | | クラッシュ時 | 強制終了+ログ保存+手動再起動 |
@@ -549,7 +625,7 @@ void validateWasm(Path wasmPath, long maxSize) throws ValidationException {
 | **W-4** | ファイル配置 | `saves/<world>/rust computers/computer/<id>/<name>.wasm` |
 | | ログ配置 | `computer/<id>/log/<timestamp>.log` |
 | | アップロード | サーバー直置き + **GUI Drag & Drop（自動上書き保存）** |
-| | GUI | ログ 10 行表示（スクロール）+ **stdin 送信欄** |
+| | GUI | **ID / ステータス+ファイル名 / ログ 15 行（バッファ 200 行）/ 入力欄** |
 | **W-5** | バイナリサイズ | デフォルト 4 MB / config.toml でオーバーライド可 |
 
 ---
