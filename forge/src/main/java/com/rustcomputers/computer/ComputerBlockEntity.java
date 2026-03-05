@@ -89,7 +89,7 @@ public class ComputerBlockEntity extends BlockEntity implements MenuProvider {
 
             // 前回実行中だったプログラムを再起動 / Restart previously running program
             if (savedState == ComputerState.RUNNING && programName != null) {
-                engine.start(programName);
+                engine.start(programName, serverLevel, getBlockPos());
             }
 
             LOGGER.debug("Computer #{} loaded at {}", computerId, getBlockPos());
@@ -153,7 +153,8 @@ public class ComputerBlockEntity extends BlockEntity implements MenuProvider {
         this.programName = wasmFileName;
         setChanged();
         if (engine != null) {
-            return engine.start(wasmFileName);
+            ServerLevel serverLevel = (level instanceof ServerLevel sl) ? sl : null;
+            return engine.start(wasmFileName, serverLevel, getBlockPos());
         }
         return false;
     }

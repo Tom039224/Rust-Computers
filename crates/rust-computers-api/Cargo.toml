@@ -2,8 +2,10 @@
 name = "rust-computers-api"
 version = "0.1.0"
 edition = "2021"
+authors = ["Tom039224"]
 description = "Core runtime crate for RustComputers — run async Rust on Minecraft WASM computers"
 license = "MIT"
+repository = "https://github.com/tom039224/RustComputers"
 readme = "README.md"
 
 [lib]

@@ -29,3 +29,6 @@ refs/**/.git
 
 # Minecraft Forge MDK (large binary, not needed in repo)
 forge-*-mdk.zip
+
+# Log
+logs/

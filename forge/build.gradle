@@ -68,6 +68,12 @@ repositories {
     mavenCentral()
 }
 
+// JarInJar — Chicory + MessagePack を mod JAR に同梱する。
+// Forge の JarInJar メカニズムで実行時にクラスパスに追加される。
+// JarInJar — bundle Chicory + MessagePack inside the mod JAR.
+// Forge's JarInJar mechanism adds them to the classpath at runtime.
+jarJar.enable()
+
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
@@ -81,6 +87,12 @@ dependencies {
     // MessagePack — Java ↔ WASM シリアライゼーション
     // MessagePack serialization for Java ↔ WASM bridge
     implementation 'org.msgpack:msgpack-core:0.9.8'
+
+    // --- JarInJar 宣言 / JarInJar declarations ---
+    jarJar(group: 'com.dylibso.chicory', name: 'runtime', version: "[${chicory_version},2.0.0)")
+    jarJar(group: 'com.dylibso.chicory', name: 'wasm', version: "[${chicory_version},2.0.0)")
+    jarJar(group: 'com.dylibso.chicory', name: 'compiler', version: "[${chicory_version},2.0.0)")
+    jarJar(group: 'org.msgpack', name: 'msgpack-core', version: "[0.9.0,1.0.0)")
 }
 
 // ------------------------------------------------------------------

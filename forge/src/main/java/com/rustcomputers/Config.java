@@ -37,6 +37,9 @@ public final class Config {
     /** ログバッファの最大行数 / Max lines in the log buffer */
     public static final ForgeConfigSpec.IntValue LOG_BUFFER_SIZE;
 
+    /** 1 tick あたりの WASM 実行時間上限（ミリ秒） / Max WASM execution time per tick (ms) */
+    public static final ForgeConfigSpec.IntValue TICK_TIMEOUT_MS;
+
     static {
         BUILDER.comment(
                 "RustComputers サーバー設定 / Server Configuration",
@@ -73,6 +76,13 @@ public final class Config {
                 .comment("ログバッファの最大行数。デフォルト: 200",
                          "Max lines in the log buffer. Default: 200")
                 .defineInRange("logBufferSize", 200, 50, 10000);
+
+        TICK_TIMEOUT_MS = BUILDER
+                .comment("1 tick あたりの WASM 実行時間上限（ミリ秒）。デフォルト: 50（≒ 1 game tick）",
+                         "Max WASM execution time per tick in milliseconds. Default: 50 (~1 game tick)",
+                         "超過するとコンピューターはクラッシュ状態になる。",
+                         "If exceeded, the computer will crash.")
+                .defineInRange("tickTimeoutMs", 50, 10, 5000);
 
         BUILDER.pop();
     }

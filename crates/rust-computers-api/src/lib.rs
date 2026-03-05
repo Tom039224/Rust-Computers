@@ -41,10 +41,11 @@ pub mod ffi;
 pub mod future;
 pub mod io;
 pub mod panic;
+pub mod peripheral;
 
 // 再エクスポート / Re-exports
 pub use error::BridgeError;
-pub use future::RequestFuture;
+pub use future::{JoinAll, RequestFuture};
 pub use io::read_line;
 
 /// エントリーポイントマクロ。
@@ -95,21 +96,40 @@ macro_rules! entry {
 /// 複数の Future を並行して待機するマクロ。
 /// Macro to await multiple futures concurrently.
 ///
-/// # 使い方 / Usage
+/// # タプル構文 / Tuple syntax
+///
+/// 2〜4 個の Future をタプル形式で渡し、結果をタプルで受け取る。
+/// Pass 2–4 futures in tuple form and receive results as a tuple.
 ///
 /// ```rust,no_run
-/// let (a, b) = rc::parallel!(
+/// let (a, b) = rc::parallel!((
 ///     radar.scan(64.0),
 ///     sensor.get_temp(),
-/// );
+/// ));
 /// ```
 ///
-/// 内部的には全 Future を同時に poll し、全て Ready になったら結果をタプルで返す。
-/// Internally polls all futures simultaneously and returns results as a tuple
-/// when all are Ready.
+/// # Vec 構文 / Vec syntax
+///
+/// 同一型の Future の Vec を渡し、結果を Vec で受け取る。
+/// Pass a Vec of same-typed futures and receive results as a Vec.
+///
+/// ```rust,no_run
+/// let results = rc::parallel!(futures_vec);
+/// ```
 #[macro_export]
 macro_rules! parallel {
-    ($($fut:expr),+ $(,)?) => {{
-        $crate::future::join!($($fut),+).await
+    // --- タプル構文 (2〜4 要素) / Tuple syntax (2–4 elements) ---
+    (($a:expr, $b:expr $(,)?)) => {{
+        $crate::future::Join2::new($a, $b).await
+    }};
+    (($a:expr, $b:expr, $c:expr $(,)?)) => {{
+        $crate::future::Join3::new($a, $b, $c).await
+    }};
+    (($a:expr, $b:expr, $c:expr, $d:expr $(,)?)) => {{
+        $crate::future::Join4::new($a, $b, $c, $d).await
+    }};
+    // --- Vec 構文 / Vec syntax ---
+    ($vec:expr) => {{
+        $crate::future::JoinAll::new($vec).await
     }};
 }

@@ -252,6 +252,168 @@ where
     }
 }
 
+/// 4 つの Future を並行して poll する。
+/// Poll four futures concurrently.
+pub struct Join4<A: Future, B: Future, C: Future, D: Future> {
+    a: Option<Pin<Box<A>>>,
+    b: Option<Pin<Box<B>>>,
+    c: Option<Pin<Box<C>>>,
+    d: Option<Pin<Box<D>>>,
+    result_a: Option<A::Output>,
+    result_b: Option<B::Output>,
+    result_c: Option<C::Output>,
+    result_d: Option<D::Output>,
+}
+
+impl<A, B, C, D> Join4<A, B, C, D>
+where
+    A: Future,
+    B: Future,
+    C: Future,
+    D: Future,
+{
+    pub fn new(a: A, b: B, c: C, d: D) -> Self {
+        Self {
+            a: Some(Box::pin(a)),
+            b: Some(Box::pin(b)),
+            c: Some(Box::pin(c)),
+            d: Some(Box::pin(d)),
+            result_a: None,
+            result_b: None,
+            result_c: None,
+            result_d: None,
+        }
+    }
+}
+
+impl<A, B, C, D> Future for Join4<A, B, C, D>
+where
+    A: Future,
+    B: Future,
+    C: Future,
+    D: Future,
+{
+    type Output = (A::Output, B::Output, C::Output, D::Output);
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = unsafe { self.get_unchecked_mut() };
+
+        if this.result_a.is_none() {
+            if let Some(ref mut fut) = this.a {
+                if let Poll::Ready(val) = fut.as_mut().poll(cx) {
+                    this.result_a = Some(val);
+                    this.a = None;
+                }
+            }
+        }
+        if this.result_b.is_none() {
+            if let Some(ref mut fut) = this.b {
+                if let Poll::Ready(val) = fut.as_mut().poll(cx) {
+                    this.result_b = Some(val);
+                    this.b = None;
+                }
+            }
+        }
+        if this.result_c.is_none() {
+            if let Some(ref mut fut) = this.c {
+                if let Poll::Ready(val) = fut.as_mut().poll(cx) {
+                    this.result_c = Some(val);
+                    this.c = None;
+                }
+            }
+        }
+        if this.result_d.is_none() {
+            if let Some(ref mut fut) = this.d {
+                if let Poll::Ready(val) = fut.as_mut().poll(cx) {
+                    this.result_d = Some(val);
+                    this.d = None;
+                }
+            }
+        }
+
+        if this.result_a.is_some()
+            && this.result_b.is_some()
+            && this.result_c.is_some()
+            && this.result_d.is_some()
+        {
+            Poll::Ready((
+                this.result_a.take().unwrap(),
+                this.result_b.take().unwrap(),
+                this.result_c.take().unwrap(),
+                this.result_d.take().unwrap(),
+            ))
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
+// ==================================================================
+// JoinAll — Vec<Future> を並行して poll する
+// JoinAll — poll a Vec of futures concurrently
+// ==================================================================
+
+/// 同一型の Future の Vec を並行して poll する。
+/// Poll a Vec of same-typed futures concurrently.
+///
+/// 全 Future が Ready になったら結果を Vec で返す。
+/// Returns results as a Vec when all futures are Ready.
+pub struct JoinAll<F: Future> {
+    /// 未完了の Future（None = 完了済み） / Incomplete futures (None = done)
+    futures: Vec<Option<Pin<Box<F>>>>,
+    /// 結果スロット / Result slots
+    results: Vec<Option<F::Output>>,
+}
+
+impl<F: Future> JoinAll<F> {
+    /// Vec<F> から JoinAll を生成する。
+    /// Create a JoinAll from a Vec of futures.
+    pub fn new(futures: Vec<F>) -> Self {
+        let len = futures.len();
+        let boxed: Vec<Option<Pin<Box<F>>>> = futures
+            .into_iter()
+            .map(|f| Some(Box::pin(f)))
+            .collect();
+        Self {
+            futures: boxed,
+            results: (0..len).map(|_| None).collect(),
+        }
+    }
+}
+
+impl<F: Future> Future for JoinAll<F> {
+    type Output = Vec<F::Output>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = unsafe { self.get_unchecked_mut() };
+        let mut all_done = true;
+
+        for i in 0..this.futures.len() {
+            if this.results[i].is_some() {
+                continue; // 既に完了 / Already done
+            }
+            if let Some(ref mut fut) = this.futures[i] {
+                if let Poll::Ready(val) = fut.as_mut().poll(cx) {
+                    this.results[i] = Some(val);
+                    this.futures[i] = None;
+                } else {
+                    all_done = false;
+                }
+            }
+        }
+
+        if all_done {
+            let results: Vec<F::Output> = this.results
+                .iter_mut()
+                .map(|slot| slot.take().unwrap())
+                .collect();
+            Poll::Ready(results)
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
 /// 内部マクロ: Join を構築する。
 /// Internal macro: build a Join combinator.
 #[macro_export]
@@ -261,5 +423,8 @@ macro_rules! join {
     };
     ($a:expr, $b:expr, $c:expr $(,)?) => {
         $crate::future::Join3::new($a, $b, $c)
+    };
+    ($a:expr, $b:expr, $c:expr, $d:expr $(,)?) => {
+        $crate::future::Join4::new($a, $b, $c, $d)
     };
 }
