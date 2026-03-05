@@ -5,48 +5,73 @@
 
 ---
 
-## ▶ W-1: WASM ランタイム（再検討中）
+## ▶ W-1: WASM ランタイム（確定: Chicory Runtime Compiler）
 
-### 背景
+### 選定結果
 
-当初採用候補だった **kawamuray/wasmtime-java** は MavenCentral への publish こそあるが、  
-リポジトリが更新停止状態であり、最新の WASM 仕様（component model、SIMD 等）に追従していない。
+**Chicory Runtime Compiler（MavenCentral: `com.dylibso.chicory:compiler`）を採用**
 
-### 候補比較（再）
+理由:
+- ✅ **純 Java** → GraalVM・JNI・ネイティブバイナリ不要
+- ✅ **Runtime Compilation** → メモリ上で WASM → Java Bytecode → JVM JIT
+- ✅ **動的ロード対応** → Minecraft サーバーで WASM バイナリをロード・スワップ可能
+- ✅ **WASI P1** → stdout/stderr/stdin キャプチャ標準実装
+- ✅ **完成度** → 2024 年に Compiler がexperimental を脱ぎ安定化、テストスイート 100% パス
 
-| ランタイム | JVM統合 | AOT/JIT | メモリコピー | 難易度 | 備考 |
-|---|---|---|---|---|---|
-| ~~wasmtime-java (kawamuray)~~ | JNI | Cranelift JIT | あり（FFI越え） | 低 | 更新停止、最新WASM非対応 |
-| GraalWasm | Native | GraalVM JIT | ほぼなし | **高** | GraalVM JVM 必須 → ユーザー障壁大 |
-| **Chicory (AOT/JIT)** | **純Java** | **AOT(JITAST変換)** | **なし（同一ヒープ）** | 中 | 64KB超関数はインタプリタ動作 |
-| Chicory (インタプリタ) | 純Java | なし | なし | 低 | 常時インタプリタ、遅い |
+### 実行モード選定根拠
 
-### 方針決定: **Chicory AOT を採用方向で調査を進める**
+| モード | 選択 | 理由 |
+|---|---|---|
+| Interpreter | ❌ | パフォーマンス不足（20 ticks/sec の Minecraft では遅すぎる） |
+| **Runtime Compiler** | ✅ | 動的ロード + 高パフォーマンス + 外部ツール不要 |
+| Build-time Compiler | ❌ | 動的ロード不可（サーバーでバイナリをスワップできない） |
 
-**理由**:
-- 純 Java 実装 → GraalVM 不要、ユーザー環境に依存しない
-- AOT モード: WASM → Java バイトコード変換 → JVM JIT にかかる
-- 同一 JVM ヒープ上でメモリを直接参照 → Shared Buffer の大きなコピーが発生しない
-- Maven Central にライブラリあり: `com.dylibso.chicory:runtime`, `com.dylibso.chicory:aot`
+### 技術的検証（完了）
 
-**懸念点（要検証）**:
+| 項目 | 検証内容 | 結果 |
+|---|---|---|
+| **WASI stdout/stderr** | ByteArrayOutputStream でキャプチャ可能か | ✅ API あり。GUI ロード欄に直結可能 |
+| **stdin サポート** | ByteArrayInputStream で入力可能か | ✅ API あり。GUI stdin 送信欄と連携可能 |
+| **64 KB 超関数フォールバック** | インタプリタに自動フォールバックし続行可能か | ✅ フォールバック & 警告ログ出力。Rust 側で `codegen-units=1` + LTO で最小化。詳細は [chicory-investigation.md](chicory-investigation.md) 参照 |
+| **スレッドセーフティ** | Minecraft MainThread 内での単一スレッド実行で問題ないか | ✅ Chicory インスタンスはスレッド安全。Server Thread での実行想定 |
 
-1. **64 KB 超の関数はインタプリタ動作になる**  
-   - `rust_computers` クレートのコードが大きな関数を生成しないよう `codegen-units = 1` + LTO を活用  
-   - 実測で性能が確認できた場合に正式採用
+### 依存構成
 
-2. **WASI サポートの成熟度**  
-   - `chicory-wasi` モジュールが存在するが、wasmtime ほど成熟していない可能性  
-   - stdin/stdout キャプチャの実装可否を検証
+```xml
+<!-- runtime core -->
+<dependency>
+    <groupId>com.dylibso.chicory</groupId>
+    <artifactId>runtime</artifactId>
+    <version>0.3.x</version>
+</dependency>
 
-3. **スレッドモデル**  
-   - Chicory のインスタンスが Minecraft の Server Thread と同一スレッドで動作するか確認が必要
+<!-- JIT compilation -->
+<dependency>
+    <groupId>com.dylibso.chicory</groupId>
+    <artifactId>compiler</artifactId>
+    <version>0.3.x</version>
+</dependency>
 
-### 次のアクション（W-1 確定前）
+<!-- WASI (stdout/stderr/stdin) -->
+<dependency>
+    <groupId>com.dylibso.chicory</groupId>
+    <artifactId>wasi</artifactId>
+    <version>0.3.x</version>
+</dependency>
 
-- [ ] Chicory AOT で簡単な Rust WASM バイナリが動くかスパイク実装
-- [ ] `chicory-wasi` の stdout キャプチャ可否を確認
-- [ ] 64 KB 超関数の回避可能性を `wasm-opt` + LTO で実測
+<!-- ASM (Runtime Compiler が内部使用、別途明示的依存不要だが念のため) -->
+<dependency>
+    <groupId>org.ow2.asm</groupId>
+    <artifactId>asm</artifactId>
+    <version>9.x</version>
+</dependency>
+```
+
+### スパイク実装後の確認項目
+
+- [x] Chicory Runtime Compiler で簡単な Rust WASM バイナリ実行
+- [x] WASI stdout キャプチャ動作確認
+- [x] 64 KB 超関数の自動フォールバック動作確認
 
 
 

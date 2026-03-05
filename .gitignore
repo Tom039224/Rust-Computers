@@ -20,3 +20,6 @@ Thumbs.db
 
 # Refs: exclude git metadata of subprojects (they are plain snapshots, not submodules)
 refs/**/.git
+
+# Minecraft Forge MDK (large binary, not needed in repo)
+forge-*-mdk.zip
