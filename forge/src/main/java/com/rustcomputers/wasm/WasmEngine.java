@@ -49,6 +49,8 @@ public final class WasmEngine {
     private final int computerId;
     private final Path computerDir;
     private final LogBuffer logBuffer;
+    /** クライアントへ送信待ちのログ行キュー / Pending log lines to send to clients */
+    private final java.util.ArrayList<String> pendingLog = new java.util.ArrayList<>();
     private final RequestManager requestManager;
     private final HostFunctions hostFunctions;
 
@@ -121,7 +123,9 @@ public final class WasmEngine {
         }
 
         Path wasmPath = computerDir.resolve(wasmFileName);
+        LOGGER.info("Computer #{}: start() called — path={}, exists={}", computerId, wasmPath, Files.exists(wasmPath));
         if (!Files.exists(wasmPath)) {
+            LOGGER.error("Computer #{}: file not found: {} (path={})", computerId, wasmFileName, wasmPath);
             appendLog("[ERROR] File not found: " + wasmFileName);
             return false;
         }
@@ -130,12 +134,19 @@ public final class WasmEngine {
             // バリデーション / Validation
             long size = Files.size(wasmPath);
             if (size > Config.MAX_WASM_SIZE.get()) {
+                LOGGER.error("Computer #{}: file too large: {} bytes (max {})", computerId, size, Config.MAX_WASM_SIZE.get());
                 appendLog("[ERROR] File too large: " + size + " bytes (max " + Config.MAX_WASM_SIZE.get() + ")");
                 return false;
             }
 
             byte[] bytes = Files.readAllBytes(wasmPath);
             if (!isValidWasm(bytes)) {
+                LOGGER.error("Computer #{}: invalid WASM binary: {} (magic={:02x} {:02x} {:02x} {:02x})",
+                        computerId, wasmFileName,
+                        bytes.length > 0 ? bytes[0] : 0,
+                        bytes.length > 1 ? bytes[1] : 0,
+                        bytes.length > 2 ? bytes[2] : 0,
+                        bytes.length > 3 ? bytes[3] : 0);
                 appendLog("[ERROR] Invalid WASM binary: " + wasmFileName);
                 return false;
             }
@@ -171,9 +182,11 @@ public final class WasmEngine {
             appendLog("[ERROR] Failed to read: " + wasmFileName + " — " + e.getMessage());
             LOGGER.error("Computer #{}: failed to read WASM file", computerId, e);
             return false;
-        } catch (Exception e) {
-            crash("Failed to initialize: " + e.getMessage());
-            LOGGER.error("Computer #{}: WASM init failed", computerId, e);
+        } catch (Throwable e) {
+            // Error も含めてすべてのロード失敗を捕捉
+            // Catch all Throwables including Errors (e.g. from JIT compiler)
+            crash("Failed to initialize: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            LOGGER.error("Computer #{}: WASM init failed with {}: {}", computerId, e.getClass().getName(), e.getMessage(), e);
             return false;
         }
     }
@@ -275,7 +288,22 @@ public final class WasmEngine {
      */
     public void appendLog(String message) {
         String timestamp = LocalDateTime.now().format(LOG_TIME_FMT);
-        logBuffer.append("[" + timestamp + "] " + message);
+        String line = "[" + timestamp + "] " + message;
+        logBuffer.append(line);
+        pendingLog.add(line);
+    }
+
+    /**
+     * 未送信のログ行をすべて取り出してクリアする。
+     * Drain all pending log lines (removing them from the queue).
+     *
+     * @return 取り出したログ行（空の場合は空リスト）/ drained lines (empty list if none)
+     */
+    public java.util.List<String> drainPendingLog() {
+        if (pendingLog.isEmpty()) return java.util.List.of();
+        java.util.List<String> result = new java.util.ArrayList<>(pendingLog);
+        pendingLog.clear();
+        return result;
     }
 
     /**

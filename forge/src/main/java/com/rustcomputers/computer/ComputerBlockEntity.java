@@ -2,22 +2,27 @@ package com.rustcomputers.computer;
 
 import com.rustcomputers.ModRegistries;
 import com.rustcomputers.gui.ComputerMenu;
+import com.rustcomputers.network.LogUpdatePacket;
+import com.rustcomputers.network.NetworkHandler;
 import com.rustcomputers.wasm.ComputerState;
 import com.rustcomputers.wasm.WasmEngine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.network.PacketDistributor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * コンピューターブロックエンティティ。
@@ -135,6 +140,7 @@ public class ComputerBlockEntity extends BlockEntity implements MenuProvider {
     public void serverTick() {
         if (engine != null) {
             engine.tick();
+            sendPendingLog();
         }
     }
 
@@ -154,13 +160,31 @@ public class ComputerBlockEntity extends BlockEntity implements MenuProvider {
         setChanged();
         if (engine != null) {
             ServerLevel serverLevel = (level instanceof ServerLevel sl) ? sl : null;
-            return engine.start(wasmFileName, serverLevel, getBlockPos());
+            boolean ok = engine.start(wasmFileName, serverLevel, getBlockPos());
+            // 実行成否に関わらず、ログバッファを即座フラッシュ (GUIにエラー表示するため)
+            // Immediately flush log regardless of success/failure (so GUI shows errors)
+            sendPendingLog();
+            return ok;
         }
         return false;
     }
 
     /**
-     * 実行中のプログラムを停止する。
+     * 未送信のログ行を近くの全プレイヤーに送信する。
+     * Send pending log lines to all players in the server level.
+     */
+    private void sendPendingLog() {
+        if (engine == null || !(level instanceof ServerLevel serverLevel)) return;
+        List<String> lines = engine.drainPendingLog();
+        if (lines.isEmpty()) return;
+        LogUpdatePacket packet = new LogUpdatePacket(computerId, lines);
+        for (ServerPlayer player : serverLevel.players()) {
+            NetworkHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+        }
+    }
+
+    /**
+     * プログラムを停止する。
      * Stop the running program.
      */
     public void stopProgram() {

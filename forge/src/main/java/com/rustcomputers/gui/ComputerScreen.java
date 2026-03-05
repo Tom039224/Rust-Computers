@@ -14,6 +14,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -41,6 +43,11 @@ import java.util.List;
 public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ComputerScreen.class);
+
+    /** カスタムフォントのリソースロケーション (circle-m+ 1mn) / Custom font resource location */
+    private static final ResourceLocation COMPUTER_FONT = new ResourceLocation("rustcomputers", "computer");
+    /** カスタムフォントの Style / Custom font Style */
+    private static final Style COMPUTER_FONT_STYLE = Style.EMPTY.withFont(COMPUTER_FONT);
 
     // ------------------------------------------------------------------
     // レイアウト定数 / Layout constants
@@ -155,7 +162,7 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         // ヘッダー: Computer #ID / Header: Computer #ID
         int id = menu.getComputerId();
-        graphics.drawString(font, "Computer #" + id, MARGIN, 6, 0xFFFFFF, false);
+        graphics.drawString(font, Component.literal("Computer #" + id).withStyle(COMPUTER_FONT_STYLE), MARGIN, 6, 0xFFFFFF, false);
 
         // ステータス行 / Status line
         ComputerState state = menu.getComputerState();
@@ -165,14 +172,14 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
             case STOPPED -> 0xAAAAAA;  // グレー
         };
         String statusText = state.name();
-        graphics.drawString(font, statusText, MARGIN, 18, stateColor, false);
+        graphics.drawString(font, Component.literal(statusText).withStyle(COMPUTER_FONT_STYLE), MARGIN, 18, stateColor, false);
 
         // プログラム選択表示 / Program selector display
         String prog = menu.getSelectedProgram();
         String progLabel = prog != null ? prog : "(no program)";
         int progColor = (prog != null) ? 0xFFFFFF : 0x888888;
         // [<] [>] ボタンの右側に表示 (x = MARGIN + 18 + 18 + 4 = 40)
-        graphics.drawString(font, progLabel, MARGIN + 40, 32, progColor, false);
+        graphics.drawString(font, Component.literal(progLabel).withStyle(COMPUTER_FONT_STYLE), MARGIN + 40, 32, progColor, false);
 
         // ログ描画 / Draw log lines
         String[] allLines = clientLog.snapshot();
@@ -188,7 +195,7 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
 
         for (int i = startIdx; i < endIdx; i++) {
             int y = logStartY + (i - startIdx) * LOG_LINE_HEIGHT;
-            graphics.drawString(font, allLines[i], MARGIN, y, 0xCCCCCC, false);
+            graphics.drawString(font, Component.literal(allLines[i]).withStyle(COMPUTER_FONT_STYLE), MARGIN, y, 0xCCCCCC, false);
         }
     }
 
