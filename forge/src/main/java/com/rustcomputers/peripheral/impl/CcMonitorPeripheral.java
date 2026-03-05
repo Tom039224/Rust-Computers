@@ -98,10 +98,13 @@ public class CcMonitorPeripheral implements PeripheralType {
     @Nullable private static Method mBESetTextScale;
 
     /**
-     * ServerMonitor をオンデマンドで作成する private メソッド。
-     * Private method that creates a ServerMonitor on demand.
+     * CC が毎 tick 内部的に呼ぶ serverTick() 。
+     * ServerMonitor の遅延初期化・サイズ計算・描画データ生成などモニター初期化フロー全体を実行する。
+     * serverTick() that CC calls internally every tick.
+     * Runs the full monitor init flow: lazy ServerMonitor creation, size
+     * calculation, and render-data generation.
      */
-    @Nullable private static Method mCreateServerMonitor;
+    @Nullable private static Method mServerTick;
 
     private static boolean reflectionInitialized = false;
     private static boolean reflectionOk = false;
@@ -180,13 +183,16 @@ public class CcMonitorPeripheral implements PeripheralType {
                 LOGGER.debug("CcMonitorPeripheral: setTextScale not found, skipping");
             }
 
-            // createServerMonitor も private — null 状態からの遅延初期化に使用
-            // createServerMonitor is also private — used to force-init from null state
+            // serverTick() は ServerTickingBlockEntity インターフェースの public メソッド。
+            // 内部で createServerMonitor() ・サイズ計算・描画データ生成などモニター初期化フロー全体を包含する。
+            // CC コンピューター新山敏に呼ばれており RC から呼んでも安全。
+            // serverTick() is a public method from ServerTickingBlockEntity interface.
+            // Internally covers createServerMonitor(), size calculation, and render-data.
+            // CC calls it every tick; calling it from RC is safe.
             try {
-                mCreateServerMonitor = monitorBeClass.getDeclaredMethod("createServerMonitor");
-                mCreateServerMonitor.setAccessible(true);
+                mServerTick = monitorBeClass.getMethod("serverTick");
             } catch (NoSuchMethodException ex) {
-                LOGGER.debug("CcMonitorPeripheral: createServerMonitor not found, skipping");
+                LOGGER.debug("CcMonitorPeripheral: serverTick not found, will skip force-init");
             }
 
             reflectionOk = true;
@@ -265,24 +271,25 @@ public class CcMonitorPeripheral implements PeripheralType {
         try {
             Object serverMonitor = mGetServerMonitor.invoke(be);
 
-            // serverMonitor が null の場合は createServerMonitor() で強制初期化する。
-            // CC:Tweaked はモニターが画面レンダリングされるまで ServerMonitor を
-            // 遅延生成するため、プログラム実行時にはまだ null の場合がある。
-            // When serverMonitor is null, force-init via createServerMonitor().
-            // CC:Tweaked lazily creates ServerMonitor on first render, so it may
-            // still be null when a program runs.
-            if (serverMonitor == null && mCreateServerMonitor != null) {
-                LOGGER.debug("CcMonitorPeripheral: serverMonitor was null, calling createServerMonitor()");
-                // createServerMonitor は level のメインスレッドから初めて呼ぶ必要があるが、
-                // 我々はすでにサーバースレッド上にいるので直接呼んでよい。
-                // We are already on the server thread, so calling directly is safe.
-                mCreateServerMonitor.invoke(be);
+            // serverMonitor が null の場合は serverTick() でモニター初期化フロー全体を走らせる。
+            // CC:Tweaked は「CC コンピューターの隣接」などの条件が整うまで ServerMonitor を遅延生成する。
+            // RC コンピューターはその条件を満たさないため、プログラム起動時に null のままになる。
+            // serverTick() はその条件チェックを年2劇しだ渴世。
+            //
+            // If serverMonitor is null, run the full monitor init flow through serverTick().
+            // CC:Tweaked lazily creates ServerMonitor only after a CC computer is adjacent;
+            // RC computers don't satisfy that condition, so it stays null at program start.
+            // Calling serverTick() once bypasses that requirement.
+            if (serverMonitor == null && mServerTick != null) {
+                LOGGER.debug("CcMonitorPeripheral: serverMonitor null — calling serverTick() to force init");
+                mServerTick.invoke(be);
                 serverMonitor = mGetServerMonitor.invoke(be);
             }
 
             if (serverMonitor == null) {
                 throw new PeripheralException(
-                        "Monitor not yet initialized (serverMonitor is null even after createServerMonitor)");
+                        "Monitor not initialized — serverTick() did not produce a ServerMonitor. "
+                      + "Try placing & removing the monitor, or check CC:Tweaked version.");
             }
             Object terminal = mGetTerminal.invoke(serverMonitor);
             if (terminal == null) {
