@@ -98,13 +98,16 @@ public class CcMonitorPeripheral implements PeripheralType {
     @Nullable private static Method mBESetTextScale;
 
     /**
-     * CC が毎 tick 内部的に呼ぶ serverTick() 。
-     * ServerMonitor の遅延初期化・サイズ計算・描画データ生成などモニター初期化フロー全体を実行する。
-     * serverTick() that CC calls internally every tick.
-     * Runs the full monitor init flow: lazy ServerMonitor creation, size
-     * calculation, and render-data generation.
+     * CC の private メソッド createServerTerminal()。
+     * createServerMonitor() を呼んで ServerMonitor を生成し、rebuild() でターミナルを初期化する。
+     * CC's private method createServerTerminal().
+     * Calls createServerMonitor() to create the ServerMonitor, then rebuild() to initialize the terminal.
+     * 新しく置いたモニターは xIndex=0, yIndex=0, width=1, height=1 がデフォルトなので
+     * CC コンピューターなしでも正常に動作する。
+     * A freshly-placed monitor defaults to xIndex=0, yIndex=0, width=1, height=1 so this
+     * works correctly even without a CC computer attached.
      */
-    @Nullable private static Method mServerTick;
+    @Nullable private static Method mCreateServerTerminal;
 
     private static boolean reflectionInitialized = false;
     private static boolean reflectionOk = false;
@@ -183,16 +186,19 @@ public class CcMonitorPeripheral implements PeripheralType {
                 LOGGER.debug("CcMonitorPeripheral: setTextScale not found, skipping");
             }
 
-            // serverTick() は ServerTickingBlockEntity インターフェースの public メソッド。
-            // 内部で createServerMonitor() ・サイズ計算・描画データ生成などモニター初期化フロー全体を包含する。
-            // CC コンピューター新山敏に呼ばれており RC から呼んでも安全。
-            // serverTick() is a public method from ServerTickingBlockEntity interface.
-            // Internally covers createServerMonitor(), size calculation, and render-data.
-            // CC calls it every tick; calling it from RC is safe.
+            // createServerTerminal() は private メソッド。
+            // createServerMonitor() を呼んで ServerMonitor を生成し、rebuild() でターミナルを初期化する。
+            // 新しく置いたモニターは xIndex=0, yIndex=0, width=1, height=1 がデフォルトのため
+            // CC コンピューターなしでも正常に動作する。(serverTick() は存在しないため v0.1.8 では無効だった)
+            // createServerTerminal() is a private method.
+            // It calls createServerMonitor() to set up the ServerMonitor, then rebuild() to build the terminal.
+            // A freshly-placed monitor defaults to xIndex=0, yIndex=0, width=1, height=1 so it works
+            // without a CC computer. (serverTick() doesn't exist — was a no-op in v0.1.8)
             try {
-                mServerTick = monitorBeClass.getMethod("serverTick");
+                mCreateServerTerminal = monitorBeClass.getDeclaredMethod("createServerTerminal");
+                mCreateServerTerminal.setAccessible(true);
             } catch (NoSuchMethodException ex) {
-                LOGGER.debug("CcMonitorPeripheral: serverTick not found, will skip force-init");
+                LOGGER.warn("CcMonitorPeripheral: createServerTerminal() not found — monitor init will fail");
             }
 
             reflectionOk = true;
@@ -271,25 +277,26 @@ public class CcMonitorPeripheral implements PeripheralType {
         try {
             Object serverMonitor = mGetServerMonitor.invoke(be);
 
-            // serverMonitor が null の場合は serverTick() でモニター初期化フロー全体を走らせる。
-            // CC:Tweaked は「CC コンピューターの隣接」などの条件が整うまで ServerMonitor を遅延生成する。
-            // RC コンピューターはその条件を満たさないため、プログラム起動時に null のままになる。
-            // serverTick() はその条件チェックを年2劇しだ渴世。
+            // serverMonitor が null の場合は createServerTerminal() でモニターを初期化する。
+            // CC:Tweaked の ServerMonitor は CC コンピューターが接続した時だけ生成されるが、
+            // createServerTerminal() → createServerMonitor() → new ServerMonitor() + rebuild() を呼べば
+            // CC コンピューターなしでも初期化できる。
+            // 新しく置いたモニターは xIndex=0, yIndex=0, width=1, height=1 がデフォルトなので条件を満たす。
             //
-            // If serverMonitor is null, run the full monitor init flow through serverTick().
-            // CC:Tweaked lazily creates ServerMonitor only after a CC computer is adjacent;
-            // RC computers don't satisfy that condition, so it stays null at program start.
-            // Calling serverTick() once bypasses that requirement.
-            if (serverMonitor == null && mServerTick != null) {
-                LOGGER.debug("CcMonitorPeripheral: serverMonitor null — calling serverTick() to force init");
-                mServerTick.invoke(be);
+            // If serverMonitor is null, initialize the monitor via createServerTerminal().
+            // CC:Tweaked only creates ServerMonitor when a CC computer connects, but calling
+            // createServerTerminal() → createServerMonitor() → new ServerMonitor() + rebuild()
+            // works without a CC computer. A freshly-placed monitor has xIndex=0, yIndex=0 by default.
+            if (serverMonitor == null && mCreateServerTerminal != null) {
+                LOGGER.debug("CcMonitorPeripheral: serverMonitor null — calling createServerTerminal() to init");
+                mCreateServerTerminal.invoke(be);
                 serverMonitor = mGetServerMonitor.invoke(be);
             }
 
             if (serverMonitor == null) {
                 throw new PeripheralException(
-                        "Monitor not initialized — serverTick() did not produce a ServerMonitor. "
-                      + "Try placing & removing the monitor, or check CC:Tweaked version.");
+                        "Monitor not initialized — createServerTerminal() did not produce a ServerMonitor. "
+                      + "CC:Tweaked version mismatch? Expected dan200.computercraft 1.116.x");
             }
             Object terminal = mGetTerminal.invoke(serverMonitor);
             if (terminal == null) {

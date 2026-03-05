@@ -78,11 +78,13 @@ public final class Config {
                 .defineInRange("logBufferSize", 200, 50, 10000);
 
         TICK_TIMEOUT_MS = BUILDER
-                .comment("1 tick あたりの WASM 実行時間上限（ミリ秒）。デフォルト: 50（≒ 1 game tick）",
-                         "Max WASM execution time per tick in milliseconds. Default: 50 (~1 game tick)",
+                .comment("1 tick あたりの WASM 実行時間上限（ミリ秒）。デフォルト: 200",
+                         "Max WASM execution time per tick in milliseconds. Default: 200",
+                         "Chicory の JIT コンパイル初回オーバーヘッド (~225ms) を吸収するため 200ms に設定。",
+                         "Set to 200ms to absorb Chicory JIT first-compile overhead (~225ms).",
                          "超過するとコンピューターはクラッシュ状態になる。",
                          "If exceeded, the computer will crash.")
-                .defineInRange("tickTimeoutMs", 50, 10, 5000);
+                .defineInRange("tickTimeoutMs", 200, 10, 5000);
 
         BUILDER.pop();
     }
