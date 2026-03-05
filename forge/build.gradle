@@ -81,7 +81,6 @@ dependencies {
     // Pure-Java WASM runtime (no JNI / native dependencies)
     implementation "com.dylibso.chicory:runtime:${chicory_version}"
     implementation "com.dylibso.chicory:wasm:${chicory_version}"
-    implementation "com.dylibso.chicory:compiler:${chicory_version}"
     // Note: wasi は不使用 (no_std 採用) / WASI is not used (no_std approach)
 
     // MessagePack — Java ↔ WASM シリアライゼーション
@@ -91,7 +90,6 @@ dependencies {
     // --- JarInJar 宣言 / JarInJar declarations ---
     jarJar(group: 'com.dylibso.chicory', name: 'runtime', version: "[${chicory_version},2.0.0)")
     jarJar(group: 'com.dylibso.chicory', name: 'wasm', version: "[${chicory_version},2.0.0)")
-    jarJar(group: 'com.dylibso.chicory', name: 'compiler', version: "[${chicory_version},2.0.0)")
     jarJar(group: 'org.msgpack', name: 'msgpack-core', version: "[0.9.0,1.0.0)")
 }
 

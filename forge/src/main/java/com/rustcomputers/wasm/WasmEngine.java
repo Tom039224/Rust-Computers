@@ -1,6 +1,5 @@
 package com.rustcomputers.wasm;
 
-import com.dylibso.chicory.compiler.MachineFactoryCompiler;
 import com.dylibso.chicory.runtime.ExportFunction;
 import com.dylibso.chicory.runtime.ImportValues;
 import com.dylibso.chicory.runtime.Instance;
@@ -154,10 +153,9 @@ public final class WasmEngine {
             // WASM モジュールをパース / Parse WASM module
             WasmModule module = Parser.parse(bytes);
 
-            // Chicory Instance を構築（Runtime Compiler で JIT コンパイル）
-            // Build Chicory Instance (JIT compile with Runtime Compiler)
+            // Chicory Instance を構築（インタープリタモード — Forgeの ASM との競合を回避）
+            // Build Chicory Instance (interpreter mode — avoid ASM conflict with Forge)
             instance = Instance.builder(module)
-                    .withMachineFactory(MachineFactoryCompiler::compile)
                     .withImportValues(
                             ImportValues.builder()
                                     .addFunction(hostFunctions.toArray())
