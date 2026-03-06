@@ -114,6 +114,7 @@ public final class DevEnvCommand {
                 writeMainRs(devDir.resolve("src"), computerId);
             }
             writeVsCodeTasks(devDir, computerId, computerDir);
+            writeVsCodeSettings(devDir);
 
             String devDirStr = devDir.toAbsolutePath().toString();
             source.sendSuccess(
@@ -398,6 +399,27 @@ public final class DevEnvCommand {
                 """.formatted(id, deployCmd, id);
         Files.writeString(
                 devDir.resolve(".vscode").resolve("tasks.json"),
+                content, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * {@code .vscode/settings.json} を書き出す。
+     * Write {@code .vscode/settings.json} for rust-analyzer configuration.
+     */
+    private static void writeVsCodeSettings(Path devDir) throws IOException {
+        String content = """
+                {
+                    // rust-analyzer: build.rs を常に実行して補完・型情報を解決する。
+                    // Run build scripts always so code completion works correctly.
+                    "rust-analyzer.cargo.runBuildScripts": "always",
+
+                    // proc マクロを有効にする (entry! など)
+                    // Enable proc macros (for entry! etc.)
+                    "rust-analyzer.procMacro.enable": true
+                }
+                """;
+        Files.writeString(
+                devDir.resolve(".vscode").resolve("settings.json"),
                 content, StandardCharsets.UTF_8);
     }
 
