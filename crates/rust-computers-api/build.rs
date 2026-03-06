@@ -118,9 +118,8 @@ fn return_type(ret: Option<&str>) -> String {
         Some("f64")        => "f64".to_string(),
         Some("str")        => "alloc::string::String".to_string(),
         Some("(i32, i32)") => "(i32, i32)".to_string(),
-        // bytes: 阭列 / Map など複味な戻値を生の msgpack バイト列として返す
-        // Complex return types (List/Map) are returned as raw msgpack bytes.
-        Some("bytes")      => "alloc::vec::Vec<u8>".to_string(),
+        // bytes: MessagePack バイト列を Value 型でデコード / decode to Value type
+        Some("bytes")      => "m::Value".to_string(),
         Some(other)        => other.to_string(),
     }
 }
@@ -153,10 +152,14 @@ fn decode_return(ret: Option<&str>) -> String {
                 "        Ok((v0, v1))"
             ).to_string()
         }
-        // bytes: 生の msgpack バイト列をそのまま返す
-        // Raw msgpack bytes are returned as-is.
+        // bytes: MessagePack バイト列を msgpack::Value にデコード
+        // Raw msgpack bytes are decoded to msgpack::Value
         Some("bytes") => {
-            "Ok(data)".to_string()
+            concat!(
+                "let (val, _off) = m::Value::decode(&data)\n",
+                "            .ok_or(BridgeError::JavaException)?;\n",
+                "        Ok(val)"
+            ).to_string()
         }
         _ => "let _ = data;\n        Ok(())".to_string(),
     }

@@ -31,6 +31,8 @@ extern crate alloc;
 
 use alloc::vec;
 use alloc::vec::Vec;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
 
 // ==================================================================
 // エンコード / Encoding
@@ -263,5 +265,268 @@ fn skip_element(data: &[u8], pos: usize) -> i32 {
             (pos + 2 + len) as i32
         }
         _ => -1,
+    }
+}
+
+// ==================================================================
+// Value 型定義 / Value type definition
+// ==================================================================
+
+/// MessagePack 値の汎用表現 / Generic representation of a MessagePack value.
+///
+/// Lua側から返される複雑な戻り値（List/Map）をデコードするための型。
+/// Used to decode complex return values (List/Map) from Lua side.
+#[derive(Debug, Clone)]
+pub enum Value {
+    /// nil 値
+    Nil,
+    /// ブール値
+    Bool(bool),
+    /// 整数値（i64 でラップ）
+    Integer(i64),
+    /// 浮動小数点値
+    Float(f64),
+    /// 文字列値
+    String(alloc::string::String),
+    /// バイナリデータ
+    Binary(alloc::vec::Vec<u8>),
+    /// 配列
+    Array(alloc::vec::Vec<Value>),
+    /// マップ（キーは常に文字列）
+    Map(alloc::collections::BTreeMap<alloc::string::String, Value>),
+}
+
+impl Value {
+    /// MessagePack バイト列を Value にデコードする。
+    /// Decode MessagePack bytes to a Value.
+    ///
+    /// # 戻り値 / Return value
+    /// `(Value, next_offset)` のタプル。offset がデータ長と同じなら完全にデコード済み。
+    /// Returns `(Value, next_offset)`. If next_offset == data.len(), fully decoded.
+    pub fn decode(data: &[u8]) -> Option<(Self, usize)> {
+        if data.is_empty() {
+            return None;
+        }
+        Self::decode_at(data, 0).map(|(val, off)| (val, off as usize))
+    }
+
+    fn decode_at(data: &[u8], pos: usize) -> Option<(Self, i32)> {
+        if pos >= data.len() {
+            return None;
+        }
+        let b = data[pos];
+        match b {
+            // nil
+            0xC0 => Some((Self::Nil, (pos + 1) as i32)),
+            // bool
+            0xC2 => Some((Self::Bool(false), (pos + 1) as i32)),
+            0xC3 => Some((Self::Bool(true), (pos + 1) as i32)),
+            // positive fixint (0x00-0x7F)
+            0x00..=0x7F => Some((Self::Integer(b as i64), (pos + 1) as i32)),
+            // negative fixint (0xE0-0xFF)
+            0xE0..=0xFF => Some((Self::Integer((b as i8) as i64), (pos + 1) as i32)),
+            // uint 8
+            0xCC => {
+                let val = *data.get(pos + 1)?;
+                Some((Self::Integer(val as i64), (pos + 2) as i32))
+            }
+            // uint 16
+            0xCD => {
+                let hi = *data.get(pos + 1)? as u16;
+                let lo = *data.get(pos + 2)? as u16;
+                let val = (hi << 8) | lo;
+                Some((Self::Integer(val as i64), (pos + 3) as i32))
+            }
+            // uint 32
+            0xCE => {
+                let a = *data.get(pos + 1)? as u32;
+                let b2 = *data.get(pos + 2)? as u32;
+                let c = *data.get(pos + 3)? as u32;
+                let d = *data.get(pos + 4)? as u32;
+                let val = (a << 24) | (b2 << 16) | (c << 8) | d;
+                Some((Self::Integer(val as i64), (pos + 5) as i32))
+            }
+            // int 8
+            0xD0 => {
+                let val = *data.get(pos + 1)? as i8 as i64;
+                Some((Self::Integer(val), (pos + 2) as i32))
+            }
+            // int 16
+            0xD1 => {
+                let hi = *data.get(pos + 1)? as i16;
+                let lo = *data.get(pos + 2)? as i16;
+                let val = (hi << 8) | lo;
+                Some((Self::Integer(val as i64), (pos + 3) as i32))
+            }
+            // int 32
+            0xD2 => {
+                let a = *data.get(pos + 1)? as i32;
+                let b2 = *data.get(pos + 2)? as i32;
+                let c = *data.get(pos + 3)? as i32;
+                let d = *data.get(pos + 4)? as i32;
+                let val = (a << 24) | (b2 << 16) | (c << 8) | d;
+                Some((Self::Integer(val as i64), (pos + 5) as i32))
+            }
+            // int 64
+            0xD3 => {
+                if data.len() < pos + 9 {
+                    return None;
+                }
+                let mut val: i64 = 0;
+                for i in 0..8 {
+                    val = (val << 8) | (*data.get(pos + 1 + i)? as i64);
+                }
+                Some((Self::Integer(val), (pos + 9) as i32))
+            }
+            // float 32
+            0xCA => {
+                if data.len() < pos + 5 {
+                    return None;
+                }
+                let mut bits: u32 = 0;
+                for i in 0..4 {
+                    bits = (bits << 8) | (*data.get(pos + 1 + i)? as u32);
+                }
+                let f = f32::from_bits(bits);
+                Some((Self::Float(f as f64), (pos + 5) as i32))
+            }
+            // float 64
+            0xCB => {
+                if data.len() < pos + 9 {
+                    return None;
+                }
+                let mut bits: u64 = 0;
+                for i in 0..8 {
+                    bits = (bits << 8) | (*data.get(pos + 1 + i)? as u64);
+                }
+                let f = f64::from_bits(bits);
+                Some((Self::Float(f), (pos + 9) as i32))
+            }
+            // fixstr (0xA0-0xBF)
+            0xA0..=0xBF => {
+                let len = (b & 0x1F) as usize;
+                let start = pos + 1;
+                let end = start + len;
+                if end > data.len() {
+                    return None;
+                }
+                let s = alloc::string::String::from_utf8_lossy(&data[start..end]).into_owned();
+                Some((Self::String(s), end as i32))
+            }
+            // str 8
+            0xD9 => {
+                let len = *data.get(pos + 1)? as usize;
+                let start = pos + 2;
+                let end = start + len;
+                if end > data.len() {
+                    return None;
+                }
+                let s = alloc::string::String::from_utf8_lossy(&data[start..end]).into_owned();
+                Some((Self::String(s), end as i32))
+            }
+            // str 16
+            0xDA => {
+                let hi = *data.get(pos + 1)? as usize;
+                let lo = *data.get(pos + 2)? as usize;
+                let len = (hi << 8) | lo;
+                let start = pos + 3;
+                let end = start + len;
+                if end > data.len() {
+                    return None;
+                }
+                let s = alloc::string::String::from_utf8_lossy(&data[start..end]).into_owned();
+                Some((Self::String(s), end as i32))
+            }
+            // bin 8
+            0xC4 => {
+                let len = *data.get(pos + 1)? as usize;
+                let start = pos + 2;
+                let end = start + len;
+                if end > data.len() {
+                    return None;
+                }
+                let bin = data[start..end].to_vec();
+                Some((Self::Binary(bin), end as i32))
+            }
+            // bin 16
+            0xC5 => {
+                let hi = *data.get(pos + 1)? as usize;
+                let lo = *data.get(pos + 2)? as usize;
+                let len = (hi << 8) | lo;
+                let start = pos + 3;
+                let end = start + len;
+                if end > data.len() {
+                    return None;
+                }
+                let bin = data[start..end].to_vec();
+                Some((Self::Binary(bin), end as i32))
+            }
+            // fixarray (0x90-0x9F)
+            0x90..=0x9F => {
+                let count = (b & 0x0F) as usize;
+                let mut arr = Vec::new();
+                let mut cur = (pos + 1) as i32;
+                for _ in 0..count {
+                    let (val, next) = Self::decode_at(data, cur as usize)?;
+                    arr.push(val);
+                    cur = next;
+                }
+                Some((Self::Array(arr), cur))
+            }
+            // array 16
+            0xDC => {
+                let hi = *data.get(pos + 1)? as usize;
+                let lo = *data.get(pos + 2)? as usize;
+                let count = (hi << 8) | lo;
+                let mut arr = Vec::new();
+                let mut cur = (pos + 3) as i32;
+                for _ in 0..count {
+                    let (val, next) = Self::decode_at(data, cur as usize)?;
+                    arr.push(val);
+                    cur = next;
+                }
+                Some((Self::Array(arr), cur))
+            }
+            // fixmap (0x80-0x8F)
+            0x80..=0x8F => {
+                let count = (b & 0x0F) as usize;
+                let mut map = BTreeMap::new();
+                let mut cur = (pos + 1) as i32;
+                for _ in 0..count {
+                    // key は常に String であると仮定
+                    let (key_val, next_key) = Self::decode_at(data, cur as usize)?;
+                    let key = match key_val {
+                        Self::String(s) => s,
+                        _ => return None,
+                    };
+                    cur = next_key;
+                    let (val, next_val) = Self::decode_at(data, cur as usize)?;
+                    map.insert(key, val);
+                    cur = next_val;
+                }
+                Some((Self::Map(map), cur))
+            }
+            // map 16
+            0xDE => {
+                let hi = *data.get(pos + 1)? as usize;
+                let lo = *data.get(pos + 2)? as usize;
+                let count = (hi << 8) | lo;
+                let mut map = BTreeMap::new();
+                let mut cur = (pos + 3) as i32;
+                for _ in 0..count {
+                    let (key_val, next_key) = Self::decode_at(data, cur as usize)?;
+                    let key = match key_val {
+                        Self::String(s) => s,
+                        _ => return None,
+                    };
+                    cur = next_key;
+                    let (val, next_val) = Self::decode_at(data, cur as usize)?;
+                    map.insert(key, val);
+                    cur = next_val;
+                }
+                Some((Self::Map(map), cur))
+            }
+            _ => None,
+        }
     }
 }
