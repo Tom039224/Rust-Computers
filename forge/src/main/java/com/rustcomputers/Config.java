@@ -93,11 +93,16 @@ public final class Config {
     public static final ForgeConfigSpec SPEC = BUILDER.build();
 
     /**
-     * Mod ロード時に呼ばれ、サーバー設定を登録する。
-     * Called during mod loading to register the server config.
+     * Mod ロード時に呼ばれ、設定を登録する。
+     * Called during mod loading to register the config.
+     *
+     * <p>COMMON 型は常に config/rustcomputers-server.toml に生成される。
+     * SERVER 型はワールドの serverconfig/ 内にしか生成されないため COMMON を使用。</p>
+     * <p>COMMON type is always written to config/rustcomputers-server.toml.
+     * SERVER type only appears inside a world's serverconfig/, so we use COMMON.</p>
      */
     public static void register() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, SPEC, "rustcomputers-server.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SPEC, "rustcomputers-server.toml");
     }
 
     private Config() { /* ユーティリティクラス / Utility class */ }
