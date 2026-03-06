@@ -133,3 +133,52 @@ tasks.named('jar', Jar).configure {
     }
     finalizedBy 'reobfJar'
 }
+
+// ------------------------------------------------------------------
+// Rust API ソース同梱 / Bundle rust-computers-api source in the JAR
+//
+// /rc get-dev <id> コマンドがゲーム実行時に展開できるよう
+// rust-computers-api のソースを JAR リソースとして同梱する。
+// Bundles rust-computers-api source as JAR resources so that
+// the /rc get-dev <id> command can extract them at game runtime.
+// ------------------------------------------------------------------
+
+def apiSrcDir = file('../crates/rust-computers-api')
+
+// rust-computers-api ソースをリソースとしてコピーする。
+// Copy rust-computers-api source files as resources.
+tasks.named('processResources', ProcessResources).configure {
+    from(apiSrcDir) {
+        include 'src/**'
+        include 'build.rs'
+        include 'peripherals/**'
+        include 'Cargo.toml'
+        into 'assets/rustcomputers/apisrc'
+    }
+
+    // コピー後に MANIFEST を生成する。
+    // Gradle の fileTree / eachFileRecurse は特定ケースで一部のファイルをスキップする
+    // ことがあるため、Java NIO の Files.walk() を使って確実に全ファイルを列挙する。
+    // After copying, generate MANIFEST using Java NIO Files.walk() to avoid
+    // Gradle fileTree quirks that may silently skip files.
+    doLast {
+        def apiSrcPath = apiSrcDir.toPath()
+        def allowedPrefixes = ['src/', 'peripherals/'] as List<String>
+        def allowedFiles   = ['build.rs', 'Cargo.toml'] as List<String>
+
+        def lines = []
+        java.nio.file.Files.walk(apiSrcPath).each { p ->
+            if (!java.nio.file.Files.isRegularFile(p)) return
+            def rel = apiSrcPath.relativize(p).toString().replace('\\', '/')
+            if (rel.startsWith('target/')) return
+            if (rel.startsWith('examples/')) return
+            def include = allowedFiles.any { rel == it } ||
+                          allowedPrefixes.any { rel.startsWith(it) }
+            if (include) lines << rel
+        }
+
+        def apiDestDir = new File(destinationDir, 'assets/rustcomputers/apisrc')
+        apiDestDir.mkdirs()
+        new File(apiDestDir, 'MANIFEST').text = lines.sort().join('\n')
+    }
+}

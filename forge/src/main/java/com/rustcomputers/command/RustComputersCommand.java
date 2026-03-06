@@ -25,10 +25,13 @@ import java.util.UUID;
  * <pre>
  *   /rc log &lt;computerId&gt;             -- ストリーミング状態の確認
  *   /rc log &lt;computerId&gt; true|false  -- ストリーミングの有効/無効切り替え
+ *   /rc get-dev &lt;computerId&gt;         -- 開発環境を生成 (要 OP 権限 2+)
  * </pre>
  *
  * <p>設定はプレイヤーのセッション中のみ有効（ログアウトでリセット）。</p>
  * <p>Settings persist only for the current session (reset on logout).</p>
+ *
+ * @see DevEnvCommand
  */
 public final class RustComputersCommand {
 
@@ -56,6 +59,7 @@ public final class RustComputersCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("rc")
+                // /rc log <id> [true|false]
                 .then(Commands.literal("log")
                     .then(Commands.argument("computerId", IntegerArgumentType.integer(0))
                         // /rc log <id>  → ステータス確認 / Check streaming status
@@ -67,6 +71,15 @@ public final class RustComputersCommand {
                                     IntegerArgumentType.getInteger(ctx, "computerId"),
                                     BoolArgumentType.getBool(ctx, "enabled")))
                         )
+                    )
+                )
+                // /rc get-dev <id>  → 開発環境を生成 (OP 権限 2 以上が必要)
+                //                   → Generate dev environment (requires OP level 2+)
+                .then(Commands.literal("get-dev")
+                    .requires(src -> src.hasPermission(2))
+                    .then(Commands.argument("computerId", IntegerArgumentType.integer(0))
+                        .executes(ctx -> DevEnvCommand.execute(
+                                ctx, IntegerArgumentType.getInteger(ctx, "computerId")))
                     )
                 )
         );
