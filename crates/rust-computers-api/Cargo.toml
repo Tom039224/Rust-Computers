@@ -1,3 +1,9 @@
+[workspace]
+members = [
+    ".",
+    # ワークスペース内の他のメンバー（今後追加時）/ Other workspace members as needed
+]
+
 [package]
 name = "rust-computers-api"
 version = "0.1.1"
