@@ -21,14 +21,14 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * /rc コマンド群の登録と、コンピューターログストリーミング管理。
- * Registers the /rc command tree and manages per-player computer log streaming.
+ * /rustcomputers コマンド群の登録と、コンピューターログストリーミング管理。
+ * Registers the /rustcomputers command tree and manages per-player computer log streaming.
  *
  * <h3>コマンド一覧</h3>
  * <pre>
- *   /rc log &lt;computerId&gt;             -- ストリーミング状態の確認
- *   /rc log &lt;computerId&gt; true|false  -- ストリーミングの有効/無効切り替え
- *   /rc get-dev &lt;computerId&gt;         -- 開発環境を生成 (要 OP 権限 2+)
+ *   /rustcomputers log &lt;computerId&gt;             -- ストリーミング状態の確認
+ *   /rustcomputers log &lt;computerId&gt; true|false  -- ストリーミングの有効/無効切り替え
+ *   /rustcomputers get-dev &lt;computerId&gt;         -- 開発環境を生成 (要 OP 権限 2+)
  * </pre>
  *
  * <p>設定はプレイヤーのセッション中のみ有効（ログアウトでリセット）。</p>
@@ -72,22 +72,22 @@ public final class RustComputersCommand {
     // ------------------------------------------------------------------
 
     /**
-     * Brigadier ディスパッチャーに /rc コマンドツリーを登録する。
-     * Register the /rc command tree with the Brigadier dispatcher.
+     * Brigadier ディスパッチャーに /rustcomputers コマンドツリーを登録する。
+     * Register the /rustcomputers command tree with the Brigadier dispatcher.
      *
      * @param dispatcher コマンドディスパッチャー / command dispatcher
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-            Commands.literal("rc")
-                // /rc log <id> [true|false]
+            Commands.literal("rustcomputers")
+                // /rustcomputers log <id> [true|false]
                 .then(Commands.literal("log")
                     .then(Commands.argument("computerId", IntegerArgumentType.integer(0))
                         .suggests(COMPUTER_ID_SUGGESTIONS)
-                        // /rc log <id>  → ステータス確認 / Check streaming status
+                        // /rustcomputers log <id>  → ステータス確認 / Check streaming status
                         .executes(ctx -> executeStatus(ctx.getSource(),
                                 IntegerArgumentType.getInteger(ctx, "computerId")))
-                        // /rc log <id> <true|false>  → ON/OFF 切り替え / Toggle streaming
+                        // /rustcomputers log <id> <true|false>  → ON/OFF 切り替え / Toggle streaming
                         .then(Commands.argument("enabled", BoolArgumentType.bool())
                             .executes(ctx -> executeSet(ctx.getSource(),
                                     IntegerArgumentType.getInteger(ctx, "computerId"),
@@ -95,7 +95,7 @@ public final class RustComputersCommand {
                         )
                     )
                 )
-                // /rc get-dev <id>  → 開発環境を生成 (OP 権限 2 以上が必要)
+                // /rustcomputers get-dev <id>  → 開発環境を生成 (OP 権限 2 以上が必要)
                 //                   → Generate dev environment (requires OP level 2+)
                 .then(Commands.literal("get-dev")
                     .requires(src -> src.hasPermission(2))
@@ -113,7 +113,7 @@ public final class RustComputersCommand {
     // ------------------------------------------------------------------
 
     /**
-     * /rc log &lt;computerId&gt; — ストリーミング状態を表示。
+     * /rustcomputers log &lt;computerId&gt; — ストリーミング状態を表示。
      */
     private static int executeStatus(CommandSourceStack source, int computerId) {
         try {
@@ -127,14 +127,14 @@ public final class RustComputersCommand {
         } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
             // コンソールからの実行 / Console execution
             source.sendSuccess(
-                    () -> Component.literal("[RC] /rc log コマンドはプレイヤーのみ使用できます"),
+                    () -> Component.literal("[RC] /rustcomputers log コマンドはプレイヤーのみ使用できます"),
                     false);
         }
         return 1;
     }
 
     /**
-     * /rc log &lt;computerId&gt; &lt;true|false&gt; — ストリーミングを ON/OFF に設定。
+     * /rustcomputers log &lt;computerId&gt; &lt;true|false&gt; — ストリーミングを ON/OFF に設定。
      */
     private static int executeSet(CommandSourceStack source, int computerId, boolean enable) {
         try {
@@ -159,7 +159,7 @@ public final class RustComputersCommand {
             }
         } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
             source.sendSuccess(
-                    () -> Component.literal("[RC] /rc log コマンドはプレイヤーのみ使用できます"),
+                    () -> Component.literal("[RC] /rustcomputers log コマンドはプレイヤーのみ使用できます"),
                     false);
         }
         return 1;

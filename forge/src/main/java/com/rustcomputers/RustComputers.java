@@ -188,8 +188,8 @@ public class RustComputers {
     }
 
     /**
-     * コマンド登録 — /rc コマンドツリーを Brigadier に登録。
-     * Command registration — register the /rc command tree with Brigadier.
+     * コマンド登録 — /rustcomputers コマンドツリーを Brigadier に登録。
+     * Command registration — register the /rustcomputers command tree with Brigadier.
      */
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {

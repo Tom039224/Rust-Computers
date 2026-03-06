@@ -225,7 +225,7 @@ fn generate_method(method: &Method) -> String {
     // For imm = true methods, also generate a synchronous _imm variant
     if method.imm && !method.action {
         out += &format!(
-            "    /// `{}` \u3092\u5373\u6642\u547c\u3073\u51fa\u3057\u3059\u308b\uff08`@LuaFunction(immediate=true)` \u5c02\u7528\uff09\u3002\n\
+            "    /// `{}` を即時呼び出しする（`@LuaFunction(immediate=true)` 専用）。\n\
              \x20   pub fn {fn_name}_imm(&self{params}) -> Result<{ret}, BridgeError> {{\n\
              {enc}\
              \x20       let data = peripheral::request_info_imm(self.dir, \"{lua}\", &{arr})?;\n\
