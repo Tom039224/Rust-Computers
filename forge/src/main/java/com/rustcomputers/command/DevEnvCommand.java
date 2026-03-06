@@ -409,14 +409,16 @@ public final class DevEnvCommand {
     private static void writeVsCodeSettings(Path devDir) throws IOException {
         String content = """
                 {
-                    // rust-analyzer: build.rs を常に実行して補完・型情報を解決する。
-                    // Run build scripts always so code completion works correctly.
-                    "rust-analyzer.cargo.runBuildScripts": "always",
+                    // ビルドスクリプトを走らせる（true←build.rsが必要な場合）
+                    "rust-analyzer.cargo.buildScripts.enable": true,
 
-                    // proc マクロを有効にする (entry! など)
-                    // Enable proc macros (for entry! etc.)
+                    // (オプション) ビルドスクリプトを必要に応じて毎回再実行する
+                    "rust-analyzer.cargo.buildScripts.rebuildOnChange": true,
+
+                    // proc マクロを有効にする
                     "rust-analyzer.procMacro.enable": true
                 }
+
                 """;
         Files.writeString(
                 devDir.resolve(".vscode").resolve("settings.json"),

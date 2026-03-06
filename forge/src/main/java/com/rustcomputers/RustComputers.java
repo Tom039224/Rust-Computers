@@ -5,7 +5,11 @@ import com.rustcomputers.computer.ComputerManager;
 import com.rustcomputers.network.NetworkHandler;
 import com.rustcomputers.peripheral.PeripheralProvider;
 import com.rustcomputers.peripheral.impl.CcMonitorPeripheral;
+import com.rustcomputers.peripheral.impl.SomePeripheralsBallisticAcceleratorPeripheral;
+import com.rustcomputers.peripheral.impl.SomePeripheralsDigitizerPeripheral;
 import com.rustcomputers.peripheral.impl.SomePeripheralsRadarPeripheral;
+import com.rustcomputers.peripheral.impl.SomePeripheralsRaycasterPeripheral;
+import com.rustcomputers.peripheral.impl.SomePeripheralsWorldScannerPeripheral;
 import com.rustcomputers.peripheral.impl.VanillaInventoryPeripheral;
 import com.rustcomputers.peripheral.impl.VanillaRedstonePeripheral;
 import net.minecraft.core.Direction;
@@ -203,7 +207,11 @@ public class RustComputers {
      * <p>Only called when the {@code some_peripherals} mod is loaded.</p>
      */
     private void registerSomePeripherals() {
-        registerSpBlock("some_peripherals", "radar", SomePeripheralsRadarPeripheral::new);
+        registerSpBlock("some_peripherals", "radar",                   SomePeripheralsRadarPeripheral::new);
+        registerSpBlock("some_peripherals", "world_scanner",           SomePeripheralsWorldScannerPeripheral::new);
+        registerSpBlock("some_peripherals", "ballistic_accelerator",   SomePeripheralsBallisticAcceleratorPeripheral::new);
+        registerSpBlock("some_peripherals", "raycaster",               SomePeripheralsRaycasterPeripheral::new);
+        registerSpBlock("some_peripherals", "digitizer",               SomePeripheralsDigitizerPeripheral::new);
         LOGGER.info("RustComputers: Some Peripherals peripherals registered");
     }
 
