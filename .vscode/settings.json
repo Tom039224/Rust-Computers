@@ -1,0 +1,10 @@
+{
+    // rust-analyzer: ビルドスクリプト (build.rs) を常に実行して
+    // コード補完・型情報を正しく解決する。
+    // Run build scripts (build.rs) always so code completion works correctly.
+    "rust-analyzer.cargo.runBuildScripts": "always",
+
+    // proc マクロを有効にする (entry! など)
+    // Enable proc macros (for entry! etc.)
+    "rust-analyzer.procMacro.enable": true
+}
