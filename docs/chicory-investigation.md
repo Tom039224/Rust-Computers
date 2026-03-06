@@ -303,3 +303,91 @@ ImportValues.builder()
 - Runtime Compiler 初回コンパイルが遅い（ウォームアップ後は高速化される）
 
 **方針確定**: Chicory Runtime Compiler 1.7.2 を W-1 として正式採用
+
+---
+
+## Forge Runtime Compiler 競合調査（Forge mod 統合時）
+
+### 背景
+
+上記スパイクはすべて**素の JVM 上**での検証。Forge Minecraft mod（1.20.1 / Forge 47.4.10）に
+`compiler:1.7.2` を組み込んだ際にランタイムで競合が生じる可能性を調査した。
+
+### 調査手順
+
+```
+[x] compiler:1.7.2 を build.gradle の implementation ブロックへ追加
+[x] ./gradlew compileJava → BUILD SUCCESSFUL（コンパイル時競合なし）
+[x] compiler が asm:9.9.1 を要求することを確認（wasm:1.7.2 は asm:9.3→9.8 に解決）
+[x] Chicory ソース（ClassLoadingCollector.java, MachineFactoryCompiler.java）を調査
+```
+
+### Chicory Compiler 内部アーキテクチャ
+
+`MachineFactoryCompiler` の動作フロー：
+
+```
+MachineFactoryCompiler.build(Module)
+  └─ ClassLoadingCollector.collect(generatedClassName, bytecode)
+       └─ WasmClassLoader.defineClass(name, bytecode)   ← Forge で問題
+  └─ ClassLoadingCollector.createMachineFactory(name)
+       ├─ classLoader.loadClass(name).getConstructor(Instance.class)
+       ├─ publicLookup().unreflectConstructor(constructor)  ← Forge で問題
+       └─ MethodHandleProxies.asInterfaceInstance(Function.class, handle)
+```
+
+### 競合の根本原因
+
+#### 原因 1 — WasmClassLoader の親ローダー不適合（主因）
+
+`ClassLoadingCollector` は `new WasmClassLoader()` を明示的な親なしで作成する。
+デフォルト親はシステムクラスローダーだが、Forge 環境では Chicory ランタイムのクラス
+（`Machine`、`Instance`、`ExternalValues` 等）は Forge の **`ModuleClassLoader`** に
+ロードされており、その子でないシステムクラスローダーから見えない。
+
+生成クラスが `Instance` を参照した瞬間に `NoClassDefFoundError` / `VerifyError` が発生する。
+
+```
+WasmClassLoader (parent = System CL)
+       ↑ cannot see ↓
+Forge ModuleClassLoader (Chicory runtime / wasm JARs from JarInJar を保持)
+```
+
+#### 原因 2 — `publicLookup()` の JPMS モジュール制限（副因）
+
+`MethodHandles.publicLookup()` は Java 9+ JPMS において、生成クラスのパッケージ
+（`com.dylibso.chicory.$gen`）へのアクセス権を持てない場合がある。
+Forge の `ModuleLayer` がクロスモジュールリフレクションを制限するため
+`IllegalAccessException` が発生しうる。
+
+#### 原因 3 — ASM バージョン衝突（副因）
+
+| モジュール | ASM バージョン |
+|-----------|---------------|
+| `wasm:1.7.2` | 9.3 → Gradle が 9.8 に解決 |
+| `compiler:1.7.2` | 9.9.1 |
+
+JarInJar バンドル内で両バージョンが混在すると `LinkageError`（クラス二重定義）が起こりうる。
+
+### コンパイル時 vs ランタイム
+
+| フェーズ | 結果 | 備考 |
+|---------|------|------|
+| `./gradlew compileJava` | ✅ BUILD SUCCESSFUL | 型解決のみ、クラスローダー問題は未発現 |
+| Forge 起動・`MachineFactoryCompiler` 呼び出し | ❌ 実行不可 | WasmClassLoader 親不適合 + publicLookup 問題 |
+
+### ワークアラウンド候補
+
+| 案 | 概要 | コスト |
+|----|------|--------|
+| **A（現状採用）** | Interpreter モード継続 | ゼロ（既に動作） |
+| **B** | カスタム `ClassCollector` を実装し `WasmClassLoader` の親を `WasmEngine.class.getClassLoader()` にする | 中（Chicory 内部 API 要調査） |
+| **C** | Forge 起動引数に `--add-opens java.base/java.lang=ALL-UNNAMED` を追加 | サーバー側設定変更が必要 |
+| **D** | JarInJar 内で `org.ow2.asm` を shadow して ASM バージョン衝突を回避 | 高（ビルドスクリプト改修） |
+
+### 現状・方針
+
+- `compiler:1.7.2` の Forge 組み込み: **❌ 保留**（runtime conflict 未解決）
+- Interpreter モード: **✅ 正常動作**（0.1.x 系はこれを維持）
+- `compiler` dependency は `build.gradle` には追加しない（調査のみで revert）
+- **0.2.0 課題**: ワークアラウンド案 B（カスタム ClassCollector）を検証する

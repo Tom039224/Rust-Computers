@@ -81,6 +81,8 @@ dependencies {
     // Pure-Java WASM runtime (no JNI / native dependencies)
     implementation "com.dylibso.chicory:runtime:${chicory_version}"
     implementation "com.dylibso.chicory:wasm:${chicory_version}"
+    // Note: compiler (Runtime Compiler / WASM→JVM JIT) は Forge ClassLoader 競合のため保留
+    // compiler is excluded: Forge ModuleClassLoader conflict (see docs/chicory-investigation.md)
     // Note: wasi は不使用 (no_std 採用) / WASI is not used (no_std approach)
 
     // MessagePack — Java ↔ WASM シリアライゼーション

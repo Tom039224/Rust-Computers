@@ -30,6 +30,11 @@ struct Method {
     /// 1tick 遅れ原則: どちらも async で 1tick 遅延する。
     #[serde(default)]
     action: bool,
+    /// true の場合は同期 `_imm` バリアントも生成する。
+    /// @LuaFunction(immediate=true) として定義されたメソッド専用。
+    /// If true, also generates a synchronous `_imm` variant for @LuaFunction(immediate=true) methods.
+    #[serde(default)]
+    imm: bool,
     /// 戻り値の型文字列。省略時は () を返す。
     /// "i32" | "bool" | "str" | "(i32, i32)"
     #[serde(default)]
@@ -145,6 +150,7 @@ fn decode_return(ret: Option<&str>) -> String {
 
 /// 1 メソッドぶんの Rust コードを返す
 fn generate_method(method: &Method) -> String {
+    let mut out = String::new();
     let rust_name = camel_to_snake(&method.lua);
 
     // fn の追加引数部分 ", x: i32, text: &str, ..."
@@ -196,7 +202,7 @@ fn generate_method(method: &Method) -> String {
         "情報取得リクエスト"
     };
 
-    format!(
+    out += &format!(
         "    /// `{}` を非同期呼び出しする ({})。\n\
          \x20   pub async fn {fn_name}(&self{params}) -> Result<{ret}, BridgeError> {{\n\
          {enc}\
@@ -213,7 +219,30 @@ fn generate_method(method: &Method) -> String {
         lua      = method.lua,
         arr      = array_expr,
         dec      = decode,
-    )
+    );
+
+    // imm = true の場合は同期 _imm バリアントまた生成する
+    // For imm = true methods, also generate a synchronous _imm variant
+    if method.imm && !method.action {
+        out += &format!(
+            "    /// `{}` \u3092\u5373\u6642\u547c\u3073\u51fa\u3057\u3059\u308b\uff08`@LuaFunction(immediate=true)` \u5c02\u7528\uff09\u3002\n\
+             \x20   pub fn {fn_name}_imm(&self{params}) -> Result<{ret}, BridgeError> {{\n\
+             {enc}\
+             \x20       let data = peripheral::request_info_imm(self.dir, \"{lua}\", &{arr})?;\n\
+             \x20       {dec}\n\
+             \x20   }}\n",
+            method.lua,
+            fn_name = rust_name,
+            params   = params_str,
+            ret      = ret_type,
+            enc      = encode_block,
+            lua      = method.lua,
+            arr      = array_expr,
+            dec      = decode,
+        );
+    }
+
+    out
 }
 
 /// `Peripheral` 全体から .rs ファイル内容を生成する

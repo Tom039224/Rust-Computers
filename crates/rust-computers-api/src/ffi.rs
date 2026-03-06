@@ -74,18 +74,15 @@ extern "C" {
     /// 即時ペリフェラル情報取得（同 tick 内即返）。
     /// Immediate peripheral info request (returns within the same tick).
     ///
-    /// # ❗ 明示的非推奨 / Explicitly discouraged
+    /// **用途**: `@LuaFunction(immediate=true)` として実装されたメソッド専用。
+    /// 1tick 遅れ原則の**意図的な例外**であり、`_imm` サフィックスにより明示される。
     ///
-    /// この関数は 1tick 遅れ原則に違反するため、上位層 API（`peripheral::request_info_imm`）は削除された。
-    /// Java 実装との履行匧に必要な場合のみ、直接 FFI として再定義して使用すること。
-    ///
-    /// This function violates the 1-tick delay principle.
-    /// The higher-level `peripheral::request_info_imm` has been removed.
-    /// Only use this directly via FFI if synchronous Java-side behavior is specifically required.
+    /// **Usage**: For methods implemented as `@LuaFunction(immediate=true)` only.
+    /// This is an intentional exception to the 1-tick delay principle,
+    /// made explicit by the `_imm` suffix.
     ///
     /// - 戻り値: written_bytes (>=0) | error (<0)
     /// - return: written_bytes (>=0) | error (<0)
-    #[deprecated = "其のまま使用禁止: 1tick 遅れ原則違反 / Do not use: violates 1-tick delay principle"]
     pub fn host_request_info_imm(
         periph_id: u32,
         method_id: u32,

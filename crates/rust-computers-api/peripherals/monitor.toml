@@ -14,23 +14,30 @@
 #     name    = Rust の引数名 / argument name in generated Rust
 #     ty      = 引数の型: "i32" | "str" | "bool"
 
+#   imm       = true なら同期 _imm バリアントも生成する (@LuaFunction(immediate=true) 専用)
+#               false (default) = async のみ生成
+
 # ---- 情報取得 / Info ----
 
 [[method]]
 lua = "getType"
 ret = "str"
+imm = true
 
 [[method]]
 lua = "getSize"
 ret = "(i32, i32)"
+imm = true
 
 [[method]]
 lua = "isAdvanced"
 ret = "bool"
+imm = true
 
 [[method]]
 lua = "getTextScale"
 ret = "i32"
+imm = true
 
 # ---- 描画 / Drawing ----
 
@@ -63,6 +70,7 @@ args = [
 [[method]]
 lua = "getCursorPos"
 ret = "(i32, i32)"
+imm = true
 
 [[method]]
 lua = "setCursorPos"
@@ -75,6 +83,7 @@ args = [
 [[method]]
 lua = "getCursorBlink"
 ret = "bool"
+imm = true
 
 [[method]]
 lua = "setCursorBlink"

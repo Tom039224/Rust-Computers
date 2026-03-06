@@ -194,13 +194,54 @@ fn issue_request(
 // ==================================================================
 // 即時リクエスト / Immediate requests
 // ==================================================================
-// ❗ request_info_imm は 1tick 遅れ原則に違反するため削除されました。
-// host_request_info_imm は同一tick内で出力するため、設計の `GT:N → GT:N+1` 原則を履行できない。
-// 全ての情報取得には request_info(…).await / do_action(…).await を使用すること。
-//
-// NOTE: request_info_imm was removed — it violated the 1-tick delay principle.
-// host_request_info_imm returns within the same tick, breaking the GT:N → GT:N+1 contract.
-// Use request_info(…).await or do_action(…).await for all peripheral interactions.
+
+/// ペリフェラルに即時情報リクエストを送信する（同 tick 内で完結）。
+/// Send an immediate information request to a peripheral (completes in the same tick).
+///
+/// ## ⚠️ 使用条件 / Usage restriction
+///
+/// このAPIは **`@LuaFunction(immediate=true)`** として実装された Java メソッド専用。
+/// 通常の情報取得には [`request_info`] を使用すること。
+///
+/// This API is **only for Java methods implemented as `@LuaFunction(immediate=true)`**.
+/// For regular info retrieval, use [`request_info`] instead.
+///
+/// `_imm` サフィックスにより、呼び出し側が 1tick 遅れ原則の例外であることを
+/// 明示的に了承していることを示す。
+/// The `_imm` suffix signals that the caller explicitly acknowledges
+/// this is an intentional exception to the 1-tick delay principle.
+///
+/// # 引数 / Arguments
+/// - `dir`: ペリフェラルの方向 / peripheral direction
+/// - `method_name`: メソッド名 / method name
+/// - `args`: MessagePack 引数バイト列 / MessagePack argument bytes
+///
+/// # 戻り値 / Returns
+/// 結果バイト列、またはエラー / result bytes or error
+pub fn request_info_imm(
+    dir: Direction,
+    method_name: &str,
+    args: &[u8],
+) -> Result<Vec<u8>, BridgeError> {
+    const RESULT_BUF_SIZE: usize = 4096;
+    let mut result_buf = vec![0u8; RESULT_BUF_SIZE];
+    let mid = method_id(method_name);
+    let written = unsafe {
+        ffi::host_request_info_imm(
+            dir.id(),
+            mid,
+            args.as_ptr() as i32,
+            args.len() as i32,
+            result_buf.as_mut_ptr() as i32,
+            result_buf.len() as i32,
+        )
+    };
+    if written < 0 {
+        Err(BridgeError::from_code(written))
+    } else {
+        Ok(result_buf[..written as usize].to_vec())
+    }
+}
 
 // ==================================================================
 // ユーティリティ / Utilities
