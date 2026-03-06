@@ -93,8 +93,8 @@ public class ComputerManager extends SavedData {
     // ------------------------------------------------------------------
 
     /**
-     * 新しいコンピューター ID を発行する。
-     * Allocate a new unique computer ID.
+     * 新しいコンピューター ID を発行する（ID をインクリメントして返す）。
+     * Allocate a new unique computer ID (increments nextId and returns it).
      *
      * @return 新しい ID / new ID
      */
@@ -103,6 +103,18 @@ public class ComputerManager extends SavedData {
         setDirty();
         LOGGER.info("Allocated computer ID: {}", id);
         return id;
+    }
+
+    /**
+     * 次に発行される ID（= 現在割り当て済み台数）を返す。
+     * Returns the next ID to be issued (= number of allocated computers so far).
+     * コマンド補完など読み取り専用用途向け。
+     * For read-only use such as command tab-completion.
+     *
+     * @return 次の ID / next ID
+     */
+    public int getNextId() {
+        return nextId;
     }
 
     // ------------------------------------------------------------------

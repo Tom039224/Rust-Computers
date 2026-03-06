@@ -19,8 +19,15 @@ use crate::ffi;
 /// ホスト関数の非同期結果を表す Future。
 /// A future representing an asynchronous host function result.
 ///
-/// `poll` 呼び出しごとに `host_poll_result` で完了をチェックする。
-/// Checks completion via `host_poll_result` on each `poll` call.
+/// ## 1tick 遅れ強制 / 1-tick delay enforcement
+///
+/// `poll` の初回呼び出しでは必ず `Poll::Pending` を返す。
+/// これにより、リクエスト発行 tick と結果取得 tick が必ず 1 tick 以上離れる。
+/// (`spec.md` §1.1 「1tick 遅れ原則」の実装)
+///
+/// The first call to `poll` always returns `Poll::Pending`.
+/// This guarantees at least one full tick between request issuance and result delivery.
+/// (Implements the "1-tick delay principle" from spec.md §1.1)
 pub struct RequestFuture {
     /// リクエスト ID / Request ID
     request_id: i64,
@@ -32,7 +39,8 @@ pub struct RequestFuture {
     /// Location where host_poll_result writes the byte count (4 bytes, LE)
     written_bytes_buf: i32,
 
-    /// 初回 poll フラグ / First poll flag
+    /// 1tick 遅れ強制フラグ: true の内は必ず Pending を返す。
+    /// 1-tick delay flag: returns Pending while true.
     first_poll: bool,
 }
 
@@ -51,17 +59,6 @@ impl RequestFuture {
             first_poll: true,
         }
     }
-
-    /// 即時リクエスト（request_id ベースではない）の結果を返す。
-    /// Return an immediate result (not request_id based).
-    pub fn immediate(data: Vec<u8>) -> Self {
-        Self {
-            request_id: 0,
-            result_buf: data,
-            written_bytes_buf: 0,
-            first_poll: false,
-        }
-    }
 }
 
 impl Future for RequestFuture {
@@ -72,12 +69,17 @@ impl Future for RequestFuture {
         // Safety: WASM is single-threaded. Pin is not structural, so get_unchecked_mut is safe.
         let this = unsafe { self.get_unchecked_mut() };
 
-        // 即時結果の場合 / Immediate result case
-        if this.request_id == 0 && !this.first_poll {
-            let data = core::mem::take(&mut this.result_buf);
-            return Poll::Ready(Ok(data));
+        // 1tick 遅れ強制: リクエスト発行と同じ tick では必ず Pending を返す。
+        // Java の Phase 1 (結果収集) は次 tick で行われるため、
+        // 同 tick の host_poll_result 呼び出しは常に未完了になるはず。
+        //
+        // 1-tick delay enforcement: always return Pending in the tick the request was issued.
+        // Java's Phase 1 (result collection) runs in the next tick;
+        // calling host_poll_result in the same tick would always be Pending.
+        if this.first_poll {
+            this.first_poll = false;
+            return Poll::Pending;
         }
-        this.first_poll = false;
 
         // written_bytes_buf のアドレスを取得 / Get address of written_bytes_buf
         let written_ptr = &mut this.written_bytes_buf as *mut i32 as i32;

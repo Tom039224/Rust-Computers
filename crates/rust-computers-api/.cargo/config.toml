@@ -1,0 +1,10 @@
+# rust-analyzer および cargo build のデフォルトターゲット設定
+# Default target configuration for rust-analyzer and cargo build.
+#
+# wasm32-unknown-unknown をデフォルトにすることで、rust-analyzer が
+# no_std / wasm32 環境での型チェックを行うようになる。
+# Setting wasm32-unknown-unknown as default makes rust-analyzer perform
+# type-checking in the no_std / wasm32 environment.
+
+[build]
+target = "wasm32-unknown-unknown"

@@ -6,8 +6,8 @@
 #
 # フィールド / Fields:
 #   lua       = Lua 側のメソッド名 (必須) / Lua-side method name (required)
-#   immediate = true なら同期呼び出し (デフォルト: false = async)
-#               true = synchronous call, false (default) = async
+#   action    = true なら do_action (ワールド干渉系 / write/draw)
+#               false (default) = request_info (情報取得系 / getters)
 #   ret       = 戻り値の型 / return type: "i32" | "bool" | "str" | "(i32, i32)"
 #               省略した場合は () を返す / omit for ()
 #   [[method.args]]
@@ -18,40 +18,40 @@
 
 [[method]]
 lua = "getType"
-immediate = true
 ret = "str"
 
 [[method]]
 lua = "getSize"
-immediate = true
 ret = "(i32, i32)"
 
 [[method]]
 lua = "isAdvanced"
-immediate = true
 ret = "bool"
 
 [[method]]
 lua = "getTextScale"
-immediate = true
 ret = "i32"
 
 # ---- 描画 / Drawing ----
 
 [[method]]
 lua = "clear"
+action = true
 
 [[method]]
 lua = "clearLine"
+action = true
 
 [[method]]
 lua = "write"
+action = true
 args = [
     { name = "text", ty = "str" },
 ]
 
 [[method]]
 lua = "blit"
+action = true
 args = [
     { name = "text",       ty = "str" },
     { name = "text_color", ty = "str" },
@@ -62,11 +62,11 @@ args = [
 
 [[method]]
 lua = "getCursorPos"
-immediate = true
 ret = "(i32, i32)"
 
 [[method]]
 lua = "setCursorPos"
+action = true
 args = [
     { name = "x", ty = "i32" },
     { name = "y", ty = "i32" },
@@ -74,11 +74,11 @@ args = [
 
 [[method]]
 lua = "getCursorBlink"
-immediate = true
 ret = "bool"
 
 [[method]]
 lua = "setCursorBlink"
+action = true
 args = [
     { name = "blink", ty = "bool" },
 ]
@@ -87,30 +87,31 @@ args = [
 
 [[method]]
 lua = "setTextColor"
+action = true
 args = [
     { name = "color", ty = "i32" },
 ]
 
 [[method]]
 lua = "setBackgroundColor"
+action = true
 args = [
     { name = "color", ty = "i32" },
 ]
 
 [[method]]
 lua = "getTextColor"
-immediate = true
 ret = "i32"
 
 [[method]]
 lua = "getBackgroundColor"
-immediate = true
 ret = "i32"
 
 # ---- スクロール / Scroll ----
 
 [[method]]
 lua = "scroll"
+action = true
 args = [
     { name = "lines", ty = "i32" },
 ]
@@ -119,6 +120,7 @@ args = [
 
 [[method]]
 lua = "setTextScale"
+action = true
 args = [
     { name = "scale_x10", ty = "i32" },
 ]

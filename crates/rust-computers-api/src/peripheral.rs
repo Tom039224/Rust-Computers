@@ -4,6 +4,17 @@
 //! コンピュータの隣接6方向に設置されたブロックと通信する。
 //! Communicates with blocks placed in the 6 adjacent directions of the computer.
 //!
+//! ## 1tick 遅れ原則 / 1-tick delay principle
+//!
+//! すべての情報取得およびアクション API は **1 Game Tick (GT) 遅れ**で結果が返る。
+//! All info and action APIs return results with a **1 Game Tick (GT) delay**.
+//!
+//! ```text
+//! GT:N   Rust → リクエスト発行
+//! GT:N+1 Java → 結果を収集し Rust に渡す
+//! GT:N+1 Rust → .await の先に進む
+//! ```
+//!
 //! # 方向 ID / Direction IDs
 //!
 //! | periph_id | 方向 / Direction |
@@ -20,14 +31,11 @@
 //! ```rust,no_run
 //! use rust_computers_api::peripheral::{self, Direction};
 //!
-//! // 非同期リクエスト (host_request_info)
-//! let data = peripheral::request_info(Direction::UP, "getItems", &[]).await?;
+//! // 情報取得 (1tick 遅れ) / Info request (1-tick delay)
+//! let data = peripheral::request_info(Direction::Up, "getItems", &[]).await?;
 //!
-//! // 非同期アクション (host_do_action)
-//! peripheral::do_action(Direction::SOUTH, "pushItem", &args).await?;
-//!
-//! // 即時リクエスト (host_request_info_imm) — 同一 tick で結果を得る
-//! let temp = peripheral::request_info_imm(Direction::DOWN, "getTemperature", &[])?;
+//! // アクション (1tick 遅れ) / Action (1-tick delay)
+//! peripheral::do_action(Direction::South, "pushItem", &args).await?;
 //! ```
 
 use alloc::vec;
@@ -186,44 +194,13 @@ fn issue_request(
 // ==================================================================
 // 即時リクエスト / Immediate requests
 // ==================================================================
-
-/// ペリフェラルに即時情報リクエストを送信する（同期）。
-/// Send an immediate information request to a peripheral (synchronous).
-///
-/// Java 側の `host_request_info_imm` を呼び出し、同一 tick 内で結果を得る。
-/// Calls `host_request_info_imm` on the Java side, returning within the same tick.
-///
-/// # 注意 / Notice
-/// 全てのメソッドが即時呼び出しをサポートするわけではない。
-/// Not all methods support immediate invocation.
-pub fn request_info_imm(
-    dir: Direction,
-    method_name: &str,
-    args: &[u8],
-) -> Result<Vec<u8>, BridgeError> {
-    const RESULT_BUF_SIZE: usize = 4096;
-    let mut result_buf = vec![0u8; RESULT_BUF_SIZE];
-
-    let mid = method_id(method_name);
-
-    let written = unsafe {
-        ffi::host_request_info_imm(
-            dir.id(),
-            mid,
-            args.as_ptr() as i32,
-            args.len() as i32,
-            result_buf.as_ptr() as i32,
-            result_buf.len() as i32,
-        )
-    };
-
-    if written < 0 {
-        return Err(BridgeError::from_code(written));
-    }
-
-    result_buf.truncate(written as usize);
-    Ok(result_buf)
-}
+// ❗ request_info_imm は 1tick 遅れ原則に違反するため削除されました。
+// host_request_info_imm は同一tick内で出力するため、設計の `GT:N → GT:N+1` 原則を履行できない。
+// 全ての情報取得には request_info(…).await / do_action(…).await を使用すること。
+//
+// NOTE: request_info_imm was removed — it violated the 1-tick delay principle.
+// host_request_info_imm returns within the same tick, breaking the GT:N → GT:N+1 contract.
+// Use request_info(…).await or do_action(…).await for all peripheral interactions.
 
 // ==================================================================
 // ユーティリティ / Utilities

@@ -26,9 +26,10 @@ struct Peripheral {
 struct Method {
     /// Lua 側のメソッド名 (例: "setCursorPos")
     lua: String,
-    /// true の場合は同期 (request_info_imm) を使う
+    /// true の場合は do_action (ワールド干渉系)、false は request_info (情報取得系)
+    /// 1tick 遅れ原則: どちらも async で 1tick 遅延する。
     #[serde(default)]
-    immediate: bool,
+    action: bool,
     /// 戻り値の型文字列。省略時は () を返す。
     /// "i32" | "bool" | "str" | "(i32, i32)"
     #[serde(default)]
@@ -182,43 +183,37 @@ fn generate_method(method: &Method) -> String {
     let ret_type  = return_type(method.ret.as_deref());
     let decode    = decode_return(method.ret.as_deref());
 
-    if method.immediate {
-        // 同期バージョン
-        format!(
-            "    /// `{}` を同期呼び出しする。\n\
-             \x20   pub fn {fn_name}(&self{params}) -> Result<{ret}, BridgeError> {{\n\
-             {enc}\
-             \x20       let data = peripheral::request_info_imm(self.dir, \"{lua}\", &{arr})?;\n\
-             \x20       {dec}\n\
-             \x20   }}\n",
-            method.lua,
-            fn_name = rust_name,
-            params   = params_str,
-            ret      = ret_type,
-            enc      = encode_block,
-            lua      = method.lua,
-            arr      = array_expr,
-            dec      = decode,
-        )
+    // action = true → do_action (ワールド干渉系), false → request_info (情報取得系)
+    // どちらも 1tick 遅延の async fn
+    let call_fn = if method.action {
+        "peripheral::do_action"
     } else {
-        // async バージョン
-        format!(
-            "    /// `{}` を非同期呼び出しする。\n\
-             \x20   pub async fn {fn_name}(&self{params}) -> Result<{ret}, BridgeError> {{\n\
-             {enc}\
-             \x20       let data = peripheral::request_info(self.dir, \"{lua}\", &{arr}).await?;\n\
-             \x20       {dec}\n\
-             \x20   }}\n",
-            method.lua,
-            fn_name = rust_name,
-            params   = params_str,
-            ret      = ret_type,
-            enc      = encode_block,
-            lua      = method.lua,
-            arr      = array_expr,
-            dec      = decode,
-        )
-    }
+        "peripheral::request_info"
+    };
+    let kind_comment = if method.action {
+        "ワールド干渉系アクション"
+    } else {
+        "情報取得リクエスト"
+    };
+
+    format!(
+        "    /// `{}` を非同期呼び出しする ({})。\n\
+         \x20   pub async fn {fn_name}(&self{params}) -> Result<{ret}, BridgeError> {{\n\
+         {enc}\
+         \x20       let data = {call}(self.dir, \"{lua}\", &{arr}).await?;\n\
+         \x20       {dec}\n\
+         \x20   }}\n",
+        method.lua,
+        kind_comment,
+        fn_name = rust_name,
+        params   = params_str,
+        ret      = ret_type,
+        enc      = encode_block,
+        call     = call_fn,
+        lua      = method.lua,
+        arr      = array_expr,
+        dec      = decode,
+    )
 }
 
 /// `Peripheral` 全体から .rs ファイル内容を生成する

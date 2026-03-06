@@ -3,10 +3,13 @@ package com.rustcomputers.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import com.rustcomputers.computer.ComputerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +41,24 @@ public final class RustComputersCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(RustComputersCommand.class);
 
     /**
+     * 割り当て済みコンピューター ID を補完候補として返す SuggestionProvider。
+     * SuggestionProvider that returns allocated computer IDs as completion suggestions.
+     *
+     * <p>0 〜 nextId-1 の全 ID を文字列として提案する。</p>
+     */
+    private static final SuggestionProvider<CommandSourceStack> COMPUTER_ID_SUGGESTIONS =
+        (ctx, builder) -> {
+            MinecraftServer server = ctx.getSource().getServer();
+            if (server != null) {
+                int max = ComputerManager.get(server).getNextId();
+                for (int i = 0; i < max; i++) {
+                    builder.suggest(i);
+                }
+            }
+            return builder.buildFuture();
+        };
+
+    /**
      * プレイヤーごとのログストリーミング有効コンピューター ID セット。
      * Per-player set of computer IDs with log streaming enabled.
      * キーはプレイヤー UUID、値はストリーミング中のコンピューター ID セット。
@@ -62,6 +83,7 @@ public final class RustComputersCommand {
                 // /rc log <id> [true|false]
                 .then(Commands.literal("log")
                     .then(Commands.argument("computerId", IntegerArgumentType.integer(0))
+                        .suggests(COMPUTER_ID_SUGGESTIONS)
                         // /rc log <id>  → ステータス確認 / Check streaming status
                         .executes(ctx -> executeStatus(ctx.getSource(),
                                 IntegerArgumentType.getInteger(ctx, "computerId")))
@@ -78,6 +100,7 @@ public final class RustComputersCommand {
                 .then(Commands.literal("get-dev")
                     .requires(src -> src.hasPermission(2))
                     .then(Commands.argument("computerId", IntegerArgumentType.integer(0))
+                        .suggests(COMPUTER_ID_SUGGESTIONS)
                         .executes(ctx -> DevEnvCommand.execute(
                                 ctx, IntegerArgumentType.getInteger(ctx, "computerId")))
                     )
