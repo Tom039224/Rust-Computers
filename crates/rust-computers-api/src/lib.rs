@@ -64,7 +64,7 @@ pub mod computer_craft {
     ///
     /// async fn demo() {
     ///     let mon = Monitor::new(Direction::South);
-    ///     let (w, h) = rc::parallel!((mon.get_size(), mon.is_advanced())).0.unwrap_or((26, 10));
+    ///     let (w, h) = rc::parallel!(mon.get_size(), mon.is_advanced()).0.unwrap_or((26, 10));
     ///     let _ = mon.clear().await;
     ///     let _ = mon.write(&alloc::format!("Size: {}x{}", w, h)).await;
     /// }
@@ -160,7 +160,7 @@ pub mod some_peripherals {
 
 // 再エクスポート / Re-exports
 pub use error::BridgeError;
-pub use future::{JoinAll, RequestFuture};
+pub use future::RequestFuture;
 pub use io::read_line;
 
 /// エントリーポイントマクロ。
@@ -211,43 +211,36 @@ macro_rules! entry {
 /// 複数の Future を並行して待機するマクロ。
 /// Macro to await multiple futures concurrently.
 ///
-/// ## タプル構文 / Tuple syntax
-///
-/// 2〜4 個の Future をタプルとして渡し、結果をタプルで受け取る。
+/// 2〜4 個の **異なる型** の Future をカンマ区切りで渡し、結果をタプルで受け取る。
 /// どの Future も同一 tick で発行されるため、1 tick 待つだけで全て取得できる。
 ///
-/// Pass 2–4 futures as a tuple and receive results as a tuple.
-/// All futures are issued in the same tick, so only 1 tick is consumed.
+/// Pass 2–4 futures of **potentially different types**, separated by commas.
+/// Results are returned as a tuple. All futures are issued in the same tick,
+/// so only one tick is consumed.
 ///
 /// ```rust,no_run
-/// let (a, b) = rc::parallel!((
+/// let (a, b) = rc::parallel!(
 ///     radar.scan(64.0),
 ///     sensor.get_temp(),
-/// ));
+/// );
 /// ```
 ///
-/// ## Vec 構文 / Vec syntax
-///
-/// 同一型の Future の Vec を渡し、結果を Vec で受け取る。
-/// Pass a Vec of same-typed futures and receive results as a Vec.
-///
 /// ```rust,no_run
-/// let results = rc::parallel!(futures_vec);
+/// let (size, is_adv, brightness) = rc::parallel!(
+///     mon.get_size(),
+///     mon.is_advanced(),
+///     mon.get_text_scale(),
+/// );
 /// ```
 #[macro_export]
 macro_rules! parallel {
-    // --- タプル構文 (2〜4 要素) / Tuple syntax (2–4 elements) ---
-    (($a:expr, $b:expr $(,)?) $(,)?) => {{
+    ($a:expr, $b:expr $(,)?) => {{
         $crate::future::Join2::new($a, $b).await
     }};
-    (($a:expr, $b:expr, $c:expr $(,)?) $(,)?) => {{
+    ($a:expr, $b:expr, $c:expr $(,)?) => {{
         $crate::future::Join3::new($a, $b, $c).await
     }};
-    (($a:expr, $b:expr, $c:expr, $d:expr $(,)?) $(,)?) => {{
+    ($a:expr, $b:expr, $c:expr, $d:expr $(,)?) => {{
         $crate::future::Join4::new($a, $b, $c, $d).await
-    }};
-    // --- Vec 構文 / Vec syntax ---
-    ($vec:expr) => {{
-        $crate::future::JoinAll::new($vec).await
     }};
 }
