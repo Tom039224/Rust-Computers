@@ -112,13 +112,16 @@ fn encode_arg_expr(arg: &Arg) -> String {
 /// TOML ret 文字列 → Rust 戻り値型
 fn return_type(ret: Option<&str>) -> String {
     match ret {
-        None              => "()".to_string(),
-        Some("i32")       => "i32".to_string(),
-        Some("bool")      => "bool".to_string(),
-        Some("f64")       => "f64".to_string(),
-        Some("str")       => "alloc::string::String".to_string(),
+        None               => "()".to_string(),
+        Some("i32")        => "i32".to_string(),
+        Some("bool")       => "bool".to_string(),
+        Some("f64")        => "f64".to_string(),
+        Some("str")        => "alloc::string::String".to_string(),
         Some("(i32, i32)") => "(i32, i32)".to_string(),
-        Some(other)       => other.to_string(),
+        // bytes: 阭列 / Map など複味な戻値を生の msgpack バイト列として返す
+        // Complex return types (List/Map) are returned as raw msgpack bytes.
+        Some("bytes")      => "alloc::vec::Vec<u8>".to_string(),
+        Some(other)        => other.to_string(),
     }
 }
 
@@ -149,6 +152,11 @@ fn decode_return(ret: Option<&str>) -> String {
                 "        let v1 = m::decode_int_at(&data, 1);\n",
                 "        Ok((v0, v1))"
             ).to_string()
+        }
+        // bytes: 生の msgpack バイト列をそのまま返す
+        // Raw msgpack bytes are returned as-is.
+        Some("bytes") => {
+            "Ok(data)".to_string()
         }
         _ => "let _ = data;\n        Ok(())".to_string(),
     }

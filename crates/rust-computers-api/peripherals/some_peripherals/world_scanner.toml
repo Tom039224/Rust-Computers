@@ -1,9 +1,18 @@
 # Some-Peripherals — WorldScanner peripheral
 #
 # @LuaFunction メソッド一覧:
-#   getBlockAt(x: int, y: int, z: int, inShipyard: boolean) → table (Map)
+#   getBlockAt(x, y, z, inShipyard: boolean) → table (Map)
+#     返値キー: block_type (str), ship_id (f64, オプション)
 #
-# 全メソッドが Map を返すため、現バージョンではスカラーラッパーなし。
-# スタブ構造体 `WorldScanner` のみ生成する。
-# All methods return Map; no scalar wrappers in this version.
-# Generates stub struct `WorldScanner` only.
+# Map を返すため ret="bytes" で生の msgpack を返す。
+# in_shipyard は optional だがここでは 4 引数版のみ定義する。
+
+[[method]]
+lua  = "getBlockAt"
+ret  = "bytes"
+args = [
+  { name = "x",           ty = "f64"  },
+  { name = "y",           ty = "f64"  },
+  { name = "z",           ty = "f64"  },
+  { name = "in_shipyard", ty = "bool" },
+]
