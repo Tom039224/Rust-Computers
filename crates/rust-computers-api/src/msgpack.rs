@@ -156,6 +156,35 @@ pub fn decode_int_at(data: &[u8], index: usize) -> i32 {
     decode_int(data, off as usize)
 }
 
+/// fixarray の i 番目の要素を bool としてデコードする。
+/// Decode the i-th element of a fixarray as a bool.
+pub fn decode_bool_at(data: &[u8], index: usize) -> bool {
+    let off = arg_offset(data, index);
+    if off < 0 { return false; }
+    data[off as usize] == 0xC3
+}
+
+/// fixarray の i 番目の要素を &str としてデコードする。
+/// Decode the i-th element of a fixarray as a &str.
+/// 不正値の場合は空文字列を返す。Returns "" on invalid data.
+pub fn decode_str_at<'a>(data: &'a [u8], index: usize) -> &'a str {
+    let off = arg_offset(data, index);
+    if off < 0 { return ""; }
+    let pos = off as usize;
+    if pos >= data.len() { return ""; }
+    let tag = data[pos];
+    let (start, len) = match tag {
+        0xA0..=0xBF => (pos + 1, (tag & 0x1F) as usize),  // fixstr
+        0xD9 => {                                           // str 8
+            if data.len() <= pos + 1 { return ""; }
+            (pos + 2, data[pos + 1] as usize)
+        }
+        _ => return "",
+    };
+    if start + len > data.len() { return ""; }
+    core::str::from_utf8(&data[start..start + len]).unwrap_or("")
+}
+
 // ------------------------------------------------------------------
 // Private helper
 // ------------------------------------------------------------------

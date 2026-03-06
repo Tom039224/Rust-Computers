@@ -1,0 +1,124 @@
+# CC:Tweaked Monitor ペリフェラル API 定義
+# Peripheral API manifest for CC:Tweaked Monitor.
+#
+# このファイルを編集すると build.rs が `src/monitor` モジュールを自動再生成します。
+# Editing this file causes build.rs to regenerate the `monitor` module automatically.
+#
+# フィールド / Fields:
+#   lua       = Lua 側のメソッド名 (必須) / Lua-side method name (required)
+#   immediate = true なら同期呼び出し (デフォルト: false = async)
+#               true = synchronous call, false (default) = async
+#   ret       = 戻り値の型 / return type: "i32" | "bool" | "str" | "(i32, i32)"
+#               省略した場合は () を返す / omit for ()
+#   [[method.args]]
+#     name    = Rust の引数名 / argument name in generated Rust
+#     ty      = 引数の型: "i32" | "str" | "bool"
+
+# ---- 情報取得 / Info ----
+
+[[method]]
+lua = "getType"
+immediate = true
+ret = "str"
+
+[[method]]
+lua = "getSize"
+immediate = true
+ret = "(i32, i32)"
+
+[[method]]
+lua = "isAdvanced"
+immediate = true
+ret = "bool"
+
+[[method]]
+lua = "getTextScale"
+immediate = true
+ret = "i32"
+
+# ---- 描画 / Drawing ----
+
+[[method]]
+lua = "clear"
+
+[[method]]
+lua = "clearLine"
+
+[[method]]
+lua = "write"
+args = [
+    { name = "text", ty = "str" },
+]
+
+[[method]]
+lua = "blit"
+args = [
+    { name = "text",       ty = "str" },
+    { name = "text_color", ty = "str" },
+    { name = "bg_color",   ty = "str" },
+]
+
+# ---- カーソル / Cursor ----
+
+[[method]]
+lua = "getCursorPos"
+immediate = true
+ret = "(i32, i32)"
+
+[[method]]
+lua = "setCursorPos"
+args = [
+    { name = "x", ty = "i32" },
+    { name = "y", ty = "i32" },
+]
+
+[[method]]
+lua = "getCursorBlink"
+immediate = true
+ret = "bool"
+
+[[method]]
+lua = "setCursorBlink"
+args = [
+    { name = "blink", ty = "bool" },
+]
+
+# ---- 色 / Colors ----
+
+[[method]]
+lua = "setTextColor"
+args = [
+    { name = "color", ty = "i32" },
+]
+
+[[method]]
+lua = "setBackgroundColor"
+args = [
+    { name = "color", ty = "i32" },
+]
+
+[[method]]
+lua = "getTextColor"
+immediate = true
+ret = "i32"
+
+[[method]]
+lua = "getBackgroundColor"
+immediate = true
+ret = "i32"
+
+# ---- スクロール / Scroll ----
+
+[[method]]
+lua = "scroll"
+args = [
+    { name = "lines", ty = "i32" },
+]
+
+# ---- テキストスケール / Text scale ----
+
+[[method]]
+lua = "setTextScale"
+args = [
+    { name = "scale_x10", ty = "i32" },
+]

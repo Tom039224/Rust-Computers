@@ -8,12 +8,20 @@ license = "MIT"
 repository = "https://github.com/tom039224/RustComputers"
 readme = "README.md"
 
+build = "build.rs"
+
 [lib]
 crate-type = ["rlib"]
 
 [dependencies]
 # カスタムアロケータ (no_std 用) / Custom allocator for no_std
 dlmalloc = { version = "0.2", features = ["global"] }
+
+[build-dependencies]
+# build.rs は host-side (std) で実行されるため WASM バイナリには含まれない
+# build.rs runs on the host (std) and is NOT included in the WASM binary
+serde = { version = "1", features = ["derive"] }
+toml  = "0.8"
 
 [features]
 default = []
