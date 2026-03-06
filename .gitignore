@@ -17,8 +17,7 @@ forge/src/generated/
 
 # IDE
 .idea/
-.vscode/*
-!.vscode/settings.json
+.vscode/
 *.iml
 
 # OS
