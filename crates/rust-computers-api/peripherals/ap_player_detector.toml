@@ -1,0 +1,35 @@
+# AdvancedPeripherals — PlayerDetector peripheral
+# (getOnlinePlayers/getPlayersIn* で List/Map 引数・戻り値のものはスキップ)
+# (getPlayerPos は Map 戻り値のためスキップ)
+
+[[method]]
+lua = "isPlayersInCubic"
+ret = "bool"
+args = [
+    { name = "x", ty = "i32" },
+    { name = "y", ty = "i32" },
+    { name = "z", ty = "i32" },
+]
+
+[[method]]
+lua = "isPlayersInRange"
+ret = "bool"
+args = [{ name = "range", ty = "i32" }]
+
+[[method]]
+lua = "isPlayerInCubic"
+ret = "bool"
+args = [
+    { name = "x", ty = "i32" },
+    { name = "y", ty = "i32" },
+    { name = "z", ty = "i32" },
+    { name = "username", ty = "str" },
+]
+
+[[method]]
+lua = "isPlayerInRange"
+ret = "bool"
+args = [
+    { name = "range", ty = "i32" },
+    { name = "username", ty = "str" },
+]

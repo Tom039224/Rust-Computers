@@ -1,0 +1,38 @@
+# Control-Craft — Spinalyzer peripheral
+# (Map戻り値 getVelocity/getAngularVelocity/getPosition/getPhysics/getQuaternion はスキップ)
+
+[[method]]
+lua = "applyInvariantForce"
+action = true
+args = [
+    { name = "x", ty = "f64" },
+    { name = "y", ty = "f64" },
+    { name = "z", ty = "f64" },
+]
+
+[[method]]
+lua = "applyInvariantTorque"
+action = true
+args = [
+    { name = "x", ty = "f64" },
+    { name = "y", ty = "f64" },
+    { name = "z", ty = "f64" },
+]
+
+[[method]]
+lua = "applyRotDependentForce"
+action = true
+args = [
+    { name = "x", ty = "f64" },
+    { name = "y", ty = "f64" },
+    { name = "z", ty = "f64" },
+]
+
+[[method]]
+lua = "applyRotDependentTorque"
+action = true
+args = [
+    { name = "x", ty = "f64" },
+    { name = "y", ty = "f64" },
+    { name = "z", ty = "f64" },
+]

@@ -1,0 +1,11 @@
+# Some-Peripherals — Raycaster peripheral
+# (raycast/getConfigInfo は複雑な戻り値のためスキップ)
+
+[[method]]
+lua = "getFacingDirection"
+ret = "str"
+
+[[method]]
+lua = "addStickers"
+action = true
+args = [{ name = "state", ty = "bool" }]

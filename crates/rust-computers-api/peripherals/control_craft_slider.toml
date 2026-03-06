@@ -1,0 +1,45 @@
+# Control-Craft — Slider peripheral
+# (Map戻り値はスキップ)
+
+[[method]]
+lua = "setPID"
+action = true
+args = [
+    { name = "p", ty = "f64" },
+    { name = "i", ty = "f64" },
+    { name = "d", ty = "f64" },
+]
+
+[[method]]
+lua = "setOutputForce"
+action = true
+args = [{ name = "force", ty = "f64" }]
+
+[[method]]
+lua = "getDistance"
+ret = "f64"
+
+[[method]]
+lua = "getCurrentValue"
+ret = "f64"
+
+[[method]]
+lua = "getTargetValue"
+ret = "f64"
+
+[[method]]
+lua = "setTargetValue"
+action = true
+args = [{ name = "value", ty = "f64" }]
+
+[[method]]
+lua = "lock"
+action = true
+
+[[method]]
+lua = "unlock"
+action = true
+
+[[method]]
+lua = "isLocked"
+ret = "bool"

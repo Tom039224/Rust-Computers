@@ -1,0 +1,9 @@
+# Clockwork CC Compat — DuctTank peripheral
+
+[[method]]
+lua = "getHeight"
+ret = "i32"
+
+[[method]]
+lua = "getWidth"
+ret = "i32"

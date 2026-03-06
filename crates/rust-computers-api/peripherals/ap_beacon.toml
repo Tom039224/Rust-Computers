@@ -1,0 +1,13 @@
+# AdvancedPeripherals — Beacon integration peripheral
+
+[[method]]
+lua = "getLevel"
+ret = "i32"
+
+[[method]]
+lua = "getPrimaryEffect"
+ret = "str"
+
+[[method]]
+lua = "getSecondaryEffect"
+ret = "str"

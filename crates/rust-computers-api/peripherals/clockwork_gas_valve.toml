@@ -1,0 +1,9 @@
+# Clockwork CC Compat — GasValve peripheral
+
+[[method]]
+lua = "getAperture"
+ret = "f64"
+
+[[method]]
+lua = "getFacing"
+ret = "str"

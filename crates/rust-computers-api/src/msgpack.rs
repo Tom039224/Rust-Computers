@@ -5,6 +5,7 @@
 //! - `nil()` → `0xC0`
 //! - `bool_val(bool)` → `0xC2` / `0xC3`
 //! - `int(i32)` → positive fixint / negative fixint / uint8 / uint16 / int32
+//! - `float64(f64)` → float64 (0xCB + 8 bytes)
 //! - `str(&str)` → fixstr (≤31 bytes) / str8 (≤255 bytes)
 //! - `array(&[Vec<u8>])` → fixarray (≤15 elements)
 //!
@@ -88,6 +89,15 @@ pub fn array(items: &[Vec<u8>]) -> Vec<u8> {
     for item in items {
         out.extend_from_slice(item);
     }
+    out
+}
+
+/// f64 を float64 (0xCB + 8 bytes big-endian IEEE 754) としてエンコードする。
+/// Encode an f64 as MessagePack float64.
+pub fn float64(v: f64) -> Vec<u8> {
+    let mut out = Vec::with_capacity(9);
+    out.push(0xCB);
+    out.extend_from_slice(&v.to_bits().to_be_bytes());
     out
 }
 
@@ -185,6 +195,32 @@ pub fn decode_str_at<'a>(data: &'a [u8], index: usize) -> &'a str {
     core::str::from_utf8(&data[start..start + len]).unwrap_or("")
 }
 
+/// fixarray の i 番目の要素を f64 としてデコードする。
+/// Decode the i-th element of a fixarray as an f64.
+/// 不正値の場合は 0.0 を返す。Returns 0.0 on invalid data.
+pub fn decode_float64_at(data: &[u8], index: usize) -> f64 {
+    let off = arg_offset(data, index);
+    if off < 0 { return 0.0; }
+    let pos = off as usize;
+    if pos >= data.len() { return 0.0; }
+    match data[pos] {
+        0xCA => {
+            // float32
+            if data.len() < pos + 5 { return 0.0; }
+            let b: [u8; 4] = data[pos + 1..pos + 5].try_into().unwrap_or([0; 4]);
+            f32::from_bits(u32::from_be_bytes(b)) as f64
+        }
+        0xCB => {
+            // float64
+            if data.len() < pos + 9 { return 0.0; }
+            let b: [u8; 8] = data[pos + 1..pos + 9].try_into().unwrap_or([0; 8]);
+            f64::from_bits(u64::from_be_bytes(b))
+        }
+        // int 系はキャスト変換で対応
+        _ => decode_int(data, pos) as f64,
+    }
+}
+
 // ------------------------------------------------------------------
 // Private helper
 // ------------------------------------------------------------------
@@ -218,10 +254,10 @@ fn skip_element(data: &[u8], pos: usize) -> i32 {
         }
         0xA0..=0xBF => (pos + 1 + (b & 0x1F) as usize) as i32,  // fixstr
         0xC0 | 0xC2 | 0xC3 => (pos + 1) as i32,
+        0xCA | 0xCE | 0xD2 => (pos + 5) as i32,  // float32 / uint32 / int32
+        0xCB | 0xCF | 0xD3 => (pos + 9) as i32,  // float64 / uint64 / int64
         0xCC | 0xD0 => (pos + 2) as i32,
         0xCD | 0xD1 => (pos + 3) as i32,
-        0xCE | 0xD2 => (pos + 5) as i32,
-        0xCF | 0xD3 => (pos + 9) as i32,
         0xD9 => {
             let len = data.get(pos + 1).copied().unwrap_or(0) as usize;
             (pos + 2 + len) as i32

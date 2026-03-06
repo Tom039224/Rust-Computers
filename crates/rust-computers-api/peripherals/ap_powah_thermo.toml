@@ -1,0 +1,10 @@
+# AdvancedPeripherals — Powah Thermo integration peripheral
+# (getCoolantTank → Object のためスキップ)
+
+[[method]]
+lua = "getStoredEnergy"
+ret = "f64"
+
+[[method]]
+lua = "getMaxEnergy"
+ret = "f64"

@@ -1,0 +1,22 @@
+# AdvancedPeripherals — Powah EnderCell integration peripheral
+
+[[method]]
+lua = "getStoredEnergy"
+ret = "f64"
+
+[[method]]
+lua = "getMaxEnergy"
+ret = "f64"
+
+[[method]]
+lua = "getChannel"
+ret = "i32"
+
+[[method]]
+lua = "setChannel"
+action = true
+args = [{ name = "channel", ty = "i32" }]
+
+[[method]]
+lua = "getMaxChannels"
+ret = "i32"

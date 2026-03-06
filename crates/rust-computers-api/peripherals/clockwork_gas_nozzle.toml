@@ -1,0 +1,75 @@
+# Clockwork CC Compat — GasNozzle peripheral
+# (Map/List戻り値メソッドはスキップ)
+
+[[method]]
+lua = "setPointer"
+action = true
+args = [{ name = "value", ty = "f64" }]
+
+[[method]]
+lua = "hasBalloon"
+ret = "bool"
+
+[[method]]
+lua = "getPointer"
+ret = "f64"
+
+[[method]]
+lua = "getPointerSpeed"
+ret = "f64"
+
+[[method]]
+lua = "getPocketTemperature"
+ret = "f64"
+
+[[method]]
+lua = "getDuctTemperature"
+ret = "f64"
+
+[[method]]
+lua = "getTargetTemperature"
+ret = "f64"
+
+[[method]]
+lua = "getBalloonVolume"
+ret = "f64"
+
+[[method]]
+lua = "getLeaks"
+ret = "i32"
+
+[[method]]
+lua = "getBalloonPressure"
+ret = "f64"
+
+[[method]]
+lua = "getLossRate"
+ret = "f64"
+
+[[method]]
+lua = "getInflowRate"
+ret = "f64"
+
+[[method]]
+lua = "getBuoyancyForce"
+ret = "f64"
+
+[[method]]
+lua = "getTotalGasMass"
+ret = "f64"
+
+[[method]]
+lua = "getLeakIntegrity"
+ret = "f64"
+
+[[method]]
+lua = "getMaxLeaks"
+ret = "i32"
+
+[[method]]
+lua = "getInternalDensity"
+ret = "f64"
+
+[[method]]
+lua = "getTemperatureDelta"
+ret = "f64"

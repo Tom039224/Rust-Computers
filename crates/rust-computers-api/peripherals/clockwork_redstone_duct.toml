@@ -1,0 +1,6 @@
+# Clockwork CC Compat — RedstoneDuct peripheral
+# (getConditional→Map はスキップ)
+
+[[method]]
+lua = "getPower"
+ret = "i32"

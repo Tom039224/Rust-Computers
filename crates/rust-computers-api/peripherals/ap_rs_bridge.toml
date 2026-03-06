@@ -1,0 +1,27 @@
+# AdvancedPeripherals — RSBridge (Refined Storage) peripheral
+# (import/export/craft など Map 引数・List 戻り値 のメソッドはスキップ)
+# (getTotalItemStorage など long 戻り値はスキップ)
+
+[[method]]
+lua = "isConnected"
+ret = "bool"
+
+[[method]]
+lua = "isOnline"
+ret = "bool"
+
+[[method]]
+lua = "getStoredEnergy"
+ret = "f64"
+
+[[method]]
+lua = "getEnergyCapacity"
+ret = "f64"
+
+[[method]]
+lua = "getEnergyUsage"
+ret = "f64"
+
+[[method]]
+lua = "getAverageEnergyInput"
+ret = "f64"

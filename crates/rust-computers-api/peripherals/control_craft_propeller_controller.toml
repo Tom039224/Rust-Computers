@@ -1,0 +1,10 @@
+# Control-Craft — PropellerController peripheral
+
+[[method]]
+lua = "setTargetSpeed"
+action = true
+args = [{ name = "speed", ty = "f64" }]
+
+[[method]]
+lua = "getTargetSpeed"
+ret = "f64"

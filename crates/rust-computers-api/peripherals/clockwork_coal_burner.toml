@@ -1,0 +1,13 @@
+# Clockwork CC Compat — CoalBurner peripheral
+
+[[method]]
+lua = "getFuelTicks"
+ret = "i32"
+
+[[method]]
+lua = "getMaxBurnTime"
+ret = "f64"
+
+[[method]]
+lua = "isBurning"
+ret = "bool"

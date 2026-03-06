@@ -1,0 +1,14 @@
+# AdvancedPeripherals — Powah Magmator integration peripheral
+# (getFuelTank → Object のためスキップ)
+
+[[method]]
+lua = "getStoredEnergy"
+ret = "f64"
+
+[[method]]
+lua = "getMaxEnergy"
+ret = "f64"
+
+[[method]]
+lua = "isBurning"
+ret = "bool"

@@ -1,0 +1,14 @@
+# Clockwork CC Compat — GasThruster peripheral
+# (Map戻り値はスキップ)
+
+[[method]]
+lua = "getThrust"
+ret = "f64"
+
+[[method]]
+lua = "getFlowRate"
+ret = "f64"
+
+[[method]]
+lua = "getFacing"
+ret = "str"

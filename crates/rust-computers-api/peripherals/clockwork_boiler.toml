@@ -1,0 +1,57 @@
+# Clockwork CC Compat — Boiler peripheral
+
+[[method]]
+lua = "isActive"
+ret = "bool"
+
+[[method]]
+lua = "getHeatLevel"
+ret = "i32"
+
+[[method]]
+lua = "getActiveHeat"
+ret = "i32"
+
+[[method]]
+lua = "isPassiveHeat"
+ret = "bool"
+
+[[method]]
+lua = "getWaterSupply"
+ret = "f64"
+
+[[method]]
+lua = "getAttachedEngines"
+ret = "i32"
+
+[[method]]
+lua = "getAttachedWhistles"
+ret = "i32"
+
+[[method]]
+lua = "getEngineEfficiency"
+ret = "f64"
+
+[[method]]
+lua = "getBoilerSize"
+ret = "i32"
+
+[[method]]
+lua = "getWidth"
+ret = "i32"
+
+[[method]]
+lua = "getHeight"
+ret = "i32"
+
+[[method]]
+lua = "getMaxHeatForSize"
+ret = "i32"
+
+[[method]]
+lua = "getMaxHeatForWater"
+ret = "i32"
+
+[[method]]
+lua = "getFillState"
+ret = "f64"

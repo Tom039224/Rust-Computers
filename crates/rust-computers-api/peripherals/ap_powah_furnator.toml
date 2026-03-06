@@ -1,0 +1,18 @@
+# AdvancedPeripherals — Powah Furnator integration peripheral
+# (getFuelSlot → Object のためスキップ)
+
+[[method]]
+lua = "isBurning"
+ret = "bool"
+
+[[method]]
+lua = "getStoredEnergy"
+ret = "f64"
+
+[[method]]
+lua = "getMaxEnergy"
+ret = "f64"
+
+[[method]]
+lua = "getCarbon"
+ret = "f64"

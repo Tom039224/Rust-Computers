@@ -1,0 +1,38 @@
+# Control-Craft — Camera peripheral
+# (Map戻り値はスキップ)
+
+[[method]]
+lua = "isBeingUsed"
+ret = "bool"
+
+[[method]]
+lua = "getDirection"
+ret = "str"
+
+[[method]]
+lua = "getPitch"
+ret = "f64"
+
+[[method]]
+lua = "getYaw"
+ret = "f64"
+
+[[method]]
+lua = "setPitch"
+action = true
+args = [{ name = "pitch", ty = "f64" }]
+
+[[method]]
+lua = "setYaw"
+action = true
+args = [{ name = "yaw", ty = "f64" }]
+
+[[method]]
+lua = "setConeAngle"
+action = true
+args = [{ name = "angle", ty = "f64" }]
+
+[[method]]
+lua = "setClipRange"
+action = true
+args = [{ name = "range", ty = "f64" }]

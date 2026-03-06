@@ -1,0 +1,10 @@
+# Control-Craft — KineticResistor peripheral
+
+[[method]]
+lua = "getRatio"
+ret = "f64"
+
+[[method]]
+lua = "setRatio"
+action = true
+args = [{ name = "ratio", ty = "f64" }]

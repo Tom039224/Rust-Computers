@@ -1,0 +1,10 @@
+# AdvancedPeripherals — BlockReader peripheral
+# getBlockData/getBlockStates は Map のためスキップ
+
+[[method]]
+lua = "getBlockName"
+ret = "str"
+
+[[method]]
+lua = "isTileEntity"
+ret = "bool"

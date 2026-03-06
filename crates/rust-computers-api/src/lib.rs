@@ -72,6 +72,69 @@ pub mod monitor {
     include!(concat!(env!("OUT_DIR"), "/monitor_gen.rs"));
 }
 
+// --- Clockwork CC Compat ---
+pub mod clockwork_air_compressor { include!(concat!(env!("OUT_DIR"), "/clockwork_air_compressor_gen.rs")); }
+pub mod clockwork_boiler { include!(concat!(env!("OUT_DIR"), "/clockwork_boiler_gen.rs")); }
+pub mod clockwork_coal_burner { include!(concat!(env!("OUT_DIR"), "/clockwork_coal_burner_gen.rs")); }
+pub mod clockwork_duct_tank { include!(concat!(env!("OUT_DIR"), "/clockwork_duct_tank_gen.rs")); }
+pub mod clockwork_exhaust { include!(concat!(env!("OUT_DIR"), "/clockwork_exhaust_gen.rs")); }
+pub mod clockwork_gas_engine { include!(concat!(env!("OUT_DIR"), "/clockwork_gas_engine_gen.rs")); }
+pub mod clockwork_gas_network { include!(concat!(env!("OUT_DIR"), "/clockwork_gas_network_gen.rs")); }
+pub mod clockwork_gas_nozzle { include!(concat!(env!("OUT_DIR"), "/clockwork_gas_nozzle_gen.rs")); }
+pub mod clockwork_gas_pump { include!(concat!(env!("OUT_DIR"), "/clockwork_gas_pump_gen.rs")); }
+pub mod clockwork_gas_thruster { include!(concat!(env!("OUT_DIR"), "/clockwork_gas_thruster_gen.rs")); }
+pub mod clockwork_gas_valve { include!(concat!(env!("OUT_DIR"), "/clockwork_gas_valve_gen.rs")); }
+pub mod clockwork_radiator { include!(concat!(env!("OUT_DIR"), "/clockwork_radiator_gen.rs")); }
+pub mod clockwork_redstone_duct { include!(concat!(env!("OUT_DIR"), "/clockwork_redstone_duct_gen.rs")); }
+
+// --- Control-Craft ---
+pub mod control_craft_dynamic_motor { include!(concat!(env!("OUT_DIR"), "/control_craft_dynamic_motor_gen.rs")); }
+pub mod control_craft_jet { include!(concat!(env!("OUT_DIR"), "/control_craft_jet_gen.rs")); }
+pub mod control_craft_kinematic_motor { include!(concat!(env!("OUT_DIR"), "/control_craft_kinematic_motor_gen.rs")); }
+pub mod control_craft_slider { include!(concat!(env!("OUT_DIR"), "/control_craft_slider_gen.rs")); }
+pub mod control_craft_propeller_controller { include!(concat!(env!("OUT_DIR"), "/control_craft_propeller_controller_gen.rs")); }
+pub mod control_craft_flap_bearing { include!(concat!(env!("OUT_DIR"), "/control_craft_flap_bearing_gen.rs")); }
+pub mod control_craft_kinetic_resistor { include!(concat!(env!("OUT_DIR"), "/control_craft_kinetic_resistor_gen.rs")); }
+pub mod control_craft_link_bridge { include!(concat!(env!("OUT_DIR"), "/control_craft_link_bridge_gen.rs")); }
+pub mod control_craft_spinalyzer { include!(concat!(env!("OUT_DIR"), "/control_craft_spinalyzer_gen.rs")); }
+pub mod control_craft_camera { include!(concat!(env!("OUT_DIR"), "/control_craft_camera_gen.rs")); }
+
+// --- Create ---
+pub mod create_speed_gauge { include!(concat!(env!("OUT_DIR"), "/create_speed_gauge_gen.rs")); }
+pub mod create_stress_gauge { include!(concat!(env!("OUT_DIR"), "/create_stress_gauge_gen.rs")); }
+pub mod create_speed_controller { include!(concat!(env!("OUT_DIR"), "/create_speed_controller_gen.rs")); }
+pub mod create_nixie_tube { include!(concat!(env!("OUT_DIR"), "/create_nixie_tube_gen.rs")); }
+pub mod create_station { include!(concat!(env!("OUT_DIR"), "/create_station_gen.rs")); }
+
+// --- Create Additions ---
+pub mod createaddition_electric_motor { include!(concat!(env!("OUT_DIR"), "/createaddition_electric_motor_gen.rs")); }
+pub mod createaddition_modular_accumulator { include!(concat!(env!("OUT_DIR"), "/createaddition_modular_accumulator_gen.rs")); }
+
+// --- AdvancedPeripherals ---
+pub mod ap_energy_detector { include!(concat!(env!("OUT_DIR"), "/ap_energy_detector_gen.rs")); }
+pub mod ap_environment_detector { include!(concat!(env!("OUT_DIR"), "/ap_environment_detector_gen.rs")); }
+pub mod ap_compass { include!(concat!(env!("OUT_DIR"), "/ap_compass_gen.rs")); }
+pub mod ap_block_reader { include!(concat!(env!("OUT_DIR"), "/ap_block_reader_gen.rs")); }
+pub mod ap_player_detector { include!(concat!(env!("OUT_DIR"), "/ap_player_detector_gen.rs")); }
+pub mod ap_inventory_manager { include!(concat!(env!("OUT_DIR"), "/ap_inventory_manager_gen.rs")); }
+pub mod ap_colony_integrator { include!(concat!(env!("OUT_DIR"), "/ap_colony_integrator_gen.rs")); }
+pub mod ap_beacon { include!(concat!(env!("OUT_DIR"), "/ap_beacon_gen.rs")); }
+pub mod ap_note_block { include!(concat!(env!("OUT_DIR"), "/ap_note_block_gen.rs")); }
+pub mod ap_powah_energy_cell { include!(concat!(env!("OUT_DIR"), "/ap_powah_energy_cell_gen.rs")); }
+pub mod ap_powah_ender_cell { include!(concat!(env!("OUT_DIR"), "/ap_powah_ender_cell_gen.rs")); }
+pub mod ap_powah_furnator { include!(concat!(env!("OUT_DIR"), "/ap_powah_furnator_gen.rs")); }
+pub mod ap_powah_magmator { include!(concat!(env!("OUT_DIR"), "/ap_powah_magmator_gen.rs")); }
+pub mod ap_powah_reactor { include!(concat!(env!("OUT_DIR"), "/ap_powah_reactor_gen.rs")); }
+pub mod ap_powah_solar_panel { include!(concat!(env!("OUT_DIR"), "/ap_powah_solar_panel_gen.rs")); }
+pub mod ap_powah_thermo { include!(concat!(env!("OUT_DIR"), "/ap_powah_thermo_gen.rs")); }
+pub mod ap_rs_bridge { include!(concat!(env!("OUT_DIR"), "/ap_rs_bridge_gen.rs")); }
+pub mod ap_automata_warping { include!(concat!(env!("OUT_DIR"), "/ap_automata_warping_gen.rs")); }
+
+// --- Some-Peripherals ---
+pub mod sp_raycaster { include!(concat!(env!("OUT_DIR"), "/sp_raycaster_gen.rs")); }
+pub mod sp_digitizer { include!(concat!(env!("OUT_DIR"), "/sp_digitizer_gen.rs")); }
+pub mod sp_ballistic_accelerator { include!(concat!(env!("OUT_DIR"), "/sp_ballistic_accelerator_gen.rs")); }
+
 // 再エクスポート / Re-exports
 pub use error::BridgeError;
 pub use future::{JoinAll, RequestFuture};
@@ -127,17 +190,17 @@ macro_rules! entry {
 ///
 /// ## タプル構文 / Tuple syntax
 ///
-/// 2〜4 個の Future をカンマ区切りで渡し、結果をタプルで受け取る。
+/// 2〜4 個の Future をタプルとして渡し、結果をタプルで受け取る。
 /// どの Future も同一 tick で発行されるため、1 tick 待つだけで全て取得できる。
 ///
-/// Pass 2–4 futures separated by commas and receive results as a tuple.
+/// Pass 2–4 futures as a tuple and receive results as a tuple.
 /// All futures are issued in the same tick, so only 1 tick is consumed.
 ///
 /// ```rust,no_run
-/// let (a, b) = rc::parallel!(
+/// let (a, b) = rc::parallel!((
 ///     radar.scan(64.0),
 ///     sensor.get_temp(),
-/// );
+/// ));
 /// ```
 ///
 /// ## Vec 構文 / Vec syntax
@@ -151,13 +214,13 @@ macro_rules! entry {
 #[macro_export]
 macro_rules! parallel {
     // --- タプル構文 (2〜4 要素) / Tuple syntax (2–4 elements) ---
-    ($a:expr, $b:expr $(,)?) => {{
+    (($a:expr, $b:expr $(,)?) $(,)?) => {{
         $crate::future::Join2::new($a, $b).await
     }};
-    ($a:expr, $b:expr, $c:expr $(,)?) => {{
+    (($a:expr, $b:expr, $c:expr $(,)?) $(,)?) => {{
         $crate::future::Join3::new($a, $b, $c).await
     }};
-    ($a:expr, $b:expr, $c:expr, $d:expr $(,)?) => {{
+    (($a:expr, $b:expr, $c:expr, $d:expr $(,)?) $(,)?) => {{
         $crate::future::Join4::new($a, $b, $c, $d).await
     }};
     // --- Vec 構文 / Vec syntax ---

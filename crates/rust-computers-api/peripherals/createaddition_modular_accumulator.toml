@@ -1,0 +1,29 @@
+# Create Additions — ModularAccumulator peripheral
+
+[[method]]
+lua = "getEnergy"
+ret = "i32"
+
+[[method]]
+lua = "getCapacity"
+ret = "i32"
+
+[[method]]
+lua = "getPercent"
+ret = "f64"
+
+[[method]]
+lua = "getMaxInsert"
+ret = "i32"
+
+[[method]]
+lua = "getMaxExtract"
+ret = "i32"
+
+[[method]]
+lua = "getHeight"
+ret = "i32"
+
+[[method]]
+lua = "getWidth"
+ret = "i32"

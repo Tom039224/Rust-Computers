@@ -1,0 +1,50 @@
+# AdvancedPeripherals — ColonyIntegrator (MineColonies) peripheral
+# (getCitizens/getVisitors/getBuildings/getWorkOrders/getResearch など List/Map はスキップ)
+
+[[method]]
+lua = "isInColony"
+ret = "bool"
+
+[[method]]
+lua = "amountOfConstructionSites"
+ret = "i32"
+
+[[method]]
+lua = "getColonyID"
+ret = "i32"
+
+[[method]]
+lua = "getColonyName"
+ret = "str"
+
+[[method]]
+lua = "getColonyStyle"
+ret = "str"
+
+[[method]]
+lua = "isActive"
+ret = "bool"
+
+[[method]]
+lua = "getHappiness"
+ret = "f64"
+
+[[method]]
+lua = "isUnderAttack"
+ret = "bool"
+
+[[method]]
+lua = "isUnderRaid"
+ret = "bool"
+
+[[method]]
+lua = "amountOfCitizens"
+ret = "i32"
+
+[[method]]
+lua = "maxOfCitizens"
+ret = "i32"
+
+[[method]]
+lua = "amountOfGraves"
+ret = "i32"

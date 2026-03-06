@@ -1,0 +1,16 @@
+# Control-Craft — Jet peripheral
+
+[[method]]
+lua = "setOutputThrust"
+action = true
+args = [{ name = "thrust", ty = "f64" }]
+
+[[method]]
+lua = "setHorizontalTilt"
+action = true
+args = [{ name = "tilt", ty = "f64" }]
+
+[[method]]
+lua = "setVerticalTilt"
+action = true
+args = [{ name = "tilt", ty = "f64" }]

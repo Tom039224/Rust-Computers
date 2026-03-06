@@ -1,0 +1,34 @@
+# Create Additions — ElectricMotor peripheral
+
+[[method]]
+lua = "getType"
+ret = "str"
+
+[[method]]
+lua = "setSpeed"
+action = true
+args = [{ name = "speed", ty = "f64" }]
+
+[[method]]
+lua = "stop"
+action = true
+
+[[method]]
+lua = "getSpeed"
+ret = "f64"
+
+[[method]]
+lua = "getStressCapacity"
+ret = "i32"
+
+[[method]]
+lua = "getEnergyConsumption"
+ret = "f64"
+
+[[method]]
+lua = "getMaxInsert"
+ret = "i32"
+
+[[method]]
+lua = "getMaxExtract"
+ret = "i32"

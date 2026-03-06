@@ -1,0 +1,5 @@
+# AdvancedPeripherals — Compass peripheral
+
+[[method]]
+lua = "getFacing"
+ret = "str"

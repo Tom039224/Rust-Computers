@@ -1,0 +1,11 @@
+# Create — NixieTube peripheral
+
+[[method]]
+lua = "setText"
+action = true
+args = [{ name = "text", ty = "str" }]
+
+[[method]]
+lua = "setTextColour"
+action = true
+args = [{ name = "colour", ty = "str" }]

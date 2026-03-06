@@ -36,7 +36,7 @@ struct Method {
     #[serde(default)]
     imm: bool,
     /// 戻り値の型文字列。省略時は () を返す。
-    /// "i32" | "bool" | "str" | "(i32, i32)"
+    /// "i32" | "bool" | "str" | "f64" | "(i32, i32)"
     #[serde(default)]
     ret: Option<String>,
     /// 引数リスト
@@ -49,7 +49,7 @@ struct Method {
 struct Arg {
     /// Rust で用いる引数名
     name: String,
-    /// 型文字列: "i32" | "str" | "bool"
+    /// 型文字列: "i32" | "str" | "bool" | "f64"
     ty: String,
 }
 
@@ -74,13 +74,17 @@ fn camel_to_snake(s: &str) -> String {
     out
 }
 
-/// ファイルステム ("monitor") → 構造体名 ("Monitor")
+/// ファイルステム ("monitor" / "create_speed_gauge") → 構造体名 ("Monitor" / "CreateSpeedGauge")
 fn struct_name_from_stem(stem: &str) -> String {
-    let mut chars = stem.chars();
-    match chars.next() {
-        None => String::new(),
-        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-    }
+    stem.split('_')
+        .map(|word| {
+            let mut c = word.chars();
+            match c.next() {
+                None => String::new(),
+                Some(first) => first.to_uppercase().collect::<String>() + c.as_str(),
+            }
+        })
+        .collect()
 }
 
 /// TOML 型文字列 → Rust 引数型文字列
@@ -89,6 +93,7 @@ fn arg_rust_type(ty: &str) -> &str {
         "i32"  => "i32",
         "str"  => "&str",
         "bool" => "bool",
+        "f64"  => "f64",
         _      => "i32",
     }
 }
@@ -99,6 +104,7 @@ fn encode_arg_expr(arg: &Arg) -> String {
         "i32"  => format!("m::int({})", arg.name),
         "str"  => format!("m::str({})", arg.name),
         "bool" => format!("m::bool_val({})", arg.name),
+        "f64"  => format!("m::float64({})", arg.name),
         _      => format!("m::int({})", arg.name),
     }
 }
@@ -109,6 +115,7 @@ fn return_type(ret: Option<&str>) -> String {
         None              => "()".to_string(),
         Some("i32")       => "i32".to_string(),
         Some("bool")      => "bool".to_string(),
+        Some("f64")       => "f64".to_string(),
         Some("str")       => "alloc::string::String".to_string(),
         Some("(i32, i32)") => "(i32, i32)".to_string(),
         Some(other)       => other.to_string(),
@@ -126,6 +133,9 @@ fn decode_return(ret: Option<&str>) -> String {
         }
         Some("bool") => {
             "let v = m::decode_bool_at(&data, 0);\n        Ok(v)".to_string()
+        }
+        Some("f64") => {
+            "let v = m::decode_float64_at(&data, 0);\n        Ok(v)".to_string()
         }
         Some("str") => {
             concat!(

@@ -1,0 +1,20 @@
+# AdvancedPeripherals — NoteBlock integration peripheral
+
+[[method]]
+lua = "changeNote"
+ret = "i32"
+action = true
+
+[[method]]
+lua = "changeNoteBy"
+ret = "i32"
+action = true
+args = [{ name = "note", ty = "i32" }]
+
+[[method]]
+lua = "getNote"
+ret = "i32"
+
+[[method]]
+lua = "playNote"
+action = true

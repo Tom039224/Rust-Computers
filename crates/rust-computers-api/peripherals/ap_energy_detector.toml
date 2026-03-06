@@ -1,0 +1,10 @@
+# AdvancedPeripherals — EnergyDetector peripheral
+# setTransferRateLimit(long) は i64 非対応のためスキップ
+
+[[method]]
+lua = "getTransferRateLimit"
+ret = "i32"
+
+[[method]]
+lua = "getTransferRate"
+ret = "i32"

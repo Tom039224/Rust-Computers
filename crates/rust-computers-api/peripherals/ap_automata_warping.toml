@@ -1,0 +1,30 @@
+# AdvancedPeripherals — Automata Warping plugin (Hugging Automata turtle)
+# (points() → List のためスキップ)
+
+[[method]]
+lua = "savePoint"
+ret = "bool"
+action = true
+args = [{ name = "name", ty = "str" }]
+
+[[method]]
+lua = "deletePoint"
+ret = "bool"
+action = true
+args = [{ name = "name", ty = "str" }]
+
+[[method]]
+lua = "warpToPoint"
+ret = "bool"
+action = true
+args = [{ name = "name", ty = "str" }]
+
+[[method]]
+lua = "estimateWarpCost"
+ret = "i32"
+args = [{ name = "name", ty = "str" }]
+
+[[method]]
+lua = "distanceToPoint"
+ret = "f64"
+args = [{ name = "name", ty = "str" }]
