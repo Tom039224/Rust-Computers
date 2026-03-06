@@ -1,7 +1,9 @@
 package com.rustcomputers.peripheral;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 /**
  * ペリフェラル結果用の最小 MessagePack エンコーダ / デコーダ。
@@ -146,9 +148,140 @@ public final class MsgPack {
         return out;
     }
 
+    /**
+     * float64 (IEEE 754 double) をエンコードする / Encode a double as float64.
+     */
+    public static byte[] float64(double v) {
+        long bits = Double.doubleToRawLongBits(v);
+        return new byte[]{
+            (byte) 0xCB,
+            (byte)(bits >> 56), (byte)(bits >> 48), (byte)(bits >> 40), (byte)(bits >> 32),
+            (byte)(bits >> 24), (byte)(bits >> 16), (byte)(bits >> 8),  (byte)(bits)
+        };
+    }
+
+    /**
+     * int64 をエンコードする（最小バイト数） / Encode a long (minimal bytes).
+     */
+    public static byte[] int64(long v) {
+        // int32 範囲に収まれば int32 で / use int32 if it fits
+        if (v >= Integer.MIN_VALUE && v <= Integer.MAX_VALUE) return int32((int) v);
+        return new byte[]{
+            (byte) 0xD3,
+            (byte)(v >> 56), (byte)(v >> 48), (byte)(v >> 40), (byte)(v >> 32),
+            (byte)(v >> 24), (byte)(v >> 16), (byte)(v >> 8),  (byte)(v)
+        };
+    }
+
+    /**
+     * Map&lt;String, byte[]&gt; を fixmap / map16 でエンコードする。
+     * Encode a Map&lt;String, byte[]&gt; as fixmap or map16.
+     */
+    public static byte[] packMap(Map<String, byte[]> m) {
+        int n = m.size();
+        int dataLen = 0;
+        List<Map.Entry<String, byte[]>> entries = new java.util.ArrayList<>(m.entrySet());
+        // compute data length
+        for (Map.Entry<String, byte[]> e : entries) {
+            dataLen += str(e.getKey()).length + e.getValue().length;
+        }
+        byte[] out;
+        int pos;
+        if (n <= 15) {
+            out = new byte[1 + dataLen];
+            out[0] = (byte)(0x80 | n);
+            pos = 1;
+        } else {
+            out = new byte[3 + dataLen];
+            out[0] = (byte) 0xDE;
+            out[1] = (byte)(n >> 8);
+            out[2] = (byte)(n);
+            pos = 3;
+        }
+        for (Map.Entry<String, byte[]> e : entries) {
+            byte[] k = str(e.getKey());
+            System.arraycopy(k, 0, out, pos, k.length); pos += k.length;
+            byte[] v = e.getValue();
+            System.arraycopy(v, 0, out, pos, v.length); pos += v.length;
+        }
+        return out;
+    }
+
+    /**
+     * Kotlin / Java の任意値を再帰的に MessagePack にエンコードする。
+     * Recursively encode any Kotlin / Java value to MessagePack.
+     *
+     * <p>対応型 / Supported types:
+     * {@code null}, {@link Boolean}, {@link Integer}, {@link Long}, {@link Short},
+     * {@link Byte}, {@link Double}, {@link Float}, {@link String},
+     * {@link List}, {@link Map} (String keys)</p>
+     */
+    @SuppressWarnings("unchecked")
+    public static byte[] packAny(Object value) {
+        if (value == null)              return nil();
+        if (value instanceof Boolean)   return bool((Boolean) value);
+        if (value instanceof Byte)      return int32((Byte) value);
+        if (value instanceof Short)     return int32((Short) value);
+        if (value instanceof Integer)   return int32((Integer) value);
+        if (value instanceof Long)      return int64((Long) value);
+        if (value instanceof Float)     return float64((Float) value);
+        if (value instanceof Double)    return float64((Double) value);
+        if (value instanceof String)    return str((String) value);
+        if (value instanceof List) {
+            List<?> list = (List<?>) value;
+            List<byte[]> encoded = new java.util.ArrayList<>(list.size());
+            for (Object item : list) encoded.add(packAny(item));
+            return array(encoded);
+        }
+        if (value instanceof Map) {
+            Map<?, ?> raw = (Map<?, ?>) value;
+            Map<String, byte[]> encoded = new java.util.LinkedHashMap<>();
+            for (Map.Entry<?, ?> e : raw.entrySet()) {
+                encoded.put(String.valueOf(e.getKey()), packAny(e.getValue()));
+            }
+            return packMap(encoded);
+        }
+        // フォールバック: toString でエンコード / fallback: encode as string
+        return str(value.toString());
+    }
+
     // ==================================================================
     // デコード / Decoding
     // ==================================================================
+
+    /**
+     * バイト列から offset 位置の double 値を読む（float32 / float64 / int 対応）。
+     * Read a double from bytes at offset (handles float32, float64, and int types).
+     *
+     * @param data   入力バイト列 / input bytes
+     * @param offset 読み取り開始位置 / read start offset
+     * @return デコードされた double 値、データ不足なら 0.0
+     */
+    public static double decodeF64(byte[] data, int offset) {
+        if (data == null || data.length <= offset) return 0.0;
+        int b = data[offset] & 0xFF;
+        // int formats — delegate to decodeInt
+        if (b <= 0x7F || b >= 0xE0 ||
+            b == 0xCC || b == 0xCD || b == 0xCE ||
+            b == 0xD0 || b == 0xD1 || b == 0xD2) {
+            return decodeInt(data, offset);
+        }
+        if (b == 0xCA) { // float32
+            if (offset + 4 >= data.length) return 0.0;
+            int bits = ((data[offset+1]&0xFF)<<24)|((data[offset+2]&0xFF)<<16)
+                      |((data[offset+3]&0xFF)<<8)|(data[offset+4]&0xFF);
+            return Float.intBitsToFloat(bits);
+        }
+        if (b == 0xCB) { // float64
+            if (offset + 8 >= data.length) return 0.0;
+            long bits = 0;
+            for (int i = 1; i <= 8; i++) {
+                bits = (bits << 8) | (data[offset + i] & 0xFF);
+            }
+            return Double.longBitsToDouble(bits);
+        }
+        return 0.0;
+    }
 
     /**
      * バイト列から offset 位置の int 値を読む（引数デコード用）。
