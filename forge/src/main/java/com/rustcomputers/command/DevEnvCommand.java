@@ -71,18 +71,27 @@ public final class DevEnvCommand {
                 .resolve("computer")
                 .resolve(String.valueOf(computerId));
 
-        // 既存チェック / Already exists check
-        if (Files.exists(devDir.resolve("dev.toml"))) {
-            source.sendSuccess(
-                    () -> Component.literal(
-                            "[RC] Computer #" + computerId + " の開発環境はすでに存在します:\n" +
-                            "  " + devDir + "\n" +
-                            "  削除してから再実行してください。 / Delete it first to regenerate."),
-                    false);
-            return 0;
-        }
+        // 既存チェック — src/ 以外を削除して再生成 / Already-exists: delete all except src/ then regenerate
+        boolean isRegenerate = Files.exists(devDir);
 
         try {
+            if (isRegenerate) {
+                try (java.util.stream.Stream<Path> listing = Files.list(devDir)) {
+                    listing.filter(p -> !p.getFileName().toString().equals("src"))
+                           .forEach(p -> {
+                               try { deleteRecursive(p); }
+                               catch (IOException e) {
+                                   LOGGER.warn("[RC] 削除失敗 / Failed to delete {}: {}", p, e.getMessage());
+                               }
+                           });
+                }
+                source.sendSuccess(
+                        () -> Component.literal(
+                                "[RC] Computer #" + computerId + " の開発環境を再生成します (src/ は保持)。\n" +
+                                "  Regenerating dev env (src/ preserved)."),
+                        false);
+            }
+
             // ディレクトリ作成 / Create directory structure
             Files.createDirectories(devDir.resolve("src"));
             Files.createDirectories(devDir.resolve(".cargo"));
@@ -99,7 +108,11 @@ public final class DevEnvCommand {
             writeDevToml(devDir, computerId);
             writeCargoToml(devDir, computerId);
             writeCargoConfig(devDir);
-            writeMainRs(devDir.resolve("src"), computerId);
+            // src/main.rs は初回生成のみ実行 (再生成時はユーザーのコードを保持)
+            // Write src/main.rs only on first-time generation (preserve user code on regenerate)
+            if (!isRegenerate) {
+                writeMainRs(devDir.resolve("src"), computerId);
+            }
             writeVsCodeTasks(devDir, computerId, computerDir);
 
             String devDirStr = devDir.toAbsolutePath().toString();
@@ -295,7 +308,7 @@ public final class DevEnvCommand {
                     // Example: writing to a CC:Tweaked Monitor placed to the south:
                     // -------------------------------------------------------------------
 
-                    // use rc::monitor::Monitor;
+                    // use rc::computer_craft::monitor::Monitor;
                     // use rc::peripheral::Direction;
                     //
                     // let mon = Monitor::new(Direction::South);
@@ -391,6 +404,21 @@ public final class DevEnvCommand {
     // ------------------------------------------------------------------
     // ユーティリティ / Utilities
     // ------------------------------------------------------------------
+
+    /**
+     * パスを再帰的に削除する (ファイルでもディレクトリでも可)。
+     * Recursively delete a path (works for both files and directories).
+     */
+    private static void deleteRecursive(Path path) throws IOException {
+        if (Files.isDirectory(path)) {
+            try (java.util.stream.Stream<Path> children = Files.list(path)) {
+                for (Path child : (Iterable<Path>) children::iterator) {
+                    deleteRecursive(child);
+                }
+            }
+        }
+        Files.deleteIfExists(path);
+    }
 
     /**
      * シェルのシングルクォートをエスケープする ('→'"'"')。

@@ -1,0 +1,11 @@
+# AdvancedPeripherals — NBTStorage peripheral
+#
+# read() → table (Map 戻り値のためスキップ)
+# write(data: table) → bool (Map 引数のためスキップ)
+# writeJson(json_data: string) → bool (文字列引数・bool 戻り値: 実装する)
+
+[[method]]
+lua    = "writeJson"
+ret    = "bool"
+action = true
+args   = [{ name = "json_data", ty = "str" }]

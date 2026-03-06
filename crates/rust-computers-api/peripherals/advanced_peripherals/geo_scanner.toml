@@ -1,0 +1,10 @@
+# AdvancedPeripherals — GeoScanner peripheral
+#
+# scan(radius: int) → table (ブロックリスト) はスキップ
+# chunkAnalyze() → table もスキップ
+# cost(radius) はスカラー int を返す → 実装する
+
+[[method]]
+lua  = "cost"
+ret  = "i32"
+args = [{ name = "radius", ty = "i32" }]

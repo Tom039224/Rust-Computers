@@ -1,0 +1,9 @@
+# Some-Peripherals — WorldScanner peripheral
+#
+# @LuaFunction メソッド一覧:
+#   getBlockAt(x: int, y: int, z: int, inShipyard: boolean) → table (Map)
+#
+# 全メソッドが Map を返すため、現バージョンではスカラーラッパーなし。
+# スタブ構造体 `WorldScanner` のみ生成する。
+# All methods return Map; no scalar wrappers in this version.
+# Generates stub struct `WorldScanner` only.

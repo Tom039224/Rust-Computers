@@ -1,0 +1,13 @@
+# Some-Peripherals — Radar peripheral
+#
+# @LuaFunction メソッド一覧:
+#   scan(radius: double)             → table (List)
+#   scanForEntities(radius: double)  → table (List)
+#   scanForShips(radius: double)     → table (List)
+#   scanForPlayers(radius: double)   → table (List)
+#   getConfigInfo()                  → table (Map)
+#
+# 全メソッドが List / Map を返すため、現バージョンではスカラーラッパーなし。
+# スタブ構造体 `Radar` のみ生成する。将来的に "table" 戻り値型サポートで追加予定。
+# All methods return List/Map; no scalar wrappers in this version.
+# Generates stub struct `Radar` only. Future "table" return type support planned.

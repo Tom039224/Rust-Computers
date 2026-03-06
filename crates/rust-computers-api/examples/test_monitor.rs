@@ -14,7 +14,7 @@
 //! - Auto-detect monitor in 6 directions (uses `Monitor::new(dir).clear()`)
 //! - `parallel!` macro: fetch size + is_advanced + text_scale in 1 tick
 //! - All drawing APIs via the auto-generated `Monitor` struct
-//!   (written by build.rs from `peripherals/monitor.toml`)
+//!   (written by build.rs from `peripherals/computer_craft/monitor.toml`)
 
 #![no_std]
 #![no_main]
@@ -24,7 +24,7 @@ extern crate alloc;
 use alloc::format;
 
 use rust_computers_api as rc;
-use rc::monitor::Monitor;
+use rc::computer_craft::monitor::Monitor;
 use rc::peripheral::{Direction, is_mod_available};
 
 rc::entry!(main);
