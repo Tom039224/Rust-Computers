@@ -4,14 +4,18 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -127,7 +131,110 @@ public final class PeripheralProvider {
             }
         }
 
+        // 有線モデム経由のペリフェラルも追加 (CC:Tweaked がインストールされている場合)
+        // Also add peripherals connected via wired modem (when CC:Tweaked is installed)
+        scanWiredNetwork(level, computerPos, result);
+
         return result;
+    }
+
+    // ==================================================================
+    // 有線モデムネットワーク走査 / Wired modem network scanning
+    // ==================================================================
+
+    /**
+     * 隣接する CC:Tweaked 有線モデムを検出し、ネットワーク上のペリフェラルを追加する。
+     * Detect adjacent CC:Tweaked wired modems and add network peripherals.
+     *
+     * <p>CC:Tweaked が存在しない環境では何もせず安全にスキップする。</p>
+     * <p>Silently skips if CC:Tweaked is not installed.</p>
+     *
+     * @param level       サーバーレベル / server level
+     * @param computerPos コンピュータの座標 / computer block position
+     * @param result      既存のペリフェラルマップ（直接接続 periph_id 0–5）に追記する
+     *                    / existing peripheral map (direct periph_id 0–5) to append to
+     */
+    private static void scanWiredNetwork(
+            ServerLevel level, BlockPos computerPos, Map<Integer, AttachedPeripheral> result) {
+        try {
+            scanWiredNetworkImpl(level, computerPos, result);
+        } catch (LinkageError e) {
+            // CC:Tweaked が未インストール — 正常動作
+            LOGGER.debug("CC:Tweaked not available, skipping wired modem scan");
+        } catch (Throwable e) {
+            // リフレクション失敗等
+            LOGGER.warn("Wired modem scan failed: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * CC:Tweaked API を使用した有線モデムネットワーク走査の内部実装。
+     * Internal implementation of wired modem network scanning using CC:Tweaked API.
+     *
+     * <p>ForgeComputerCraftAPI.getWiredElementAt() で隣接の WiredElement を取得し、
+     * ネットワーク上の全ノードをリフレクション経由で走査する
+     * （WiredNetwork のパブリックAPI には全ノード列挙がないため）。</p>
+     */
+    private static void scanWiredNetworkImpl(
+            ServerLevel level, BlockPos computerPos, Map<Integer, AttachedPeripheral> result) throws Exception {
+
+        // 既にマップに含まれている BlockPos（直接接続）を記録
+        Set<BlockPos> knownPositions = new HashSet<>();
+        knownPositions.add(computerPos);
+        for (AttachedPeripheral ap : result.values()) {
+            knownPositions.add(ap.peripheralPos());
+        }
+
+        int nextPeriphId = 6;
+
+        for (Direction dir : Direction.values()) {
+            BlockPos adjPos = computerPos.relative(dir);
+            if (!level.isLoaded(adjPos)) continue;
+
+            // CC:Tweaked API: 隣接ブロックから WiredElement を取得
+            var optElement = dan200.computercraft.api.ForgeComputerCraftAPI
+                    .getWiredElementAt(level, adjPos, dir.getOpposite());
+
+            if (optElement.isPresent()) {
+                var element = optElement.orElse(null);
+                if (element == null) continue;
+                var node = element.getNode();
+                var network = node.getNetwork();
+
+                // リフレクションで WiredNetworkImpl.nodes (Set<WiredNodeImpl>) を取得
+                // WiredNetwork public API には全ノード列挙がないため
+                Field nodesField = network.getClass().getDeclaredField("nodes");
+                nodesField.setAccessible(true);
+                @SuppressWarnings("unchecked")
+                Set<?> nodes = (Set<?>) nodesField.get(network);
+
+                for (Object n : nodes) {
+                    // WiredNodeImpl は WiredNode を implements しているが、
+                    // getElement() は interface WiredNode 上にある
+                    if (n instanceof dan200.computercraft.api.network.wired.WiredNode wn) {
+                        var elem = wn.getElement();
+                        Vec3 posVec = elem.getPosition();
+                        BlockPos bp = BlockPos.containing(posVec);
+
+                        // 既知の位置はスキップ（自分 + 直接接続 + 重複排除）
+                        if (knownPositions.contains(bp)) continue;
+                        knownPositions.add(bp);
+
+                        Block block = level.getBlockState(bp).getBlock();
+                        PeripheralType pt = getForBlock(block);
+                        if (pt != null) {
+                            result.put(nextPeriphId, new AttachedPeripheral(pt, null, bp));
+                            LOGGER.debug("Found wired peripheral '{}' at {} (periph_id={})",
+                                    pt.getTypeName(), bp, nextPeriphId);
+                            nextPeriphId++;
+                        }
+                    }
+                }
+
+                // 同一ネットワークなので最初に見つけた WiredElement だけ処理すれば十分
+                break;
+            }
+        }
     }
 
     // ==================================================================

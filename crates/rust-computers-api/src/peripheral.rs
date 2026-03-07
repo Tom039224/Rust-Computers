@@ -226,7 +226,7 @@ fn issue_request(
     let request_id = unsafe {
         if is_action {
             ffi::host_do_action(
-                addr.raw() as i32,
+                addr.raw(),
                 mid,
                 args.as_ptr() as i32,
                 args.len() as i32,
@@ -235,7 +235,7 @@ fn issue_request(
             )
         } else {
             ffi::host_request_info(
-                addr.raw() as i32,
+                addr.raw(),
                 mid,
                 args.as_ptr() as i32,
                 args.len() as i32,
@@ -286,7 +286,7 @@ pub fn request_info_imm(
     let periph_id = addr.into().raw();
     let written = unsafe {
         ffi::host_request_info_imm(
-            periph_id as i32,
+            periph_id,
             mid,
             args.as_ptr() as i32,
             args.len() as i32,

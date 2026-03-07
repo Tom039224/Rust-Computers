@@ -66,6 +66,11 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 // ------------------------------------------------------------------
 repositories {
     mavenCentral()
+    maven {
+        name = "cc-tweaked"
+        url = "https://maven.squiddev.cc"
+        content { includeGroup("cc.tweaked") }
+    }
 }
 
 // JarInJar — Chicory + MessagePack を mod JAR に同梱する。
@@ -88,6 +93,11 @@ dependencies {
     // MessagePack — Java ↔ WASM シリアライゼーション
     // MessagePack serialization for Java ↔ WASM bridge
     implementation 'org.msgpack:msgpack-core:0.9.8'
+
+    // CC:Tweaked API — 有線モデムネットワーク連携 (compileOnly: 実行時は CC:T 本体が提供)
+    // CC:Tweaked API — wired modem network integration (compileOnly: provided by CC:T at runtime)
+    compileOnly("cc.tweaked:cc-tweaked-${minecraft_version}-core-api:${cct_version}")
+    compileOnly("cc.tweaked:cc-tweaked-${minecraft_version}-forge-api:${cct_version}")
 
     // --- JarInJar 宣言 / JarInJar declarations ---
     jarJar(group: 'com.dylibso.chicory', name: 'runtime', version: "[${chicory_version},2.0.0)")

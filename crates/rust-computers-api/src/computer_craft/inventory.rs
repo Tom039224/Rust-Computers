@@ -91,7 +91,7 @@ impl Inventory {
         to_slot: Option<u32>,
     ) -> Result<u32, PeripheralError> {
         let mut args = alloc::vec![
-            msgpack::int(to.dir.id() as i32),
+            msgpack::int(to.addr.raw() as i32),
             msgpack::int(from_slot as i32),
         ];
         if let Some(l) = limit {
@@ -118,7 +118,7 @@ impl Inventory {
         to_slot: Option<u32>,
     ) -> Result<u32, PeripheralError> {
         let mut args = alloc::vec![
-            msgpack::int(from.dir.id() as i32),
+            msgpack::int(from.addr.raw() as i32),
             msgpack::int(from_slot as i32),
         ];
         if let Some(l) = limit {

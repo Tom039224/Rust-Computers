@@ -4,9 +4,12 @@ use alloc::string::String;
 
 use serde::{Deserialize, Serialize};
 
+use crate::error::PeripheralError;
+use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// ブロック情報。
+/// Block information returned by WorldScanner.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SPBlockInfo {
     pub block_type: String,
@@ -15,6 +18,7 @@ pub struct SPBlockInfo {
 }
 
 /// WorldScanner ペリフェラル。
+/// WorldScanner peripheral for scanning blocks in the world.
 pub struct WorldScanner {
     addr: PeriphAddr,
 }
@@ -28,5 +32,32 @@ impl Peripheral for WorldScanner {
 
     fn periph_addr(&self) -> PeriphAddr {
         self.addr
+    }
+}
+
+impl WorldScanner {
+    /// 指定座標のブロック情報を取得する。
+    /// Get block information at the specified coordinates.
+    ///
+    /// # Arguments
+    /// * `x` - X 座標
+    /// * `y` - Y 座標
+    /// * `z` - Z 座標
+    /// * `is_shipyard` - Valkyrien Skies の shipyard 座標かどうか
+    pub async fn get_block_at(
+        &self,
+        x: i32,
+        y: i32,
+        z: i32,
+        is_shipyard: bool,
+    ) -> Result<SPBlockInfo, PeripheralError> {
+        let args = msgpack::array(&[
+            msgpack::int(x),
+            msgpack::int(y),
+            msgpack::int(z),
+            msgpack::bool_val(is_shipyard),
+        ]);
+        let data = peripheral::request_info(self.addr, "getBlockAt", &args).await?;
+        peripheral::decode(&data)
     }
 }
