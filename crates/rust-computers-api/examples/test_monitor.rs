@@ -116,15 +116,15 @@ async fn main() {
     // All three Futures are dispatched at GT:N.
     // Results arrive at GT:N+1 — one tick total regardless of count.
     //
-    // Syntax: rc::parallel!((future_a, future_b, future_c))
+    // Syntax: rc::parallel!(future_a, future_b, future_c).await
     //         returns (Result<A, _>, Result<B, _>, Result<C, _>)
     // ---------------------------------------------------------------
     rc::println!("[3] Parallel fetch: size + is_advanced + text_scale (1 tick)...");
-    let (size_res, advanced_res, scale_res) = rc::parallel!((
+    let (size_res, advanced_res, scale_res) = rc::parallel!(
         mon.get_size(),
         mon.is_advanced(),
         mon.get_text_scale(),
-    ));
+    ).await;
     let (width, height) = size_res.unwrap_or((26, 10));
     let is_advanced      = advanced_res.unwrap_or(false);
     let _scale           = scale_res.unwrap_or(10);

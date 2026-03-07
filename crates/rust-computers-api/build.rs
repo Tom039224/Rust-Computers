@@ -91,6 +91,7 @@ fn struct_name_from_stem(stem: &str) -> String {
 fn arg_rust_type(ty: &str) -> &str {
     match ty {
         "i32"  => "i32",
+        "i64"  => "i64",
         "str"  => "&str",
         "bool" => "bool",
         "f64"  => "f64",
@@ -102,6 +103,7 @@ fn arg_rust_type(ty: &str) -> &str {
 fn encode_arg_expr(arg: &Arg) -> String {
     match arg.ty.as_str() {
         "i32"  => format!("m::int({})", arg.name),
+        "i64"  => format!("m::int64({})", arg.name),
         "str"  => format!("m::str({})", arg.name),
         "bool" => format!("m::bool_val({})", arg.name),
         "f64"  => format!("m::float64({})", arg.name),
@@ -114,6 +116,7 @@ fn return_type(ret: Option<&str>) -> String {
     match ret {
         None               => "()".to_string(),
         Some("i32")        => "i32".to_string(),
+        Some("i64")        => "i64".to_string(),
         Some("bool")       => "bool".to_string(),
         Some("f64")        => "f64".to_string(),
         Some("str")        => "alloc::string::String".to_string(),
@@ -132,6 +135,9 @@ fn decode_return(ret: Option<&str>) -> String {
         }
         Some("i32") => {
             "let v = m::decode_int_at(&data, 0);\n        Ok(v)".to_string()
+        }
+        Some("i64") => {
+            "let v = m::decode_int64_at(&data, 0);\n        Ok(v)".to_string()
         }
         Some("bool") => {
             "let v = m::decode_bool_at(&data, 0);\n        Ok(v)".to_string()

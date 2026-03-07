@@ -64,6 +64,43 @@ WASM モジュールが呼び出せるホスト関数 / Host functions callable 
 
 ## Peripheral API
 
+### プログラミングモデル / Programming Model
+
+すべてのペリフェラル操作は **1 tick 遅れ**で結果が返ります。`_imm` サフィックス付きメソッドは即時実行です。  
+All peripheral operations return results with a **1 tick delay**. Methods with `_imm` suffix execute immediately.
+
+```rust
+#[entry]
+async fn main() {
+    let mon = Monitor::new(Direction::South);
+
+    // 1 tick 待ち
+    let (w, h) = mon.get_size().await?;
+
+    // 即時実行 (同 tick 内で結果)
+    let kind = mon.get_type_imm()?;
+
+    // 並列取得 — parallel! は Future を返す
+    let (size, adv, scale) = rc::parallel!(
+        mon.get_size(),
+        mon.is_advanced(),
+        mon.get_text_scale(),
+    ).await;
+}
+```
+
+### msgpack::Value 型安全アクセサ
+
+複雑な戻り値（`ret = "bytes"`）は `msgpack::Value` としてデコードされ、型安全なアクセサでデータを抽出できます。  
+Complex return values (`ret = "bytes"`) are decoded as `msgpack::Value` with type-safe accessors.
+
+| メソッド | 説明 |
+|---|---|
+| `as_i64()` / `as_f64()` / `as_bool()` / `as_str()` | プリミティブ型を抽出 |
+| `as_array()` / `as_map()` | コレクション参照を取得 |
+| `get(key)` / `at(index)` | Map/Array から直接取得 |
+| `len()` / `is_empty()` / `is_nil()` | 状態確認 |
+
 ### VanillaRedstonePeripheral
 
 対応ブロック: Lever, Redstone Block, Redstone Torch, Redstone Wire, Redstone Lamp, Comparator, Repeater, Observer, ボタン各種、感圧板各種, Sculk Sensor, Daylight Detector, Lightning Rod, Tripwire Hook
@@ -85,6 +122,19 @@ WASM モジュールが呼び出せるホスト関数 / Host functions callable 
 | `getItem(slot)` | int | map\|nil | スロットのアイテム情報 (`id`, `count`, `maxCount`) |
 | `listItems()` | — | array | 空でないスロットの一覧 |
 | `getItemCount(slot)` | int | int | スロットのアイテム数 |
+
+### 対応 TOML 型
+
+| TOML `ret` | Rust 型 |
+|---|---|
+| `"i32"` | `i32` |
+| `"i64"` | `i64` |
+| `"bool"` | `bool` |
+| `"f64"` | `f64` |
+| `"str"` | `String` |
+| `"(i32, i32)"` | `(i32, i32)` |
+| `"bytes"` | `msgpack::Value` |
+| 省略 | `()` |
 
 ---
 

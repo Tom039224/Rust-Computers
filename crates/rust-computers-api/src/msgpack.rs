@@ -32,7 +32,6 @@ extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 use alloc::collections::BTreeMap;
-use alloc::string::String;
 
 // ==================================================================
 // エンコード / Encoding
@@ -101,6 +100,74 @@ pub fn float64(v: f64) -> Vec<u8> {
     out.push(0xCB);
     out.extend_from_slice(&v.to_bits().to_be_bytes());
     out
+}
+
+/// i64 を int64 (0xD3 + 8 bytes big-endian) としてエンコードする。
+/// Encode an i64 as MessagePack int64.
+pub fn int64(v: i64) -> Vec<u8> {
+    // 小さい値は最小バイト数でエンコード / Small values use minimal encoding
+    if v >= 0 && v <= 0x7F       { return vec![v as u8]; }            // positive fixint
+    if v >= -32 && v < 0         { return vec![v as u8]; }            // negative fixint
+    if v >= 0 && v <= 0xFF       { return vec![0xCC, v as u8]; }      // uint 8
+    if v >= 0 && v <= 0xFFFF     { return vec![0xCD, (v >> 8) as u8, v as u8]; } // uint 16
+    if v >= i32::MIN as i64 && v <= i32::MAX as i64 {
+        let w = v as i32;
+        return vec![0xD2, (w >> 24) as u8, (w >> 16) as u8, (w >> 8) as u8, w as u8]; // int 32
+    }
+    // int 64
+    let mut out = Vec::with_capacity(9);
+    out.push(0xD3);
+    out.extend_from_slice(&v.to_be_bytes());
+    out
+}
+
+/// i64 を decode する。int8/int16/int32/int64/uint8/uint16/uint32/uint64 に対応。
+/// Decode an i64. Supports int8/int16/int32/int64/uint8/uint16/uint32/uint64.
+pub fn decode_int64_at(data: &[u8], index: usize) -> i64 {
+    let off = arg_offset(data, index);
+    if off < 0 { return 0; }
+    let pos = off as usize;
+    if pos >= data.len() { return 0; }
+    let b = data[pos];
+    match b {
+        0x00..=0x7F => b as i64,                  // positive fixint
+        0xE0..=0xFF => (b as i8) as i64,          // negative fixint
+        0xCC => data.get(pos + 1).map_or(0, |&v| v as i64),  // uint8
+        0xCD => {
+            let hi = data.get(pos + 1).copied().unwrap_or(0) as i64;
+            let lo = data.get(pos + 2).copied().unwrap_or(0) as i64;
+            (hi << 8) | lo
+        }
+        0xCE => {
+            let a = data.get(pos + 1).copied().unwrap_or(0) as u32;
+            let b2 = data.get(pos + 2).copied().unwrap_or(0) as u32;
+            let c = data.get(pos + 3).copied().unwrap_or(0) as u32;
+            let d = data.get(pos + 4).copied().unwrap_or(0) as u32;
+            ((a << 24) | (b2 << 16) | (c << 8) | d) as i64
+        }
+        0xD0 => data.get(pos + 1).map_or(0, |&v| v as i8 as i64),  // int8
+        0xD1 => {
+            let hi = data.get(pos + 1).copied().unwrap_or(0) as i16;
+            let lo = data.get(pos + 2).copied().unwrap_or(0) as i16;
+            ((hi << 8) | lo) as i64
+        }
+        0xD2 => {
+            let a = data.get(pos + 1).copied().unwrap_or(0) as i32;
+            let b2 = data.get(pos + 2).copied().unwrap_or(0) as i32;
+            let c = data.get(pos + 3).copied().unwrap_or(0) as i32;
+            let d = data.get(pos + 4).copied().unwrap_or(0) as i32;
+            ((a << 24) | (b2 << 16) | (c << 8) | d) as i64
+        }
+        0xD3 => {
+            if data.len() < pos + 9 { return 0; }
+            let mut val: i64 = 0;
+            for i in 0..8 {
+                val = (val << 8) | (data.get(pos + 1 + i).copied().unwrap_or(0) as i64);
+            }
+            val
+        }
+        _ => 0,
+    }
 }
 
 // ==================================================================
@@ -276,7 +343,29 @@ fn skip_element(data: &[u8], pos: usize) -> i32 {
 ///
 /// Lua側から返される複雑な戻り値（List/Map）をデコードするための型。
 /// Used to decode complex return values (List/Map) from Lua side.
-#[derive(Debug, Clone)]
+///
+/// ## 型安全な値アクセス / Type-safe value access
+///
+/// ```rust,no_run
+/// use rust_computers_api::msgpack::Value;
+///
+/// fn process(val: &Value) {
+///     // 型変換メソッド
+///     if let Some(i) = val.as_i64()    { /* 整数 */ }
+///     if let Some(f) = val.as_f64()    { /* 浮動小数点 */ }
+///     if let Some(b) = val.as_bool()   { /* ブール */ }
+///     if let Some(s) = val.as_str()    { /* 文字列参照 */ }
+///     if let Some(a) = val.as_array()  { /* 配列参照 */ }
+///     if let Some(m) = val.as_map()    { /* マップ参照 */ }
+///
+///     // マップから直接キーで取得
+///     if let Some(v) = val.get("key")  { /* &Value */ }
+///
+///     // 配列から直接インデックスで取得
+///     if let Some(v) = val.at(0)       { /* &Value */ }
+/// }
+/// ```
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     /// nil 値
     Nil,
@@ -297,6 +386,140 @@ pub enum Value {
 }
 
 impl Value {
+    // ==================================================================
+    // 型変換メソッド / Type accessor methods
+    // ==================================================================
+
+    /// 整数値として取得する。Integer の場合のみ Some を返す。
+    /// Returns the value as i64 if it is an Integer.
+    #[inline]
+    pub fn as_i64(&self) -> Option<i64> {
+        match self { Self::Integer(v) => Some(*v), _ => None }
+    }
+
+    /// i32 として取得する。Integer の場合のみ Some を返す（切り捨て）。
+    /// Returns the value as i32 if it is an Integer (truncated).
+    #[inline]
+    pub fn as_i32(&self) -> Option<i32> {
+        match self { Self::Integer(v) => Some(*v as i32), _ => None }
+    }
+
+    /// 浮動小数点値として取得する。Float の場合のみ Some を返す。
+    /// Integer の場合は f64 にキャストして返す。
+    /// Returns the value as f64. Float returns directly; Integer is cast.
+    #[inline]
+    pub fn as_f64(&self) -> Option<f64> {
+        match self {
+            Self::Float(v) => Some(*v),
+            Self::Integer(v) => Some(*v as f64),
+            _ => None,
+        }
+    }
+
+    /// ブール値として取得する。Bool の場合のみ Some を返す。
+    /// Returns the value as bool if it is a Bool.
+    #[inline]
+    pub fn as_bool(&self) -> Option<bool> {
+        match self { Self::Bool(v) => Some(*v), _ => None }
+    }
+
+    /// 文字列参照として取得する。String の場合のみ Some を返す。
+    /// Returns a string reference if the value is a String.
+    #[inline]
+    pub fn as_str(&self) -> Option<&str> {
+        match self { Self::String(s) => Some(s.as_str()), _ => None }
+    }
+
+    /// 文字列を所有権付きで取得する。String の場合のみ Some を返す。
+    /// Returns the owned string if the value is a String.
+    #[inline]
+    pub fn into_string(self) -> Option<alloc::string::String> {
+        match self { Self::String(s) => Some(s), _ => None }
+    }
+
+    /// 配列参照として取得する。Array の場合のみ Some を返す。
+    /// Returns an array reference if the value is an Array.
+    #[inline]
+    pub fn as_array(&self) -> Option<&alloc::vec::Vec<Value>> {
+        match self { Self::Array(a) => Some(a), _ => None }
+    }
+
+    /// 配列を所有権付きで取得する。Array の場合のみ Some を返す。
+    /// Returns the owned array if the value is an Array.
+    #[inline]
+    pub fn into_array(self) -> Option<alloc::vec::Vec<Value>> {
+        match self { Self::Array(a) => Some(a), _ => None }
+    }
+
+    /// マップ参照として取得する。Map の場合のみ Some を返す。
+    /// Returns a map reference if the value is a Map.
+    #[inline]
+    pub fn as_map(&self) -> Option<&alloc::collections::BTreeMap<alloc::string::String, Value>> {
+        match self { Self::Map(m) => Some(m), _ => None }
+    }
+
+    /// マップを所有権付きで取得する。Map の場合のみ Some を返す。
+    /// Returns the owned map if the value is a Map.
+    #[inline]
+    pub fn into_map(self) -> Option<alloc::collections::BTreeMap<alloc::string::String, Value>> {
+        match self { Self::Map(m) => Some(m), _ => None }
+    }
+
+    /// バイナリ参照として取得する。Binary の場合のみ Some を返す。
+    /// Returns a binary reference if the value is Binary.
+    #[inline]
+    pub fn as_bytes(&self) -> Option<&[u8]> {
+        match self { Self::Binary(b) => Some(b.as_slice()), _ => None }
+    }
+
+    /// nil かどうかを返す。
+    /// Returns true if the value is Nil.
+    #[inline]
+    pub fn is_nil(&self) -> bool {
+        matches!(self, Self::Nil)
+    }
+
+    // ==================================================================
+    // コレクションアクセス / Collection access
+    // ==================================================================
+
+    /// Map のキーから値を取得する。Map でない場合は None を返す。
+    /// Get a value by key from a Map. Returns None if not a Map.
+    #[inline]
+    pub fn get(&self, key: &str) -> Option<&Value> {
+        match self {
+            Self::Map(m) => m.get(key),
+            _ => None,
+        }
+    }
+
+    /// Array のインデックスから値を取得する。Array でない場合は None を返す。
+    /// Get a value by index from an Array. Returns None if not an Array.
+    #[inline]
+    pub fn at(&self, index: usize) -> Option<&Value> {
+        match self {
+            Self::Array(a) => a.get(index),
+            _ => None,
+        }
+    }
+
+    /// Array の長さを返す。Array でない場合は 0。
+    /// Returns the length of an Array. Returns 0 if not an Array.
+    #[inline]
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Array(a) => a.len(),
+            Self::Map(m) => m.len(),
+            _ => 0,
+        }
+    }
+
+    /// コレクションが空かどうかを返す。
+    /// Returns true if the collection is empty.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
     /// MessagePack バイト列を Value にデコードする。
     /// Decode MessagePack bytes to a Value.
     ///
@@ -529,4 +752,71 @@ impl Value {
             _ => None,
         }
     }
+}
+
+// ==================================================================
+// Display 実装 / Display implementation
+// ==================================================================
+
+impl core::fmt::Display for Value {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Nil => write!(f, "nil"),
+            Self::Bool(v) => write!(f, "{}", v),
+            Self::Integer(v) => write!(f, "{}", v),
+            Self::Float(v) => write!(f, "{}", v),
+            Self::String(s) => write!(f, "\"{}\"", s),
+            Self::Binary(b) => write!(f, "<{} bytes>", b.len()),
+            Self::Array(a) => {
+                write!(f, "[")?;
+                for (i, v) in a.iter().enumerate() {
+                    if i > 0 { write!(f, ", ")?; }
+                    write!(f, "{}", v)?;
+                }
+                write!(f, "]")
+            }
+            Self::Map(m) => {
+                write!(f, "{{")?;
+                for (i, (k, v)) in m.iter().enumerate() {
+                    if i > 0 { write!(f, ", ")?; }
+                    write!(f, "\"{}\": {}", k, v)?;
+                }
+                write!(f, "}}")
+            }
+        }
+    }
+}
+
+// ==================================================================
+// From 実装 / From implementations
+// ==================================================================
+
+impl From<i32> for Value {
+    #[inline]
+    fn from(v: i32) -> Self { Self::Integer(v as i64) }
+}
+
+impl From<i64> for Value {
+    #[inline]
+    fn from(v: i64) -> Self { Self::Integer(v) }
+}
+
+impl From<f64> for Value {
+    #[inline]
+    fn from(v: f64) -> Self { Self::Float(v) }
+}
+
+impl From<bool> for Value {
+    #[inline]
+    fn from(v: bool) -> Self { Self::Bool(v) }
+}
+
+impl From<&str> for Value {
+    #[inline]
+    fn from(v: &str) -> Self { Self::String(alloc::string::String::from(v)) }
+}
+
+impl From<alloc::string::String> for Value {
+    #[inline]
+    fn from(v: alloc::string::String) -> Self { Self::String(v) }
 }

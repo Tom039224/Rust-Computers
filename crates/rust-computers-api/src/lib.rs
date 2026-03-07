@@ -64,7 +64,8 @@ pub mod computer_craft {
     ///
     /// async fn demo() {
     ///     let mon = Monitor::new(Direction::South);
-    ///     let (w, h) = rc::parallel!(mon.get_size(), mon.is_advanced()).0.unwrap_or((26, 10));
+    ///     let (size, _adv) = rc::parallel!(mon.get_size(), mon.is_advanced()).await;
+    ///     let (w, h) = size.unwrap_or((26, 10));
     ///     let _ = mon.clear().await;
     ///     let _ = mon.write(&alloc::format!("Size: {}x{}", w, h)).await;
     /// }
@@ -208,39 +209,40 @@ macro_rules! entry {
     };
 }
 
-/// 複数の Future を並行して待機するマクロ。
-/// Macro to await multiple futures concurrently.
+/// 複数の Future を並行して poll する Future を返すマクロ。
+/// Macro that returns a Future which polls multiple futures concurrently.
 ///
-/// 2〜4 個の **異なる型** の Future をカンマ区切りで渡し、結果をタプルで受け取る。
+/// 2〜4 個の **異なる型** の Future をカンマ区切りで渡す。
+/// 返り値は **Future** であり、`.await` で結果のタプルを取得する。
 /// どの Future も同一 tick で発行されるため、1 tick 待つだけで全て取得できる。
 ///
 /// Pass 2–4 futures of **potentially different types**, separated by commas.
-/// Results are returned as a tuple. All futures are issued in the same tick,
-/// so only one tick is consumed.
+/// Returns a **Future** that resolves to a tuple of results.
+/// All futures are issued in the same tick, so only one tick is consumed.
 ///
 /// ```rust,no_run
 /// let (a, b) = rc::parallel!(
 ///     radar.scan(64.0),
 ///     sensor.get_temp(),
-/// );
+/// ).await;
 /// ```
 ///
 /// ```rust,no_run
-/// let (size, is_adv, brightness) = rc::parallel!(
+/// let (size, is_adv, scale) = rc::parallel!(
 ///     mon.get_size(),
 ///     mon.is_advanced(),
 ///     mon.get_text_scale(),
-/// );
+/// ).await;
 /// ```
 #[macro_export]
 macro_rules! parallel {
-    ($a:expr, $b:expr $(,)?) => {{
-        $crate::future::Join2::new($a, $b).await
-    }};
-    ($a:expr, $b:expr, $c:expr $(,)?) => {{
-        $crate::future::Join3::new($a, $b, $c).await
-    }};
-    ($a:expr, $b:expr, $c:expr, $d:expr $(,)?) => {{
-        $crate::future::Join4::new($a, $b, $c, $d).await
-    }};
+    ($a:expr, $b:expr $(,)?) => {
+        $crate::future::Join2::new($a, $b)
+    };
+    ($a:expr, $b:expr, $c:expr $(,)?) => {
+        $crate::future::Join3::new($a, $b, $c)
+    };
+    ($a:expr, $b:expr, $c:expr, $d:expr $(,)?) => {
+        $crate::future::Join4::new($a, $b, $c, $d)
+    };
 }

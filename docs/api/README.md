@@ -1,13 +1,26 @@
 # RustComputers API リファレンス / API Reference
 
-**バージョン / Version**: v0.1.16
+**バージョン / Version**: v0.1.25
 
 
 各ペリフェラルの Rust ラッパー API ドキュメント。\
-
 Rust wrapper API documentation for each peripheral.
 
+### 共通仕様 / Common Conventions
 
+- すべての情報取得は **1 tick 遅れ** で結果が返ります。`_imm` サフィックス付きは即時実行です。
+- 複数同時取得は `parallel!` マクロで **Future を生成**し、`.await` で一括取得できます。
+- 複雑な戻り値 (`ret = "bytes"`) は `msgpack::Value` 型で返り、`as_i64()` / `as_str()` / `get(key)` / `at(index)` 等のアクセサで型安全に操作できます。
+- 対応型: `i32`, `i64`, `bool`, `f64`, `str`, `(i32, i32)`, `bytes`
+
+```rust
+// 使用例
+let (size, adv) = rc::parallel!(
+    mon.get_size(),
+    mon.is_advanced(),
+).await;
+let kind = mon.get_type_imm()?;  // 即時実行
+```
 ## ペリフェラル一覧 / Peripheral List
 
 ### CC:Tweaked (1 peripherals, 18 methods)
