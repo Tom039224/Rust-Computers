@@ -3,7 +3,7 @@
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// スピーカー楽器。
 /// Speaker instrument types.
@@ -55,18 +55,18 @@ impl SpeakerInstrument {
 /// スピーカーペリフェラル。
 /// Speaker peripheral.
 pub struct Speaker {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Speaker {
     const NAME: &'static str = "speaker";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -89,7 +89,7 @@ impl Speaker {
             args.push(msgpack::nil());
             args.push(msgpack::float64(p as f64));
         }
-        peripheral::do_action(self.dir, "playNote", &msgpack::array(&args)).await?;
+        peripheral::do_action(self.addr, "playNote", &msgpack::array(&args)).await?;
         Ok(())
     }
 
@@ -111,14 +111,14 @@ impl Speaker {
             args.push(msgpack::nil());
             args.push(msgpack::float64(p as f64));
         }
-        peripheral::do_action(self.dir, "playSound", &msgpack::array(&args)).await?;
+        peripheral::do_action(self.addr, "playSound", &msgpack::array(&args)).await?;
         Ok(())
     }
 
     /// 再生を停止する。
     /// Stop playback.
     pub async fn stop(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.dir, "stop", &msgpack::array(&[])).await?;
+        peripheral::do_action(self.addr, "stop", &msgpack::array(&[])).await?;
         Ok(())
     }
 }

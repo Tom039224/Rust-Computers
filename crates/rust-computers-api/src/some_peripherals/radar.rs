@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::cc_vs::ship::VSQuaternion;
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 use super::ballistic_accelerator::SPCoordinate;
 
@@ -48,18 +48,18 @@ pub struct SPShipInfo {
 
 /// Radar ペリフェラル。
 pub struct Radar {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Radar {
     const NAME: &'static str = "sp_radar";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -71,7 +71,7 @@ impl Radar {
     ) -> Result<Vec<SPEntityInfo>, PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(radius)]);
         let data =
-            peripheral::request_info(self.dir, "scanForEntities", &args).await?;
+            peripheral::request_info(self.addr, "scanForEntities", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -82,7 +82,7 @@ impl Radar {
     ) -> Result<Vec<SPShipInfo>, PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(radius)]);
         let data =
-            peripheral::request_info(self.dir, "scanForShips", &args).await?;
+            peripheral::request_info(self.addr, "scanForShips", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -93,14 +93,14 @@ impl Radar {
     ) -> Result<Vec<SPEntityInfo>, PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(radius)]);
         let data =
-            peripheral::request_info(self.dir, "scanForPlayers", &args).await?;
+            peripheral::request_info(self.addr, "scanForPlayers", &args).await?;
         peripheral::decode(&data)
     }
 
     /// 設定情報を取得する (imm 対応)。
     pub async fn get_config_info(&self) -> Result<BTreeMap<String, String>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getConfigInfo",
             &msgpack::array(&[]),
         )
@@ -110,7 +110,7 @@ impl Radar {
 
     pub fn get_config_info_imm(&self) -> Result<BTreeMap<String, String>, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getConfigInfo",
             &msgpack::array(&[]),
         )?;

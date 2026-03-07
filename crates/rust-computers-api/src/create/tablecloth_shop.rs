@@ -4,24 +4,24 @@
 use alloc::string::String;
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 use super::common::CRItemDetail;
 
 /// Tablecloth Shop ペリフェラル。
 pub struct TableclothShop {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for TableclothShop {
     const NAME: &'static str = "create:tablecloth_shop";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -29,7 +29,7 @@ impl TableclothShop {
     /// ショップとして機能しているかどうかを取得する。
     pub async fn is_shop(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "isShop",
             &msgpack::array(&[]),
         )
@@ -40,7 +40,7 @@ impl TableclothShop {
     /// アドレスを取得する。
     pub async fn get_address(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getAddress",
             &msgpack::array(&[]),
         )
@@ -51,14 +51,14 @@ impl TableclothShop {
     /// アドレスを設定する。
     pub async fn set_address(&self, address: &str) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(address)]);
-        peripheral::do_action(self.dir, "setAddress", &args).await?;
+        peripheral::do_action(self.addr, "setAddress", &args).await?;
         Ok(())
     }
 
     /// 価格タグアイテムを取得する。
     pub async fn get_price_tag_item(&self) -> Result<Option<CRItemDetail>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getPriceTagItem",
             &msgpack::array(&[]),
         )
@@ -69,14 +69,14 @@ impl TableclothShop {
     /// 価格タグアイテムを設定する。
     pub async fn set_price_tag_item(&self, item_name: &str) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(item_name)]);
-        peripheral::do_action(self.dir, "setPriceTagItem", &args).await?;
+        peripheral::do_action(self.addr, "setPriceTagItem", &args).await?;
         Ok(())
     }
 
     /// 価格タグの数量を取得する。
     pub async fn get_price_tag_count(&self) -> Result<u32, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getPriceTagCount",
             &msgpack::array(&[]),
         )
@@ -87,14 +87,14 @@ impl TableclothShop {
     /// 価格タグの数量を設定する。
     pub async fn set_price_tag_count(&self, count: u32) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::int(count as i32)]);
-        peripheral::do_action(self.dir, "setPriceTagCount", &args).await?;
+        peripheral::do_action(self.addr, "setPriceTagCount", &args).await?;
         Ok(())
     }
 
     /// 商品情報を取得する。
     pub async fn get_wares(&self) -> Result<Option<CRItemDetail>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getWares",
             &msgpack::array(&[]),
         )
@@ -105,7 +105,7 @@ impl TableclothShop {
     /// 商品情報を設定する。
     pub async fn set_wares(&self, item_name: &str) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(item_name)]);
-        peripheral::do_action(self.dir, "setWares", &args).await?;
+        peripheral::do_action(self.addr, "setWares", &args).await?;
         Ok(())
     }
 }

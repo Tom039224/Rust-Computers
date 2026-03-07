@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// 4x4 変換行列。
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -38,18 +38,18 @@ pub struct CTLRaycastResult {
 
 /// Camera ペリフェラル。
 pub struct Camera {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Camera {
     const NAME: &'static str = "controlcraft:camera";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -57,13 +57,13 @@ macro_rules! imm_getter {
     ($fn_async:ident, $fn_imm:ident, $method:literal, $ret:ty) => {
         pub async fn $fn_async(&self) -> Result<$ret, PeripheralError> {
             let data =
-                peripheral::request_info(self.dir, $method, &msgpack::array(&[])).await?;
+                peripheral::request_info(self.addr, $method, &msgpack::array(&[])).await?;
             peripheral::decode(&data)
         }
 
         pub fn $fn_imm(&self) -> Result<$ret, PeripheralError> {
             let data =
-                peripheral::request_info_imm(self.dir, $method, &msgpack::array(&[]))?;
+                peripheral::request_info_imm(self.addr, $method, &msgpack::array(&[]))?;
             peripheral::decode(&data)
         }
     };
@@ -147,28 +147,28 @@ impl Camera {
     /// clip (全体)。
     pub async fn clip(&self) -> Result<CTLRaycastResult, PeripheralError> {
         let data =
-            peripheral::request_info(self.dir, "clip", &msgpack::array(&[])).await?;
+            peripheral::request_info(self.addr, "clip", &msgpack::array(&[])).await?;
         peripheral::decode(&data)
     }
 
     /// clip (エンティティ)。
     pub async fn clip_entity(&self) -> Result<CTLRaycastResult, PeripheralError> {
         let data =
-            peripheral::request_info(self.dir, "clipEntity", &msgpack::array(&[])).await?;
+            peripheral::request_info(self.addr, "clipEntity", &msgpack::array(&[])).await?;
         peripheral::decode(&data)
     }
 
     /// clip (ブロック)。
     pub async fn clip_block(&self) -> Result<CTLRaycastResult, PeripheralError> {
         let data =
-            peripheral::request_info(self.dir, "clipBlock", &msgpack::array(&[])).await?;
+            peripheral::request_info(self.addr, "clipBlock", &msgpack::array(&[])).await?;
         peripheral::decode(&data)
     }
 
     /// clip (全エンティティ)。
     pub async fn clip_all_entity(&self) -> Result<Vec<CTLRaycastResult>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "clipAllEntity",
             &msgpack::array(&[]),
         )
@@ -179,14 +179,14 @@ impl Camera {
     /// clip (シップ)。
     pub async fn clip_ship(&self) -> Result<CTLRaycastResult, PeripheralError> {
         let data =
-            peripheral::request_info(self.dir, "clipShip", &msgpack::array(&[])).await?;
+            peripheral::request_info(self.addr, "clipShip", &msgpack::array(&[])).await?;
         peripheral::decode(&data)
     }
 
     /// clip (プレイヤー)。
     pub async fn clip_player(&self) -> Result<CTLRaycastResult, PeripheralError> {
         let data =
-            peripheral::request_info(self.dir, "clipPlayer", &msgpack::array(&[])).await?;
+            peripheral::request_info(self.addr, "clipPlayer", &msgpack::array(&[])).await?;
         peripheral::decode(&data)
     }
 
@@ -195,20 +195,20 @@ impl Camera {
     /// ピッチを設定する。
     pub async fn set_pitch(&self, degrees: f64) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(degrees)]);
-        peripheral::do_action(self.dir, "setPitch", &args).await?;
+        peripheral::do_action(self.addr, "setPitch", &args).await?;
         Ok(())
     }
 
     /// ヨーを設定する。
     pub async fn set_yaw(&self, degrees: f64) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(degrees)]);
-        peripheral::do_action(self.dir, "setYaw", &args).await?;
+        peripheral::do_action(self.addr, "setYaw", &args).await?;
         Ok(())
     }
 
     /// アウトラインをユーザーに表示する。
     pub async fn outline_to_user(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.dir, "outlineToUser", &msgpack::array(&[])).await?;
+        peripheral::do_action(self.addr, "outlineToUser", &msgpack::array(&[])).await?;
         Ok(())
     }
 
@@ -219,21 +219,21 @@ impl Camera {
         yaw: f64,
     ) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(pitch), msgpack::float64(yaw)]);
-        peripheral::do_action(self.dir, "forcePitchYaw", &args).await?;
+        peripheral::do_action(self.addr, "forcePitchYaw", &args).await?;
         Ok(())
     }
 
     /// クリップ範囲を設定する。
     pub async fn set_clip_range(&self, range: f64) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(range)]);
-        peripheral::do_action(self.dir, "setClipRange", &args).await?;
+        peripheral::do_action(self.addr, "setClipRange", &args).await?;
         Ok(())
     }
 
     /// コーン角度を設定する。
     pub async fn set_cone_angle(&self, angle: f64) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(angle)]);
-        peripheral::do_action(self.dir, "setConeAngle", &args).await?;
+        peripheral::do_action(self.addr, "setConeAngle", &args).await?;
         Ok(())
     }
 
@@ -249,7 +249,7 @@ impl Camera {
             msgpack::float64(y),
             msgpack::float64(z),
         ]);
-        let data = peripheral::request_info(self.dir, "raycast", &args).await?;
+        let data = peripheral::request_info(self.addr, "raycast", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -260,7 +260,7 @@ impl Camera {
     ) -> Result<Vec<crate::msgpack::Value>, PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(radius)]);
         let data =
-            peripheral::request_info(self.dir, "getEntities", &args).await?;
+            peripheral::request_info(self.addr, "getEntities", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -270,13 +270,13 @@ impl Camera {
         radius: f64,
     ) -> Result<Vec<crate::msgpack::Value>, PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(radius)]);
-        let data = peripheral::request_info(self.dir, "getMobs", &args).await?;
+        let data = peripheral::request_info(self.addr, "getMobs", &args).await?;
         peripheral::decode(&data)
     }
 
     /// リセットする。
     pub async fn reset(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.dir, "reset", &msgpack::array(&[])).await?;
+        peripheral::do_action(self.addr, "reset", &msgpack::array(&[])).await?;
         Ok(())
     }
 }

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// 流体情報。
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -24,18 +24,18 @@ pub struct CLPosition {
 
 /// Boiler ペリフェラル。
 pub struct Boiler {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Boiler {
     const NAME: &'static str = "clockwork:boiler";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -43,13 +43,13 @@ macro_rules! imm_getter {
     ($fn_async:ident, $fn_imm:ident, $method:literal, $ret:ty) => {
         pub async fn $fn_async(&self) -> Result<$ret, PeripheralError> {
             let data =
-                peripheral::request_info(self.dir, $method, &msgpack::array(&[])).await?;
+                peripheral::request_info(self.addr, $method, &msgpack::array(&[])).await?;
             peripheral::decode(&data)
         }
 
         pub fn $fn_imm(&self) -> Result<$ret, PeripheralError> {
             let data =
-                peripheral::request_info_imm(self.dir, $method, &msgpack::array(&[]))?;
+                peripheral::request_info_imm(self.addr, $method, &msgpack::array(&[]))?;
             peripheral::decode(&data)
         }
     };

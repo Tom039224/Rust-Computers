@@ -3,22 +3,22 @@
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// Speedometer ペリフェラル。
 pub struct Speedometer {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Speedometer {
     const NAME: &'static str = "create:speedometer";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -26,7 +26,7 @@ impl Speedometer {
     /// 現在の回転速度を取得する。
     pub async fn get_speed(&self) -> Result<f32, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getSpeed",
             &msgpack::array(&[]),
         )
@@ -37,7 +37,7 @@ impl Speedometer {
     /// 現在の回転速度を即時取得する (imm 対応)。
     pub fn get_speed_imm(&self) -> Result<f32, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getSpeed",
             &msgpack::array(&[]),
         )?;
@@ -47,7 +47,7 @@ impl Speedometer {
     /// 速度変化イベントを 1tick 待機して取得する。来なければ None。
     pub async fn try_pull_speed_change(&self) -> Result<Option<f32>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "try_pull_speed_change",
             &msgpack::array(&[]),
         )

@@ -6,38 +6,38 @@ use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 use super::common::{CRItemDetail, CRPackage, CRSlotInfo};
 
 /// Packager ペリフェラル。
 pub struct Packager {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Packager {
     const NAME: &'static str = "create:packager";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
 impl Packager {
     /// パッケージを作成する。
     pub async fn make_package(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.dir, "makePackage", &msgpack::array(&[])).await?;
+        peripheral::do_action(self.addr, "makePackage", &msgpack::array(&[])).await?;
         Ok(())
     }
 
     /// インベントリ内のスロット一覧を取得する。
     pub async fn list(&self) -> Result<Vec<CRSlotInfo>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "list",
             &msgpack::array(&[]),
         )
@@ -49,14 +49,14 @@ impl Packager {
     pub async fn get_item_detail(&self, slot: u32) -> Result<Option<CRItemDetail>, PeripheralError> {
         let args = msgpack::array(&[msgpack::int(slot as i32)]);
         let data =
-            peripheral::request_info(self.dir, "getItemDetail", &args).await?;
+            peripheral::request_info(self.addr, "getItemDetail", &args).await?;
         peripheral::decode(&data)
     }
 
     /// アドレスを取得する。
     pub async fn get_address(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getAddress",
             &msgpack::array(&[]),
         )
@@ -67,14 +67,14 @@ impl Packager {
     /// アドレスを設定する。
     pub async fn set_address(&self, address: &str) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(address)]);
-        peripheral::do_action(self.dir, "setAddress", &args).await?;
+        peripheral::do_action(self.addr, "setAddress", &args).await?;
         Ok(())
     }
 
     /// パッケージ情報を取得する。
     pub async fn get_package(&self) -> Result<Option<CRPackage>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getPackage",
             &msgpack::array(&[]),
         )
@@ -89,7 +89,7 @@ impl Packager {
         &self,
     ) -> Result<Option<CRPackage>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "try_pull_package_received",
             &msgpack::array(&[]),
         )
@@ -111,7 +111,7 @@ impl Packager {
         &self,
     ) -> Result<Option<CRPackage>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "try_pull_package_sent",
             &msgpack::array(&[]),
         )

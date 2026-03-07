@@ -4,6 +4,7 @@ import com.dylibso.chicory.runtime.HostFunction;
 import com.dylibso.chicory.runtime.Instance;
 import com.dylibso.chicory.wasm.types.FunctionType;
 import com.dylibso.chicory.wasm.types.ValType;
+import com.rustcomputers.peripheral.MsgPack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,7 @@ public final class HostFunctions {
             hostPollResult(),
             hostIsModAvailable(),
             hostGetComputerId(),
+            hostFindPeripheralsByTypeImm(),
         };
     }
 
@@ -305,6 +307,65 @@ public final class HostFunctions {
             FunctionType.of(List.of(), List.of(ValType.I32)),
             (Instance inst, long... args) -> {
                 return new long[]{ engine.getComputerId() };
+            }
+        );
+    }
+
+    // ==================================================================
+    // host_find_peripherals_by_type_imm(name_ptr: i32, name_len: i32,
+    //                                   result_ptr: i32, result_buf_size: i32) → i32
+    // ==================================================================
+
+    /**
+     * 型名に一致するペリフェラルの periph_id リストを即時返す。
+     * Immediately return the list of periph_ids matching the given type name.
+     *
+     * <p>結果は msgpack の uint32 配列としてエンコードされる。</p>
+     * <p>Result is encoded as a msgpack array of uint32 periph_ids.</p>
+     *
+     * @return 結果バッファに書き込んだバイト数、バッファ不足なら負値
+     *         / bytes written to result buffer, negative if buffer too small
+     */
+    private HostFunction hostFindPeripheralsByTypeImm() {
+        return new HostFunction(
+            MODULE, "host_find_peripherals_by_type_imm",
+            FunctionType.of(
+                List.of(ValType.I32, ValType.I32, ValType.I32, ValType.I32),
+                List.of(ValType.I32)
+            ),
+            (Instance inst, long... args) -> {
+                int namePtr     = (int) args[0];
+                int nameLen     = (int) args[1];
+                int resultPtr   = (int) args[2];
+                int resultBufSz = (int) args[3];
+
+                // WASM メモリから型名を読み取る / Read type name from WASM memory
+                String typeName = inst.memory().readString(namePtr, nameLen);
+
+                // 型名に一致する periph_id をリストアップ / Find matching periph_ids
+                java.util.List<Integer> ids = engine.findPeripheralsByType(typeName);
+
+                // msgpack 配列としてエンコード / Encode as msgpack array of uint32
+                byte[][] encoded = new byte[ids.size()][];
+                for (int i = 0; i < ids.size(); i++) {
+                    encoded[i] = MsgPack.int32(ids.get(i));
+                }
+                byte[] payload = MsgPack.array(encoded);
+
+                // バッファサイズチェック / Check buffer size
+                if (payload.length > resultBufSz) {
+                    LOGGER.warn("Computer #{}: host_find_peripherals_by_type_imm: " +
+                            "result buffer too small ({} < {})",
+                            engine.getComputerId(), resultBufSz, payload.length);
+                    return new long[]{ ErrorCodes.ERR_RESULT_BUF_TOO_SMALL };
+                }
+
+                // WASM メモリに書き込む / Write to WASM memory
+                inst.memory().write(resultPtr, payload);
+                LOGGER.debug("Computer #{}: host_find_peripherals_by_type_imm: " +
+                        "type='{}', found={}, written={}",
+                        engine.getComputerId(), typeName, ids.size(), payload.length);
+                return new long[]{ payload.length };
             }
         );
     }

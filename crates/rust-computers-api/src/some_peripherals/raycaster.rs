@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 use super::ballistic_accelerator::SPCoordinate;
 
@@ -42,18 +42,18 @@ pub struct SPRaycastResult {
 
 /// Raycaster ペリフェラル。
 pub struct Raycaster {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Raycaster {
     const NAME: &'static str = "sp:raycaster";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -82,21 +82,21 @@ impl Raycaster {
         );
         args.push(only_distance.map_or_else(|| msgpack::nil(), |v| msgpack::bool_val(v)));
         let data =
-            peripheral::request_info(self.dir, "raycast", &msgpack::array(&args)).await?;
+            peripheral::request_info(self.addr, "raycast", &msgpack::array(&args)).await?;
         peripheral::decode(&data)
     }
 
     /// ステッカーの powered 状態を設定する。
     pub async fn add_stickers(&self, state: bool) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::bool_val(state)]);
-        peripheral::do_action(self.dir, "addStickers", &args).await?;
+        peripheral::do_action(self.addr, "addStickers", &args).await?;
         Ok(())
     }
 
     /// 設定情報を取得する (imm 対応)。
     pub async fn get_config_info(&self) -> Result<BTreeMap<String, String>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getConfigInfo",
             &msgpack::array(&[]),
         )
@@ -106,7 +106,7 @@ impl Raycaster {
 
     pub fn get_config_info_imm(&self) -> Result<BTreeMap<String, String>, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getConfigInfo",
             &msgpack::array(&[]),
         )?;
@@ -116,7 +116,7 @@ impl Raycaster {
     /// ブロックの向きを取得する (imm 対応)。
     pub async fn get_facing_direction(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getFacingDirection",
             &msgpack::array(&[]),
         )
@@ -126,7 +126,7 @@ impl Raycaster {
 
     pub fn get_facing_direction_imm(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getFacingDirection",
             &msgpack::array(&[]),
         )?;

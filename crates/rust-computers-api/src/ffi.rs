@@ -119,4 +119,31 @@ extern "C" {
     /// このコンピューターの ID を返す。
     /// Return the ID of this computer.
     pub fn host_get_computer_id() -> i32;
+
+    // ==================================================================
+    // ペリフェラル検索 / Peripheral search
+    // ==================================================================
+
+    /// 型名に一致するペリフェラルの periph_id 一覧を即時返す。
+    /// Immediately return a list of periph_ids for all peripherals matching the given type name.
+    ///
+    /// 直結6方向 (periph_id 0–5) および有線モデム経由接続 (periph_id 6+) を含む。
+    /// Includes directly-connected 6 directions (periph_id 0–5) and
+    /// wired-modem-connected peripherals (periph_id 6+).
+    ///
+    /// CC:Tweaked の `peripheral.find("<type>")` に相当。
+    /// Equivalent to CC:Tweaked's `peripheral.find("<type>")`.
+    ///
+    /// - `name_ptr`: 型名 UTF-8 文字列のポインタ / pointer to type name UTF-8 string
+    /// - `name_len`: 型名バイト長 / byte length of type name
+    /// - `result_ptr`: 結果バッファ (msgpack array of u32) / result buffer (msgpack array of u32)
+    /// - `result_buf_size`: 結果バッファサイズ / result buffer size
+    /// - 戻り値: 書き込みバイト数 (>=0) | エラー (<0)
+    /// - return: written bytes (>=0) | error (<0)
+    pub fn host_find_peripherals_by_type_imm(
+        name_ptr: i32,
+        name_len: i32,
+        result_ptr: i32,
+        result_buf_size: i32,
+    ) -> i32;
 }

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// デジタイズアイテムデータ。
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,18 +25,18 @@ pub struct SPDigitizedItem {
 
 /// Digitizer ペリフェラル。
 pub struct Digitizer {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Digitizer {
     const NAME: &'static str = "sp:digitizer";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -50,7 +50,7 @@ impl Digitizer {
             Some(a) => msgpack::array(&[msgpack::int(a as i32)]),
             None => msgpack::array(&[]),
         };
-        let data = peripheral::do_action(self.dir, "digitizeAmount", &args).await?;
+        let data = peripheral::do_action(self.addr, "digitizeAmount", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -65,7 +65,7 @@ impl Digitizer {
             args.push(msgpack::int(a as i32));
         }
         let data =
-            peripheral::do_action(self.dir, "rematerializeAmount", &msgpack::array(&args))
+            peripheral::do_action(self.addr, "rematerializeAmount", &msgpack::array(&args))
                 .await?;
         peripheral::decode(&data)
     }
@@ -82,7 +82,7 @@ impl Digitizer {
             args.push(msgpack::int(a as i32));
         }
         let data =
-            peripheral::do_action(self.dir, "mergeDigitalItems", &msgpack::array(&args))
+            peripheral::do_action(self.addr, "mergeDigitalItems", &msgpack::array(&args))
                 .await?;
         peripheral::decode(&data)
     }
@@ -95,21 +95,21 @@ impl Digitizer {
     ) -> Result<String, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(from_uuid), msgpack::int(amount as i32)]);
         let data =
-            peripheral::do_action(self.dir, "separateDigitalItem", &args).await?;
+            peripheral::do_action(self.addr, "separateDigitalItem", &args).await?;
         peripheral::decode(&data)
     }
 
     /// UUID が存在するか確認する。
     pub async fn check_id(&self, uuid: &str) -> Result<SPItemData, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(uuid)]);
-        let data = peripheral::request_info(self.dir, "checkId", &args).await?;
+        let data = peripheral::request_info(self.addr, "checkId", &args).await?;
         peripheral::decode(&data)
     }
 
     /// スロット0 のアイテム情報を返す。
     pub async fn get_item_in_slot(&self) -> Result<SPItemData, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getItemInSlot",
             &msgpack::array(&[]),
         )
@@ -120,7 +120,7 @@ impl Digitizer {
     /// スロット0 のアイテム上限数を返す。
     pub async fn get_item_limit_in_slot(&self) -> Result<u32, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getItemLimitInSlot",
             &msgpack::array(&[]),
         )

@@ -4,7 +4,7 @@ use alloc::string::String;
 
 use serde::{Deserialize, Serialize};
 
-use crate::peripheral::{Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// ブロック情報。
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,17 +16,17 @@ pub struct SPBlockInfo {
 
 /// WorldScanner ペリフェラル。
 pub struct WorldScanner {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for WorldScanner {
     const NAME: &'static str = "sp:world_scanner";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }

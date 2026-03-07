@@ -8,7 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -125,6 +127,36 @@ public final class PeripheralProvider {
             }
         }
 
+        return result;
+    }
+
+    // ==================================================================
+    // 検索 / Search
+    // ==================================================================
+
+    /**
+     * 接続済みペリフェラルの中から型名が一致するものの periph_id リストを返す。
+     * Return the list of periph_ids whose type name matches {@code typeName}.
+     *
+     * <p>{@code find_imm&lt;T&gt;()} の Java 側実装。periph_id 0–5（直接接続）のほか、
+     * 将来追加される有線モデム接続（periph_id 6+）も対象となる。</p>
+     *
+     * <p>Java-side implementation for {@code find_imm<T>()}. Covers periph_ids 0–5
+     * (direct connections) as well as future wired-modem connections (periph_id 6+).</p>
+     *
+     * @param allPeripherals  WasmEngine が保持するペリフェラルマップ / peripheral map held by WasmEngine
+     * @param typeName        検索する型名（Rust 側の {@code NAME} 定数と一致する値）
+     *                        / type name to search (matches Rust-side {@code NAME} constant)
+     * @return マッチした periph_id のリスト（なければ空） / list of matching periph_ids, empty if none
+     */
+    public static List<Integer> findByTypeName(
+            Map<Integer, AttachedPeripheral> allPeripherals, String typeName) {
+        List<Integer> result = new ArrayList<>();
+        for (Map.Entry<Integer, AttachedPeripheral> entry : allPeripherals.entrySet()) {
+            if (typeName.equals(entry.getValue().typeName())) {
+                result.add(entry.getKey());
+            }
+        }
         return result;
     }
 }

@@ -3,22 +3,22 @@
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// Sticker ペリフェラル。
 pub struct Sticker {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Sticker {
     const NAME: &'static str = "create:sticker";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -26,7 +26,7 @@ impl Sticker {
     /// 伸展状態かどうかを取得する。
     pub async fn is_extended(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "isExtended",
             &msgpack::array(&[]),
         )
@@ -37,7 +37,7 @@ impl Sticker {
     /// 伸展状態かどうかを即時取得する (imm 対応)。
     pub fn is_extended_imm(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "isExtended",
             &msgpack::array(&[]),
         )?;
@@ -47,7 +47,7 @@ impl Sticker {
     /// ブロックに接続されているかどうかを取得する。
     pub async fn is_attached_to_block(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "isAttachedToBlock",
             &msgpack::array(&[]),
         )
@@ -58,7 +58,7 @@ impl Sticker {
     /// ブロックに接続されているかどうかを即時取得する (imm 対応)。
     pub fn is_attached_to_block_imm(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "isAttachedToBlock",
             &msgpack::array(&[]),
         )?;
@@ -68,21 +68,21 @@ impl Sticker {
     /// スティッカーを伸展させる。成功したかどうかを返す。
     pub async fn extend(&self) -> Result<bool, PeripheralError> {
         let data =
-            peripheral::do_action(self.dir, "extend", &msgpack::array(&[])).await?;
+            peripheral::do_action(self.addr, "extend", &msgpack::array(&[])).await?;
         peripheral::decode(&data)
     }
 
     /// スティッカーを収縮させる。成功したかどうかを返す。
     pub async fn retract(&self) -> Result<bool, PeripheralError> {
         let data =
-            peripheral::do_action(self.dir, "retract", &msgpack::array(&[])).await?;
+            peripheral::do_action(self.addr, "retract", &msgpack::array(&[])).await?;
         peripheral::decode(&data)
     }
 
     /// スティッカーの伸展/収縮を切り替える。成功したかどうかを返す。
     pub async fn toggle(&self) -> Result<bool, PeripheralError> {
         let data =
-            peripheral::do_action(self.dir, "toggle", &msgpack::array(&[])).await?;
+            peripheral::do_action(self.addr, "toggle", &msgpack::array(&[])).await?;
         peripheral::decode(&data)
     }
 }

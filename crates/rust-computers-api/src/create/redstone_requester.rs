@@ -7,24 +7,24 @@ use alloc::vec::Vec;
 use crate::error::PeripheralError;
 
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 use super::common::{CRItemFilter, CROrderItem, CRPackage};
 
 /// Redstone Requester ペリフェラル。
 pub struct RedstoneRequester {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for RedstoneRequester {
     const NAME: &'static str = "create:redstone_requester";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -37,7 +37,7 @@ impl RedstoneRequester {
         let items_vec: Vec<_> = items.iter().cloned().collect();
         let encoded = peripheral::encode(&items_vec)?;
         let args = msgpack::array(&[encoded]);
-        peripheral::do_action(self.dir, "request", &args).await?;
+        peripheral::do_action(self.addr, "request", &args).await?;
         Ok(())
     }
 
@@ -49,7 +49,7 @@ impl RedstoneRequester {
     ) -> Result<(), PeripheralError> {
         let encoded = peripheral::encode(item)?;
         let args = msgpack::array(&[msgpack::int(slot as i32), encoded]);
-        peripheral::do_action(self.dir, "setRequest", &args).await?;
+        peripheral::do_action(self.addr, "setRequest", &args).await?;
         Ok(())
     }
 
@@ -61,7 +61,7 @@ impl RedstoneRequester {
     ) -> Result<(), PeripheralError> {
         let encoded = peripheral::encode(item)?;
         let args = msgpack::array(&[msgpack::int(slot as i32), encoded]);
-        peripheral::do_action(self.dir, "setCraftingRequest", &args).await?;
+        peripheral::do_action(self.addr, "setCraftingRequest", &args).await?;
         Ok(())
     }
 
@@ -72,14 +72,14 @@ impl RedstoneRequester {
     ) -> Result<Option<CRItemFilter>, PeripheralError> {
         let args = msgpack::array(&[msgpack::int(slot as i32)]);
         let data =
-            peripheral::request_info(self.dir, "getRequest", &args).await?;
+            peripheral::request_info(self.addr, "getRequest", &args).await?;
         peripheral::decode(&data)
     }
 
     /// 構成情報を取得する。
     pub async fn get_configuration(&self) -> Result<CRPackage, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getConfiguration",
             &msgpack::array(&[]),
         )
@@ -94,21 +94,21 @@ impl RedstoneRequester {
     ) -> Result<(), PeripheralError> {
         let encoded = peripheral::encode(config)?;
         let args = msgpack::array(&[encoded]);
-        peripheral::do_action(self.dir, "setConfiguration", &args).await?;
+        peripheral::do_action(self.addr, "setConfiguration", &args).await?;
         Ok(())
     }
 
     /// アドレスを設定する。
     pub async fn set_address(&self, address: &str) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(address)]);
-        peripheral::do_action(self.dir, "setAddress", &args).await?;
+        peripheral::do_action(self.addr, "setAddress", &args).await?;
         Ok(())
     }
 
     /// アドレスを取得する。
     pub async fn get_address(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getAddress",
             &msgpack::array(&[]),
         )

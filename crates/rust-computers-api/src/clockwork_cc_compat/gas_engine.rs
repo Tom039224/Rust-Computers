@@ -2,22 +2,22 @@
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// GasEngine ペリフェラル。
 pub struct GasEngine {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for GasEngine {
     const NAME: &'static str = "clockwork:gas_engine";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -25,7 +25,7 @@ impl GasEngine {
     /// 接続エンジン数を取得する (imm 対応)。
     pub async fn get_attached_engines(&self) -> Result<u32, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getAttachedEngines",
             &msgpack::array(&[]),
         )
@@ -35,7 +35,7 @@ impl GasEngine {
 
     pub fn get_attached_engines_imm(&self) -> Result<u32, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getAttachedEngines",
             &msgpack::array(&[]),
         )?;
@@ -45,7 +45,7 @@ impl GasEngine {
     /// 全体効率を取得する (imm 対応)。
     pub async fn get_total_efficiency(&self) -> Result<f64, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getTotalEfficiency",
             &msgpack::array(&[]),
         )
@@ -55,7 +55,7 @@ impl GasEngine {
 
     pub fn get_total_efficiency_imm(&self) -> Result<f64, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getTotalEfficiency",
             &msgpack::array(&[]),
         )?;

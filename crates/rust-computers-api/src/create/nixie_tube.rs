@@ -3,24 +3,24 @@
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 use super::common::CRSignalParams;
 
 /// Nixie Tube ペリフェラル。
 pub struct NixieTube {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for NixieTube {
     const NAME: &'static str = "create:nixie_tube";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -36,14 +36,14 @@ impl NixieTube {
             args_vec.push(msgpack::str(c));
         }
         let args = msgpack::array(&args_vec);
-        peripheral::do_action(self.dir, "setText", &args).await?;
+        peripheral::do_action(self.addr, "setText", &args).await?;
         Ok(())
     }
 
     /// テキストカラーを設定する。
     pub async fn set_text_colour(&self, colour: &str) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(colour)]);
-        peripheral::do_action(self.dir, "setTextColour", &args).await?;
+        peripheral::do_action(self.addr, "setTextColour", &args).await?;
         Ok(())
     }
 
@@ -59,7 +59,7 @@ impl NixieTube {
             args_vec.push(peripheral::encode(b)?);
         }
         let args = msgpack::array(&args_vec);
-        peripheral::do_action(self.dir, "setSignal", &args).await?;
+        peripheral::do_action(self.addr, "setSignal", &args).await?;
         Ok(())
     }
 }

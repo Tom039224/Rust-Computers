@@ -1,8 +1,23 @@
 //! ペリフェラル操作 API。
-//! Peripheral API for interacting with adjacent Minecraft blocks.
+//! Peripheral API for interacting with adjacent or wired-modem-connected Minecraft blocks.
 //!
-//! コンピュータの隣接6方向に設置されたブロックと通信する。
-//! Communicates with blocks placed in the 6 adjacent directions of the computer.
+//! コンピュータの隣接6方向（直結）または有線モデム経由で接続されたブロックと通信する。
+//! Communicates with blocks placed in the 6 adjacent directions or connected via wired modem.
+//!
+//! ## ペリフェラルアドレス / Peripheral address
+//!
+//! ペリフェラルは [`PeriphAddr`] という `u32` で識別される。
+//! Each peripheral is identified by a [`PeriphAddr`] (`u32`).
+//!
+//! | periph_id | 意味 / Meaning                        |
+//! |-----------|---------------------------------------|
+//! | 0         | DOWN (下)  直結 / direct               |
+//! | 1         | UP (上)    直結 / direct               |
+//! | 2         | NORTH (北) 直結 / direct               |
+//! | 3         | SOUTH (南) 直結 / direct               |
+//! | 4         | WEST (西)  直結 / direct               |
+//! | 5         | EAST (東)  直結 / direct               |
+//! | 6+        | 有線モデム経由接続 / wired modem        |
 //!
 //! ## 1tick 遅れ原則 / 1-tick delay principle
 //!
@@ -15,27 +30,19 @@
 //! GT:N+1 Rust → .await の先に進む
 //! ```
 //!
-//! # 方向 ID / Direction IDs
-//!
-//! | periph_id | 方向 / Direction |
-//! |-----------|------------------|
-//! | 0         | DOWN   (下)      |
-//! | 1         | UP     (上)      |
-//! | 2         | NORTH  (北)      |
-//! | 3         | SOUTH  (南)      |
-//! | 4         | WEST   (西)      |
-//! | 5         | EAST   (東)      |
-//!
 //! # 使い方 / Usage
 //!
 //! ```rust,no_run
-//! use rust_computers_api::peripheral::{self, Direction};
+//! use rust_computers_api::peripheral::{self, PeriphAddr, Direction};
 //!
 //! // 情報取得 (1tick 遅れ) / Info request (1-tick delay)
-//! let data = peripheral::request_info(Direction::Up, "getItems", &[]).await?;
+//! let data = peripheral::request_info(Direction::Up.into(), "getItems", &[]).await?;
 //!
 //! // アクション (1tick 遅れ) / Action (1-tick delay)
-//! peripheral::do_action(Direction::South, "pushItem", &args).await?;
+//! peripheral::do_action(Direction::South.into(), "pushItem", &args).await?;
+//!
+//! // 有線モデム含む全検索 / Find all (including wired modem)
+//! let radars = peripheral::find_imm::<Radar>();
 //! ```
 
 use alloc::vec;
@@ -49,8 +56,8 @@ use crate::future::RequestFuture;
 // 方向列挙 / Direction enum
 // ==================================================================
 
-/// コンピュータから見た方向 (periph_id に対応)。
-/// Direction relative to the computer (corresponds to periph_id).
+/// コンピュータから見た方向 (直結ペリフェラルの periph_id に対応)。
+/// Direction relative to the computer (corresponds to directly-connected periph_id).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]
 pub enum Direction {
@@ -81,6 +88,56 @@ impl Direction {
     /// Return the periph_id value.
     pub fn id(self) -> u32 {
         self as u32
+    }
+}
+
+impl From<Direction> for PeriphAddr {
+    fn from(d: Direction) -> Self {
+        PeriphAddr(d as u32)
+    }
+}
+
+// ==================================================================
+// ペリフェラルアドレス / Peripheral address
+// ==================================================================
+
+/// ペリフェラルを識別する汎用 ID。
+/// Generic peripheral identifier.
+///
+/// - 0–5: 直結ペリフェラル (DOWN/UP/NORTH/SOUTH/WEST/EAST) / direct connection
+/// - 6+:  有線モデム経由ペリフェラル / wired modem connection
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PeriphAddr(pub u32);
+
+impl PeriphAddr {
+    /// raw periph_id から PeriphAddr を作成する。
+    /// Create a PeriphAddr from a raw periph_id.
+    pub const fn from_raw(id: u32) -> Self {
+        Self(id)
+    }
+
+    /// Direction から PeriphAddr を作成する (const)。
+    /// Create a PeriphAddr from a Direction (const).
+    pub const fn from_dir(dir: Direction) -> Self {
+        Self(dir as u32)
+    }
+
+    /// raw periph_id 値を返す。
+    /// Return the raw periph_id value.
+    pub fn raw(self) -> u32 {
+        self.0
+    }
+
+    /// Direction に変換できれば Some(dir) を返す。
+    /// Convert to Direction if this is a directly-connected peripheral.
+    pub fn as_direction(self) -> Option<Direction> {
+        Direction::from_id(self.0)
+    }
+
+    /// 直結ペリフェラル (periph_id 0–5) かどうか。
+    /// Whether this is a directly-connected peripheral (periph_id 0–5).
+    pub fn is_direct(self) -> bool {
+        self.0 <= 5
     }
 }
 
@@ -125,18 +182,18 @@ fn crc32(data: &[u8]) -> u32 {
 /// Calls `host_request_info` on the Java side and awaits the result.
 ///
 /// # 引数 / Arguments
-/// - `dir`: ペリフェラルの方向 / peripheral direction
+/// - `addr`: ペリフェラルアドレス / peripheral address
 /// - `method_name`: メソッド名 / method name
 /// - `args`: MessagePack 引数バイト列 / MessagePack argument bytes
 ///
 /// # 戻り値 / Returns
 /// 結果バイト列、またはエラー / result bytes or error
 pub fn request_info(
-    dir: Direction,
+    addr: impl Into<PeriphAddr>,
     method_name: &str,
     args: &[u8],
 ) -> impl core::future::Future<Output = Result<Vec<u8>, BridgeError>> {
-    issue_request(dir, method_name, args, false)
+    issue_request(addr.into(), method_name, args, false)
 }
 
 /// ペリフェラルにアクションリクエストを送信する（非同期）。
@@ -145,17 +202,17 @@ pub fn request_info(
 /// Java 側の `host_do_action` を呼び出し、結果を待つ。
 /// Calls `host_do_action` on the Java side and awaits the result.
 pub fn do_action(
-    dir: Direction,
+    addr: impl Into<PeriphAddr>,
     method_name: &str,
     args: &[u8],
 ) -> impl core::future::Future<Output = Result<Vec<u8>, BridgeError>> {
-    issue_request(dir, method_name, args, true)
+    issue_request(addr.into(), method_name, args, true)
 }
 
 /// 内部: 非同期リクエストを発行する。
 /// Internal: issue an async request.
 fn issue_request(
-    dir: Direction,
+    addr: PeriphAddr,
     method_name: &str,
     args: &[u8],
     is_action: bool,
@@ -169,7 +226,7 @@ fn issue_request(
     let request_id = unsafe {
         if is_action {
             ffi::host_do_action(
-                dir.id(),
+                addr.raw() as i32,
                 mid,
                 args.as_ptr() as i32,
                 args.len() as i32,
@@ -178,7 +235,7 @@ fn issue_request(
             )
         } else {
             ffi::host_request_info(
-                dir.id(),
+                addr.raw() as i32,
                 mid,
                 args.as_ptr() as i32,
                 args.len() as i32,
@@ -212,23 +269,24 @@ fn issue_request(
 /// this is an intentional exception to the 1-tick delay principle.
 ///
 /// # 引数 / Arguments
-/// - `dir`: ペリフェラルの方向 / peripheral direction
+/// - `addr`: ペリフェラルアドレス / peripheral address
 /// - `method_name`: メソッド名 / method name
 /// - `args`: MessagePack 引数バイト列 / MessagePack argument bytes
 ///
 /// # 戻り値 / Returns
 /// 結果バイト列、またはエラー / result bytes or error
 pub fn request_info_imm(
-    dir: Direction,
+    addr: impl Into<PeriphAddr>,
     method_name: &str,
     args: &[u8],
 ) -> Result<Vec<u8>, BridgeError> {
     const RESULT_BUF_SIZE: usize = 4096;
     let mut result_buf = vec![0u8; RESULT_BUF_SIZE];
     let mid = method_id(method_name);
+    let periph_id = addr.into().raw();
     let written = unsafe {
         ffi::host_request_info_imm(
-            dir.id(),
+            periph_id as i32,
             mid,
             args.as_ptr() as i32,
             args.len() as i32,
@@ -268,46 +326,85 @@ use crate::error::PeripheralError;
 pub trait Peripheral: Sized {
     /// CC:Tweaked 上のペリフェラル型名 (例: `"create:creative_motor"`)
     const NAME: &'static str;
-    /// 指定方向に新しいインスタンスを作成する。
-    fn new(dir: Direction) -> Self;
-    /// このインスタンスが参照する方向を返す。
-    fn direction(&self) -> Direction;
+    /// 指定アドレスに新しいインスタンスを作成する。
+    /// Create a new instance at the specified address.
+    fn new(addr: PeriphAddr) -> Self;
+    /// このインスタンスが参照するアドレスを返す。
+    /// Return the address this instance refers to.
+    fn periph_addr(&self) -> PeriphAddr;
+
+    /// Direction に変換できれば Some(dir) を返す (直結接続の場合)。
+    /// Returns Some(dir) if this is a directly-connected peripheral.
+    fn direction(&self) -> Option<Direction> {
+        self.periph_addr().as_direction()
+    }
 }
 
-/// 指定方向にある名前一致ペリフェラルを同期的に取得する。
-/// Synchronously wrap a peripheral in the given direction if its type matches.
-pub fn wrap_imm<T: Peripheral>(dir: Direction) -> Result<T, PeripheralError> {
+/// 指定アドレスにある名前一致ペリフェラルを同期的に取得する。
+/// Synchronously wrap a peripheral at the given address if its type matches.
+pub fn wrap_imm<T: Peripheral>(addr: impl Into<PeriphAddr>) -> Result<T, PeripheralError> {
+    let addr = addr.into();
     let args = crate::msgpack::array(&[crate::msgpack::str(T::NAME)]);
-    let data = request_info_imm(dir, "hasType", &args)?;
+    let data = request_info_imm(addr, "hasType", &args)?;
     let (val, _) = crate::msgpack::Value::decode(&data).unwrap_or((crate::msgpack::Value::Nil, 0));
     match val {
-        crate::msgpack::Value::Bool(true) => Ok(T::new(dir)),
+        crate::msgpack::Value::Bool(true) => Ok(T::new(addr)),
         _ => Err(PeripheralError::NotFound),
     }
 }
 
-/// 全方向から名前一致ペリフェラルを同期的に検索する。
-/// Synchronously find all peripherals matching the given type.
+/// 有線モデム含む全接続から名前一致ペリフェラルを同期的に検索する。
+/// Synchronously find all peripherals matching the given type,
+/// including wired modem connections.
+///
+/// CC:Tweaked の `peripheral.find("<type>")` と同等の動作。
+/// Equivalent to CC:Tweaked's `peripheral.find("<type>")`.
 pub fn find_imm<T: Peripheral>() -> alloc::vec::Vec<T> {
+    // Java 側から一致する periph_id のリストを取得する
+    // Get the list of matching periph_ids from the Java side
+    const BUF_SIZE: usize = 256;
+    let mut buf = [0u8; BUF_SIZE];
+    let name = T::NAME;
+    let written = unsafe {
+        ffi::host_find_peripherals_by_type_imm(
+            name.as_ptr() as i32,
+            name.len() as i32,
+            buf.as_mut_ptr() as i32,
+            BUF_SIZE as i32,
+        )
+    };
+
+    if written <= 0 {
+        return alloc::vec::Vec::new();
+    }
+
+    // msgpack 配列 (u32[]) をデコードして T のインスタンスを生成する
+    // Decode msgpack array (u32[]) and create T instances
+    let (val, _) = crate::msgpack::Value::decode(&buf[..written as usize])
+        .unwrap_or((crate::msgpack::Value::Nil, 0));
+
     let mut result = alloc::vec::Vec::new();
-    for id in 0..=5u32 {
-        if let Some(dir) = Direction::from_id(id) {
-            if wrap_imm::<T>(dir).is_ok() {
-                result.push(T::new(dir));
+    if let crate::msgpack::Value::Array(ids) = val {
+        for item in ids {
+            if let crate::msgpack::Value::Integer(id) = item {
+                if id >= 0 {
+                    result.push(T::new(PeriphAddr::from_raw(id as u32)));
+                }
             }
         }
     }
     result
 }
 
-/// 指定方向にある名前一致ペリフェラルを非同期的に取得する。
-/// Asynchronously wrap a peripheral in the given direction.
-pub async fn wrap<T: Peripheral>(dir: Direction) -> Result<T, PeripheralError> {
+/// 指定アドレスにある名前一致ペリフェラルを非同期的に取得する。
+/// Asynchronously wrap a peripheral at the given address.
+pub async fn wrap<T: Peripheral>(addr: impl Into<PeriphAddr>) -> Result<T, PeripheralError> {
+    let addr = addr.into();
     let args = crate::msgpack::array(&[crate::msgpack::str(T::NAME)]);
-    let data = request_info(dir, "hasType", &args).await?;
+    let data = request_info(addr, "hasType", &args).await?;
     let (val, _) = crate::msgpack::Value::decode(&data).unwrap_or((crate::msgpack::Value::Nil, 0));
     match val {
-        crate::msgpack::Value::Bool(true) => Ok(T::new(dir)),
+        crate::msgpack::Value::Bool(true) => Ok(T::new(addr)),
         _ => Err(PeripheralError::NotFound),
     }
 }

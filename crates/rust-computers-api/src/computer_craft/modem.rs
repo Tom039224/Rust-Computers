@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// 受信データ。
 /// Received data wrapper.
@@ -29,7 +29,7 @@ pub trait Modem: Peripheral {
     /// Open a channel.
     async fn open(&self, channel: u32) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::int(channel as i32)]);
-        peripheral::do_action(self.direction(), "open", &args).await?;
+        peripheral::do_action(self.periph_addr(), "open", &args).await?;
         Ok(())
     }
 
@@ -37,7 +37,7 @@ pub trait Modem: Peripheral {
     /// Check if a channel is open.
     async fn is_open(&self, channel: u32) -> Result<bool, PeripheralError> {
         let args = msgpack::array(&[msgpack::int(channel as i32)]);
-        let data = peripheral::request_info(self.direction(), "isOpen", &args).await?;
+        let data = peripheral::request_info(self.periph_addr(), "isOpen", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -45,14 +45,14 @@ pub trait Modem: Peripheral {
     /// Close a channel.
     async fn close(&self, channel: u32) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::int(channel as i32)]);
-        peripheral::do_action(self.direction(), "close", &args).await?;
+        peripheral::do_action(self.periph_addr(), "close", &args).await?;
         Ok(())
     }
 
     /// 全チャンネルを閉じる。
     /// Close all channels.
     async fn close_all(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.direction(), "closeAll", &msgpack::array(&[])).await?;
+        peripheral::do_action(self.periph_addr(), "closeAll", &msgpack::array(&[])).await?;
         Ok(())
     }
 
@@ -70,7 +70,7 @@ pub trait Modem: Peripheral {
             msgpack::int(reply_channel as i32),
             payload_bytes,
         ]);
-        peripheral::do_action(self.direction(), "transmit", &args).await?;
+        peripheral::do_action(self.periph_addr(), "transmit", &args).await?;
         Ok(())
     }
 
@@ -87,7 +87,7 @@ pub trait Modem: Peripheral {
             msgpack::int(reply_channel as i32),
             msgpack::str(payload),
         ]);
-        peripheral::do_action(self.direction(), "transmit", &args).await?;
+        peripheral::do_action(self.periph_addr(), "transmit", &args).await?;
         Ok(())
     }
 
@@ -95,7 +95,7 @@ pub trait Modem: Peripheral {
     /// Try to receive a message within 1 tick. Returns None if nothing arrives.
     async fn try_receive_raw(&self) -> Result<Option<ReceiveData<String>>, PeripheralError> {
         let data = peripheral::request_info(
-            self.direction(),
+            self.periph_addr(),
             "try_pull_modem_message",
             &msgpack::array(&[]),
         )
@@ -117,18 +117,18 @@ pub trait Modem: Peripheral {
 /// ワイヤレスモデム。
 /// Wireless modem peripheral.
 pub struct WirelessModem {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for WirelessModem {
     const NAME: &'static str = "modem";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -139,18 +139,18 @@ impl Modem for WirelessModem {
 /// 有線モデム。
 /// Wired modem peripheral.
 pub struct WiredModem {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for WiredModem {
     const NAME: &'static str = "modem";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 

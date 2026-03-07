@@ -543,6 +543,25 @@ public final class WasmEngine {
     }
 
     /**
+     * 型名が一致するペリフェラルの periph_id リストを返す。
+     * Return the list of periph_ids whose type name matches {@code typeName}.
+     *
+     * <p>現在は直接接続（periph_id 0–5）のみが対象。
+     * 将来、有線モデム接続（periph_id 6+）が追加された際も
+     * {@code peripherals} マップに追加するだけで自動的に対応される。</p>
+     *
+     * <p>Currently covers only directly-attached peripherals (periph_id 0–5).
+     * When wired-modem connections (periph_id 6+) are added in the future,
+     * they will be covered automatically once added to the {@code peripherals} map.</p>
+     *
+     * @param typeName 検索する型名 / type name to search
+     * @return マッチした periph_id のリスト（なければ空） / list of matching periph_ids
+     */
+    public java.util.List<Integer> findPeripheralsByType(String typeName) {
+        return PeripheralProvider.findByTypeName(peripherals, typeName);
+    }
+
+    /**
      * 接続済みペリフェラルのマップを返す。
      * Return the map of attached peripherals.
      */

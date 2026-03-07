@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// 3D ベクトル。
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -87,18 +87,18 @@ pub struct VSTeleportData {
 /// Ship ペリフェラル。
 /// Ship peripheral for controlling Valkyrien Skies ships.
 pub struct Ship {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Ship {
     const NAME: &'static str = "ship";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -109,14 +109,14 @@ impl Peripheral for Ship {
 macro_rules! imm_getter {
     ($fn_async:ident, $fn_imm:ident, $method:literal, $ret:ty) => {
         pub async fn $fn_async(&self) -> Result<$ret, PeripheralError> {
-            let data = peripheral::request_info(self.dir, $method, &msgpack::array(&[]))
+            let data = peripheral::request_info(self.addr, $method, &msgpack::array(&[]))
                 .await?;
             peripheral::decode(&data)
         }
 
         pub fn $fn_imm(&self) -> Result<$ret, PeripheralError> {
             let data =
-                peripheral::request_info_imm(self.dir, $method, &msgpack::array(&[]))?;
+                peripheral::request_info_imm(self.addr, $method, &msgpack::array(&[]))?;
             peripheral::decode(&data)
         }
     };
@@ -175,7 +175,7 @@ impl Ship {
             msgpack::float64(pos.y),
             msgpack::float64(pos.z),
         ]);
-        let data = peripheral::request_info(self.dir, "transformPositionToWorld", &args).await?;
+        let data = peripheral::request_info(self.addr, "transformPositionToWorld", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -188,7 +188,7 @@ impl Ship {
             msgpack::float64(pos.y),
             msgpack::float64(pos.z),
         ]);
-        let data = peripheral::request_info_imm(self.dir, "transformPositionToWorld", &args)?;
+        let data = peripheral::request_info_imm(self.addr, "transformPositionToWorld", &args)?;
         peripheral::decode(&data)
     }
 
@@ -197,28 +197,28 @@ impl Ship {
     /// スラグ名を設定する。
     pub async fn set_slug(&self, name: &str) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(name)]);
-        peripheral::do_action(self.dir, "setSlug", &args).await?;
+        peripheral::do_action(self.addr, "setSlug", &args).await?;
         Ok(())
     }
 
     /// 静的状態を設定する。
     pub async fn set_static(&self, is_static: bool) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::bool_val(is_static)]);
-        peripheral::do_action(self.dir, "setStatic", &args).await?;
+        peripheral::do_action(self.addr, "setStatic", &args).await?;
         Ok(())
     }
 
     /// スケールを設定する。
     pub async fn set_scale_value(&self, scale: f64) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(scale)]);
-        peripheral::do_action(self.dir, "setScale", &args).await?;
+        peripheral::do_action(self.addr, "setScale", &args).await?;
         Ok(())
     }
 
     /// テレポートする。
     pub async fn teleport(&self, data: &VSTeleportData) -> Result<(), PeripheralError> {
         let args = peripheral::encode(data)?;
-        peripheral::do_action(self.dir, "teleport", &args).await?;
+        peripheral::do_action(self.addr, "teleport", &args).await?;
         Ok(())
     }
 
@@ -242,7 +242,7 @@ impl Ship {
             args.push(msgpack::float64(p.y));
             args.push(msgpack::float64(p.z));
         }
-        peripheral::do_action(self.dir, "applyWorldForce", &msgpack::array(&args)).await?;
+        peripheral::do_action(self.addr, "applyWorldForce", &msgpack::array(&args)).await?;
         Ok(())
     }
 
@@ -258,7 +258,7 @@ impl Ship {
             msgpack::float64(ty),
             msgpack::float64(tz),
         ]);
-        peripheral::do_action(self.dir, "applyWorldTorque", &args).await?;
+        peripheral::do_action(self.addr, "applyWorldTorque", &args).await?;
         Ok(())
     }
 
@@ -280,7 +280,7 @@ impl Ship {
             args.push(msgpack::float64(p.y));
             args.push(msgpack::float64(p.z));
         }
-        peripheral::do_action(self.dir, "applyModelForce", &msgpack::array(&args)).await?;
+        peripheral::do_action(self.addr, "applyModelForce", &msgpack::array(&args)).await?;
         Ok(())
     }
 
@@ -296,7 +296,7 @@ impl Ship {
             msgpack::float64(ty),
             msgpack::float64(tz),
         ]);
-        peripheral::do_action(self.dir, "applyModelTorque", &args).await?;
+        peripheral::do_action(self.addr, "applyModelTorque", &args).await?;
         Ok(())
     }
 
@@ -318,7 +318,7 @@ impl Ship {
             msgpack::float64(py),
             msgpack::float64(pz),
         ]);
-        peripheral::do_action(self.dir, "applyWorldForceToModelPos", &args).await?;
+        peripheral::do_action(self.addr, "applyWorldForceToModelPos", &args).await?;
         Ok(())
     }
 
@@ -340,7 +340,7 @@ impl Ship {
             args.push(msgpack::float64(p.y));
             args.push(msgpack::float64(p.z));
         }
-        peripheral::do_action(self.dir, "applyBodyForce", &msgpack::array(&args)).await?;
+        peripheral::do_action(self.addr, "applyBodyForce", &msgpack::array(&args)).await?;
         Ok(())
     }
 
@@ -356,7 +356,7 @@ impl Ship {
             msgpack::float64(ty),
             msgpack::float64(tz),
         ]);
-        peripheral::do_action(self.dir, "applyBodyTorque", &args).await?;
+        peripheral::do_action(self.addr, "applyBodyTorque", &args).await?;
         Ok(())
     }
 
@@ -378,7 +378,7 @@ impl Ship {
             msgpack::float64(py),
             msgpack::float64(pz),
         ]);
-        peripheral::do_action(self.dir, "applyWorldForceToBodyPos", &args).await?;
+        peripheral::do_action(self.addr, "applyWorldForceToBodyPos", &args).await?;
         Ok(())
     }
 
@@ -389,7 +389,7 @@ impl Ship {
         &self,
     ) -> Result<Option<VSPhysicsTickData>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "try_pull_physics_ticks",
             &msgpack::array(&[]),
         )

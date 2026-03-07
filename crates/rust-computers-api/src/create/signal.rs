@@ -6,22 +6,22 @@ use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// Signal ペリフェラル。
 pub struct Signal {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Signal {
     const NAME: &'static str = "create:signal";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -29,7 +29,7 @@ impl Signal {
     /// シグナルの状態を取得する。
     pub async fn get_state(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getState",
             &msgpack::array(&[]),
         )
@@ -40,7 +40,7 @@ impl Signal {
     /// シグナルの状態を即時取得する (imm 対応)。
     pub fn get_state_imm(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getState",
             &msgpack::array(&[]),
         )?;
@@ -50,7 +50,7 @@ impl Signal {
     /// 強制赤信号かどうかを取得する。
     pub async fn is_forced_red(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "isForcedRed",
             &msgpack::array(&[]),
         )
@@ -61,7 +61,7 @@ impl Signal {
     /// 強制赤信号かどうかを即時取得する (imm 対応)。
     pub fn is_forced_red_imm(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "isForcedRed",
             &msgpack::array(&[]),
         )?;
@@ -71,14 +71,14 @@ impl Signal {
     /// 強制赤信号を設定する。
     pub async fn set_forced_red(&self, powered: bool) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::bool_val(powered)]);
-        peripheral::do_action(self.dir, "setForcedRed", &args).await?;
+        peripheral::do_action(self.addr, "setForcedRed", &args).await?;
         Ok(())
     }
 
     /// ブロック中の列車名一覧を取得する。
     pub async fn list_blocking_train_names(&self) -> Result<Vec<String>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "listBlockingTrainNames",
             &msgpack::array(&[]),
         )
@@ -89,7 +89,7 @@ impl Signal {
     /// ブロック中の列車名一覧を即時取得する (imm 対応)。
     pub fn list_blocking_train_names_imm(&self) -> Result<Vec<String>, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "listBlockingTrainNames",
             &msgpack::array(&[]),
         )?;
@@ -99,7 +99,7 @@ impl Signal {
     /// シグナルタイプを取得する。
     pub async fn get_signal_type(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getSignalType",
             &msgpack::array(&[]),
         )
@@ -110,7 +110,7 @@ impl Signal {
     /// シグナルタイプを即時取得する (imm 対応)。
     pub fn get_signal_type_imm(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getSignalType",
             &msgpack::array(&[]),
         )?;
@@ -119,7 +119,7 @@ impl Signal {
 
     /// シグナルタイプをサイクルする。
     pub async fn cycle_signal_type(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.dir, "cycleSignalType", &msgpack::array(&[])).await?;
+        peripheral::do_action(self.addr, "cycleSignalType", &msgpack::array(&[])).await?;
         Ok(())
     }
 
@@ -130,7 +130,7 @@ impl Signal {
         &self,
     ) -> Result<Option<()>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "try_pull_train_signal_state_change",
             &msgpack::array(&[]),
         )

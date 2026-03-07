@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// 3D 座標。
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -41,18 +41,18 @@ pub struct SPDroneBlueprint {
 
 /// BallisticAccelerator ペリフェラル。
 pub struct BallisticAccelerator {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for BallisticAccelerator {
     const NAME: &'static str = "sp:ballistic_accelerator";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -76,7 +76,7 @@ impl BallisticAccelerator {
         args.push(drag.map_or_else(|| msgpack::nil(), |v| msgpack::float64(v)));
         args.push(max_steps.map_or_else(|| msgpack::nil(), |v| msgpack::int(v as i32)));
         let data =
-            peripheral::request_info(self.dir, "timeInAir", &msgpack::array(&args)).await?;
+            peripheral::request_info(self.addr, "timeInAir", &msgpack::array(&args)).await?;
         peripheral::decode(&data)
     }
 
@@ -98,7 +98,7 @@ impl BallisticAccelerator {
         args.push(drag.map_or_else(|| msgpack::nil(), |v| msgpack::float64(v)));
         args.push(max_steps.map_or_else(|| msgpack::nil(), |v| msgpack::int(v as i32)));
         let data =
-            peripheral::request_info_imm(self.dir, "timeInAir", &msgpack::array(&args))?;
+            peripheral::request_info_imm(self.addr, "timeInAir", &msgpack::array(&args))?;
         peripheral::decode(&data)
     }
 
@@ -119,7 +119,7 @@ impl BallisticAccelerator {
             pitch, speed, length, dist, cannon, target, gravity, drag, max_steps,
         );
         let data =
-            peripheral::request_info(self.dir, "tryPitch", &msgpack::array(&args)).await?;
+            peripheral::request_info(self.addr, "tryPitch", &msgpack::array(&args)).await?;
         peripheral::decode(&data)
     }
 
@@ -139,7 +139,7 @@ impl BallisticAccelerator {
             pitch, speed, length, dist, cannon, target, gravity, drag, max_steps,
         );
         let data =
-            peripheral::request_info_imm(self.dir, "tryPitch", &msgpack::array(&args))?;
+            peripheral::request_info_imm(self.addr, "tryPitch", &msgpack::array(&args))?;
         peripheral::decode(&data)
     }
 
@@ -204,7 +204,7 @@ impl BallisticAccelerator {
             num_elements,
             check_impossible,
         );
-        let data = peripheral::request_info(self.dir, "calculatePitch", &msgpack::array(&args))
+        let data = peripheral::request_info(self.addr, "calculatePitch", &msgpack::array(&args))
             .await?;
         peripheral::decode(&data)
     }
@@ -242,7 +242,7 @@ impl BallisticAccelerator {
             check_impossible,
         );
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "calculatePitch",
             &msgpack::array(&args),
         )?;
@@ -326,7 +326,7 @@ impl BallisticAccelerator {
             check_impossible.map_or_else(|| msgpack::nil(), |v| msgpack::bool_val(v)),
         );
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "batchCalculatePitches",
             &msgpack::array(&args),
         )
@@ -344,7 +344,7 @@ impl BallisticAccelerator {
             msgpack::float64(base_drag),
             msgpack::float64(dim_drag_multiplier),
         ]);
-        let data = peripheral::request_info(self.dir, "getDrag", &args).await?;
+        let data = peripheral::request_info(self.addr, "getDrag", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -357,7 +357,7 @@ impl BallisticAccelerator {
             msgpack::float64(base_drag),
             msgpack::float64(dim_drag_multiplier),
         ]);
-        let data = peripheral::request_info_imm(self.dir, "getDrag", &args)?;
+        let data = peripheral::request_info_imm(self.addr, "getDrag", &args)?;
         peripheral::decode(&data)
     }
 }

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// アイテムエントリ。
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -30,18 +30,18 @@ pub struct ADItemEntry {
 
 /// InventoryManager ペリフェラル。
 pub struct InventoryManager {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for InventoryManager {
     const NAME: &'static str = "advancedPeripherals:inventory_manager";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -49,7 +49,7 @@ impl InventoryManager {
     /// オーナーを取得する (imm 対応)。
     pub async fn get_owner(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getOwner",
             &msgpack::array(&[]),
         )
@@ -59,7 +59,7 @@ impl InventoryManager {
 
     pub fn get_owner_imm(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getOwner",
             &msgpack::array(&[]),
         )?;
@@ -77,7 +77,7 @@ impl InventoryManager {
             args.push(msgpack::int(c as i32));
         }
         let data =
-            peripheral::do_action(self.dir, "addItemToPlayer", &msgpack::array(&args))
+            peripheral::do_action(self.addr, "addItemToPlayer", &msgpack::array(&args))
                 .await?;
         peripheral::decode(&data)
     }
@@ -93,7 +93,7 @@ impl InventoryManager {
             args.push(msgpack::int(c as i32));
         }
         let data =
-            peripheral::do_action(self.dir, "removeItemFromPlayer", &msgpack::array(&args))
+            peripheral::do_action(self.addr, "removeItemFromPlayer", &msgpack::array(&args))
                 .await?;
         peripheral::decode(&data)
     }
@@ -101,7 +101,7 @@ impl InventoryManager {
     /// インベントリ一覧を取得する。
     pub async fn list(&self) -> Result<Vec<ADItemEntry>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "list",
             &msgpack::array(&[]),
         )
@@ -112,7 +112,7 @@ impl InventoryManager {
     /// 防具一覧を取得する。
     pub async fn get_armor(&self) -> Result<Vec<ADItemEntry>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getArmor",
             &msgpack::array(&[]),
         )
@@ -123,7 +123,7 @@ impl InventoryManager {
     /// プレイヤーが装備しているかどうか。
     pub async fn is_player_equipped(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "isPlayerEquipped",
             &msgpack::array(&[]),
         )
@@ -135,14 +135,14 @@ impl InventoryManager {
     pub async fn is_wearing(&self, slot: u32) -> Result<bool, PeripheralError> {
         let args = msgpack::array(&[msgpack::int(slot as i32)]);
         let data =
-            peripheral::request_info(self.dir, "isWearing", &args).await?;
+            peripheral::request_info(self.addr, "isWearing", &args).await?;
         peripheral::decode(&data)
     }
 
     /// メインハンドのアイテムを取得する。
     pub async fn get_item_in_hand(&self) -> Result<ADItemEntry, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getItemInHand",
             &msgpack::array(&[]),
         )
@@ -153,7 +153,7 @@ impl InventoryManager {
     /// オフハンドのアイテムを取得する。
     pub async fn get_item_in_off_hand(&self) -> Result<ADItemEntry, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getItemInOffHand",
             &msgpack::array(&[]),
         )
@@ -164,7 +164,7 @@ impl InventoryManager {
     /// 空きスペース数を取得する。
     pub async fn get_empty_space(&self) -> Result<u32, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getEmptySpace",
             &msgpack::array(&[]),
         )
@@ -175,7 +175,7 @@ impl InventoryManager {
     /// 空きスペースがあるかどうか。
     pub async fn is_space_available(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "isSpaceAvailable",
             &msgpack::array(&[]),
         )
@@ -186,7 +186,7 @@ impl InventoryManager {
     /// 最初の空きスロットを取得する (なければ -1)。
     pub async fn get_free_slot(&self) -> Result<i32, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getFreeSlot",
             &msgpack::array(&[]),
         )
@@ -197,7 +197,7 @@ impl InventoryManager {
     /// チェストインベントリ一覧を取得する。
     pub async fn list_chest(&self) -> Result<Vec<ADItemEntry>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "listChest",
             &msgpack::array(&[]),
         )

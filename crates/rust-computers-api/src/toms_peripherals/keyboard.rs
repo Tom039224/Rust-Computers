@@ -2,22 +2,22 @@
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// Keyboard ペリフェラル。
 pub struct Keyboard {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Keyboard {
     const NAME: &'static str = "tm:keyboard";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -28,7 +28,7 @@ impl Keyboard {
         enabled: bool,
     ) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::bool_val(enabled)]);
-        peripheral::do_action(self.dir, "setFireNativeEvents", &args).await?;
+        peripheral::do_action(self.addr, "setFireNativeEvents", &args).await?;
         Ok(())
     }
 }

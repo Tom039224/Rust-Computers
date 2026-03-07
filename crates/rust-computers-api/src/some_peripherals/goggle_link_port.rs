@@ -5,22 +5,22 @@ use alloc::string::String;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// GoggleLinkPort ペリフェラル。
 pub struct GoggleLinkPort {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for GoggleLinkPort {
     const NAME: &'static str = "sp:goggle_link_port";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -30,7 +30,7 @@ impl GoggleLinkPort {
         &self,
     ) -> Result<BTreeMap<String, crate::msgpack::Value>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getConnected",
             &msgpack::array(&[]),
         )

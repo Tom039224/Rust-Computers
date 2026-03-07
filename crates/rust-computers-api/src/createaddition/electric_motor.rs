@@ -4,22 +4,22 @@ use alloc::string::String;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// ElectricMotor ペリフェラル。
 pub struct ElectricMotor {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for ElectricMotor {
     const NAME: &'static str = "createaddition:electric_motor";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -27,7 +27,7 @@ impl ElectricMotor {
     /// ペリフェラルタイプを取得する (imm 対応)。
     pub async fn get_type(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getType",
             &msgpack::array(&[]),
         )
@@ -37,7 +37,7 @@ impl ElectricMotor {
 
     pub fn get_type_imm(&self) -> Result<String, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getType",
             &msgpack::array(&[]),
         )?;
@@ -47,20 +47,20 @@ impl ElectricMotor {
     /// RPM を設定する (符号で方向制御)。
     pub async fn set_speed(&self, speed: f64) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(speed)]);
-        peripheral::do_action(self.dir, "setSpeed", &args).await?;
+        peripheral::do_action(self.addr, "setSpeed", &args).await?;
         Ok(())
     }
 
     /// 停止する。
     pub async fn stop(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.dir, "stop", &msgpack::array(&[])).await?;
+        peripheral::do_action(self.addr, "stop", &msgpack::array(&[])).await?;
         Ok(())
     }
 
     /// 現在の速度を取得する。
     pub async fn get_speed(&self) -> Result<f64, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getSpeed",
             &msgpack::array(&[]),
         )
@@ -71,7 +71,7 @@ impl ElectricMotor {
     /// ストレス容量を取得する。
     pub async fn get_stress_capacity(&self) -> Result<f64, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getStressCapacity",
             &msgpack::array(&[]),
         )
@@ -82,7 +82,7 @@ impl ElectricMotor {
     /// エネルギー消費量を取得する。
     pub async fn get_energy_consumption(&self) -> Result<f64, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getEnergyConsumption",
             &msgpack::array(&[]),
         )
@@ -101,7 +101,7 @@ impl ElectricMotor {
             args.push(msgpack::float64(r));
         }
         let data =
-            peripheral::do_action(self.dir, "rotate", &msgpack::array(&args)).await?;
+            peripheral::do_action(self.addr, "rotate", &msgpack::array(&args)).await?;
         peripheral::decode(&data)
     }
 
@@ -116,14 +116,14 @@ impl ElectricMotor {
             args.push(msgpack::float64(r));
         }
         let data =
-            peripheral::do_action(self.dir, "translate", &msgpack::array(&args)).await?;
+            peripheral::do_action(self.addr, "translate", &msgpack::array(&args)).await?;
         peripheral::decode(&data)
     }
 
     /// 最大挿入エネルギーを取得する。
     pub async fn get_max_insert(&self) -> Result<f64, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getMaxInsert",
             &msgpack::array(&[]),
         )
@@ -134,7 +134,7 @@ impl ElectricMotor {
     /// 最大抽出エネルギーを取得する。
     pub async fn get_max_extract(&self) -> Result<f64, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getMaxExtract",
             &msgpack::array(&[]),
         )

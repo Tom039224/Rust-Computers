@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// 大気パラメータ。
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -18,18 +18,18 @@ pub struct VSAtmosphericParameters {
 /// Aerodynamics グローバル API。
 /// Global aerodynamics API (not direction-specific, uses a fixed direction).
 pub struct Aerodynamics {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Aerodynamics {
     const NAME: &'static str = "vs_aerodynamics";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -37,7 +37,7 @@ macro_rules! imm_only {
     ($fn_name:ident, $method:literal, $ret:ty) => {
         pub fn $fn_name(&self) -> Result<$ret, PeripheralError> {
             let data =
-                peripheral::request_info_imm(self.dir, $method, &msgpack::array(&[]))?;
+                peripheral::request_info_imm(self.addr, $method, &msgpack::array(&[]))?;
             peripheral::decode(&data)
         }
     };
@@ -60,7 +60,7 @@ impl Aerodynamics {
         &self,
     ) -> Result<Option<VSAtmosphericParameters>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getAtmosphericParameters",
             &msgpack::array(&[]),
         )
@@ -72,7 +72,7 @@ impl Aerodynamics {
         &self,
     ) -> Result<Option<VSAtmosphericParameters>, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getAtmosphericParameters",
             &msgpack::array(&[]),
         )?;
@@ -89,7 +89,7 @@ impl Aerodynamics {
             None => msgpack::array(&[]),
         };
         let data =
-            peripheral::request_info(self.dir, "getAirDensity", &args).await?;
+            peripheral::request_info(self.addr, "getAirDensity", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -98,7 +98,7 @@ impl Aerodynamics {
             Some(v) => msgpack::array(&[msgpack::float64(v)]),
             None => msgpack::array(&[]),
         };
-        let data = peripheral::request_info_imm(self.dir, "getAirDensity", &args)?;
+        let data = peripheral::request_info_imm(self.addr, "getAirDensity", &args)?;
         peripheral::decode(&data)
     }
 
@@ -112,7 +112,7 @@ impl Aerodynamics {
             None => msgpack::array(&[]),
         };
         let data =
-            peripheral::request_info(self.dir, "getAirPressure", &args).await?;
+            peripheral::request_info(self.addr, "getAirPressure", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -121,7 +121,7 @@ impl Aerodynamics {
             Some(v) => msgpack::array(&[msgpack::float64(v)]),
             None => msgpack::array(&[]),
         };
-        let data = peripheral::request_info_imm(self.dir, "getAirPressure", &args)?;
+        let data = peripheral::request_info_imm(self.addr, "getAirPressure", &args)?;
         peripheral::decode(&data)
     }
 
@@ -135,7 +135,7 @@ impl Aerodynamics {
             None => msgpack::array(&[]),
         };
         let data =
-            peripheral::request_info(self.dir, "getAirTemperature", &args).await?;
+            peripheral::request_info(self.addr, "getAirTemperature", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -147,7 +147,7 @@ impl Aerodynamics {
             Some(v) => msgpack::array(&[msgpack::float64(v)]),
             None => msgpack::array(&[]),
         };
-        let data = peripheral::request_info_imm(self.dir, "getAirTemperature", &args)?;
+        let data = peripheral::request_info_imm(self.addr, "getAirTemperature", &args)?;
         peripheral::decode(&data)
     }
 }

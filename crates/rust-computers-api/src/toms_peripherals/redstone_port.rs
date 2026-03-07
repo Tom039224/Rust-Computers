@@ -5,22 +5,22 @@ use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// RedstonePort ペリフェラル。
 pub struct RedstonePort {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for RedstonePort {
     const NAME: &'static str = "tm:redstone_port";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -28,7 +28,7 @@ impl RedstonePort {
     /// 利用可能なサイド一覧を取得する (imm のみ)。
     pub fn get_sides_imm(&self) -> Result<Vec<String>, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "getSides",
             &msgpack::array(&[]),
         )?;
@@ -38,7 +38,7 @@ impl RedstonePort {
     /// 指定サイドの入力を取得する。
     pub async fn get_input(&self, side: &str) -> Result<bool, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side)]);
-        let data = peripheral::request_info(self.dir, "getInput", &args).await?;
+        let data = peripheral::request_info(self.addr, "getInput", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -46,7 +46,7 @@ impl RedstonePort {
     pub async fn get_analog_input(&self, side: &str) -> Result<u8, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side)]);
         let data =
-            peripheral::request_info(self.dir, "getAnalogInput", &args).await?;
+            peripheral::request_info(self.addr, "getAnalogInput", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -54,7 +54,7 @@ impl RedstonePort {
     pub async fn get_bundled_input(&self, side: &str) -> Result<u16, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side)]);
         let data =
-            peripheral::request_info(self.dir, "getBundledInput", &args).await?;
+            peripheral::request_info(self.addr, "getBundledInput", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -62,13 +62,13 @@ impl RedstonePort {
     pub async fn get_output(&self, side: &str) -> Result<bool, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side)]);
         let data =
-            peripheral::request_info(self.dir, "getOutput", &args).await?;
+            peripheral::request_info(self.addr, "getOutput", &args).await?;
         peripheral::decode(&data)
     }
 
     pub fn get_output_imm(&self, side: &str) -> Result<bool, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side)]);
-        let data = peripheral::request_info_imm(self.dir, "getOutput", &args)?;
+        let data = peripheral::request_info_imm(self.addr, "getOutput", &args)?;
         peripheral::decode(&data)
     }
 
@@ -76,13 +76,13 @@ impl RedstonePort {
     pub async fn get_analog_output(&self, side: &str) -> Result<u8, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side)]);
         let data =
-            peripheral::request_info(self.dir, "getAnalogOutput", &args).await?;
+            peripheral::request_info(self.addr, "getAnalogOutput", &args).await?;
         peripheral::decode(&data)
     }
 
     pub fn get_analog_output_imm(&self, side: &str) -> Result<u8, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side)]);
-        let data = peripheral::request_info_imm(self.dir, "getAnalogOutput", &args)?;
+        let data = peripheral::request_info_imm(self.addr, "getAnalogOutput", &args)?;
         peripheral::decode(&data)
     }
 
@@ -90,20 +90,20 @@ impl RedstonePort {
     pub async fn get_bundled_output(&self, side: &str) -> Result<u16, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side)]);
         let data =
-            peripheral::request_info(self.dir, "getBundledOutput", &args).await?;
+            peripheral::request_info(self.addr, "getBundledOutput", &args).await?;
         peripheral::decode(&data)
     }
 
     pub fn get_bundled_output_imm(&self, side: &str) -> Result<u16, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side)]);
-        let data = peripheral::request_info_imm(self.dir, "getBundledOutput", &args)?;
+        let data = peripheral::request_info_imm(self.addr, "getBundledOutput", &args)?;
         peripheral::decode(&data)
     }
 
     /// 出力を設定する。
     pub async fn set_output(&self, side: &str, value: bool) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side), msgpack::bool_val(value)]);
-        peripheral::do_action(self.dir, "setOutput", &args).await?;
+        peripheral::do_action(self.addr, "setOutput", &args).await?;
         Ok(())
     }
 
@@ -114,7 +114,7 @@ impl RedstonePort {
         value: u8,
     ) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side), msgpack::int(value as i32)]);
-        peripheral::do_action(self.dir, "setAnalogOutput", &args).await?;
+        peripheral::do_action(self.addr, "setAnalogOutput", &args).await?;
         Ok(())
     }
 
@@ -125,7 +125,7 @@ impl RedstonePort {
         mask: u16,
     ) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side), msgpack::int(mask as i32)]);
-        peripheral::do_action(self.dir, "setBundledOutput", &args).await?;
+        peripheral::do_action(self.addr, "setBundledOutput", &args).await?;
         Ok(())
     }
 
@@ -137,7 +137,7 @@ impl RedstonePort {
     ) -> Result<bool, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(side), msgpack::int(mask as i32)]);
         let data =
-            peripheral::request_info(self.dir, "testBundledInput", &args).await?;
+            peripheral::request_info(self.addr, "testBundledInput", &args).await?;
         peripheral::decode(&data)
     }
 }

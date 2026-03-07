@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// プレイヤー情報。
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,18 +41,18 @@ pub struct ADPlayerInfo {
 
 /// PlayerDetector ペリフェラル。
 pub struct PlayerDetector {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for PlayerDetector {
     const NAME: &'static str = "advancedPeripherals:player_detector";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -60,7 +60,7 @@ impl PlayerDetector {
     /// オンラインプレイヤー一覧を取得する。
     pub async fn get_online_players(&self) -> Result<Vec<String>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getOnlinePlayers",
             &msgpack::array(&[]),
         )
@@ -75,7 +75,7 @@ impl PlayerDetector {
     ) -> Result<Vec<String>, PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(radius)]);
         let data =
-            peripheral::request_info(self.dir, "getPlayersInRange", &args).await?;
+            peripheral::request_info(self.addr, "getPlayersInRange", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -99,7 +99,7 @@ impl PlayerDetector {
             msgpack::float64(z2),
         ]);
         let data =
-            peripheral::request_info(self.dir, "getPlayersInCoords", &args).await?;
+            peripheral::request_info(self.addr, "getPlayersInCoords", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -116,7 +116,7 @@ impl PlayerDetector {
             msgpack::float64(dz),
         ]);
         let data =
-            peripheral::request_info(self.dir, "getPlayersInCubic", &args).await?;
+            peripheral::request_info(self.addr, "getPlayersInCubic", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -127,7 +127,7 @@ impl PlayerDetector {
     ) -> Result<bool, PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(radius)]);
         let data =
-            peripheral::request_info(self.dir, "isPlayersInRange", &args).await?;
+            peripheral::request_info(self.addr, "isPlayersInRange", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -151,7 +151,7 @@ impl PlayerDetector {
             msgpack::float64(z2),
         ]);
         let data =
-            peripheral::request_info(self.dir, "isPlayersInCoords", &args).await?;
+            peripheral::request_info(self.addr, "isPlayersInCoords", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -168,7 +168,7 @@ impl PlayerDetector {
             msgpack::float64(dz),
         ]);
         let data =
-            peripheral::request_info(self.dir, "isPlayersInCubic", &args).await?;
+            peripheral::request_info(self.addr, "isPlayersInCubic", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -180,7 +180,7 @@ impl PlayerDetector {
     ) -> Result<bool, PeripheralError> {
         let args = msgpack::array(&[msgpack::str(player), msgpack::float64(radius)]);
         let data =
-            peripheral::request_info(self.dir, "isPlayerInRange", &args).await?;
+            peripheral::request_info(self.addr, "isPlayerInRange", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -206,7 +206,7 @@ impl PlayerDetector {
             msgpack::float64(z2),
         ]);
         let data =
-            peripheral::request_info(self.dir, "isPlayerInCoords", &args).await?;
+            peripheral::request_info(self.addr, "isPlayerInCoords", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -225,7 +225,7 @@ impl PlayerDetector {
             msgpack::float64(dz),
         ]);
         let data =
-            peripheral::request_info(self.dir, "isPlayerInCubic", &args).await?;
+            peripheral::request_info(self.addr, "isPlayerInCubic", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -240,7 +240,7 @@ impl PlayerDetector {
             args.push(msgpack::int(d as i32));
         }
         let data =
-            peripheral::request_info(self.dir, "getPlayerPos", &msgpack::array(&args))
+            peripheral::request_info(self.addr, "getPlayerPos", &msgpack::array(&args))
                 .await?;
         peripheral::decode(&data)
     }
@@ -256,7 +256,7 @@ impl PlayerDetector {
             args.push(msgpack::int(d as i32));
         }
         let data =
-            peripheral::request_info(self.dir, "getPlayer", &msgpack::array(&args)).await?;
+            peripheral::request_info(self.addr, "getPlayer", &msgpack::array(&args)).await?;
         peripheral::decode(&data)
     }
 }

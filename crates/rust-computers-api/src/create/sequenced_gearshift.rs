@@ -3,22 +3,22 @@
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// Sequenced Gearshift ペリフェラル。
 pub struct SequencedGearshift {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for SequencedGearshift {
     const NAME: &'static str = "create:sequenced_gearshift";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -34,7 +34,7 @@ impl SequencedGearshift {
             args_vec.push(msgpack::int(sm));
         }
         let args = msgpack::array(&args_vec);
-        peripheral::do_action(self.dir, "rotate", &args).await?;
+        peripheral::do_action(self.addr, "rotate", &args).await?;
         Ok(())
     }
 
@@ -49,14 +49,14 @@ impl SequencedGearshift {
             args_vec.push(msgpack::int(sm));
         }
         let args = msgpack::array(&args_vec);
-        peripheral::do_action(self.dir, "moveBy", &args).await?;
+        peripheral::do_action(self.addr, "moveBy", &args).await?;
         Ok(())
     }
 
     /// 現在動作中かどうかを取得する。
     pub async fn is_running(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "isRunning",
             &msgpack::array(&[]),
         )
@@ -67,7 +67,7 @@ impl SequencedGearshift {
     /// 現在動作中かどうかを即時取得する (imm 対応)。
     pub fn is_running_imm(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.dir,
+            self.addr,
             "isRunning",
             &msgpack::array(&[]),
         )?;

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// アイテム詳細情報。
 /// Detailed item information.
@@ -39,18 +39,18 @@ pub struct SlotInfo {
 /// インベントリペリフェラル。
 /// Inventory peripheral.
 pub struct Inventory {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for Inventory {
     const NAME: &'static str = "inventory";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -58,14 +58,14 @@ impl Inventory {
     /// インベントリサイズを取得する。
     /// Get the inventory size.
     pub async fn size(&self) -> Result<u32, PeripheralError> {
-        let data = peripheral::request_info(self.dir, "size", &msgpack::array(&[])).await?;
+        let data = peripheral::request_info(self.addr, "size", &msgpack::array(&[])).await?;
         peripheral::decode(&data)
     }
 
     /// 全スロットの一覧を取得する。
     /// List all slots.
     pub async fn list(&self) -> Result<BTreeMap<u32, SlotInfo>, PeripheralError> {
-        let data = peripheral::request_info(self.dir, "list", &msgpack::array(&[])).await?;
+        let data = peripheral::request_info(self.addr, "list", &msgpack::array(&[])).await?;
         peripheral::decode(&data)
     }
 
@@ -73,7 +73,7 @@ impl Inventory {
     /// Get item detail for the specified slot.
     pub async fn get_item_detail(&self, slot: u32) -> Result<Option<ItemDetail>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "getItemDetail",
             &msgpack::array(&[msgpack::int(slot as i32)]),
         )
@@ -104,7 +104,7 @@ impl Inventory {
             args.push(msgpack::int(ts as i32));
         }
         let data =
-            peripheral::do_action(self.dir, "pushItems", &msgpack::array(&args)).await?;
+            peripheral::do_action(self.addr, "pushItems", &msgpack::array(&args)).await?;
         peripheral::decode(&data)
     }
 
@@ -131,7 +131,7 @@ impl Inventory {
             args.push(msgpack::int(ts as i32));
         }
         let data =
-            peripheral::do_action(self.dir, "pullItems", &msgpack::array(&args)).await?;
+            peripheral::do_action(self.addr, "pullItems", &msgpack::array(&args)).await?;
         peripheral::decode(&data)
     }
 }

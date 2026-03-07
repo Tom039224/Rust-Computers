@@ -5,24 +5,24 @@ use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 use super::common::{CRItemDetail, CRItemFilter, CRSlotInfo};
 
 /// Stock Ticker ペリフェラル。
 pub struct StockTicker {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for StockTicker {
     const NAME: &'static str = "create:stock_ticker";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -30,7 +30,7 @@ impl StockTicker {
     /// 在庫情報を取得する。
     pub async fn stock(&self) -> Result<Vec<CRSlotInfo>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "stock",
             &msgpack::array(&[]),
         )
@@ -45,7 +45,7 @@ impl StockTicker {
     ) -> Result<Option<CRItemDetail>, PeripheralError> {
         let args = msgpack::array(&[msgpack::int(slot as i32)]);
         let data =
-            peripheral::request_info(self.dir, "getStockItemDetail", &args).await?;
+            peripheral::request_info(self.addr, "getStockItemDetail", &args).await?;
         peripheral::decode(&data)
     }
 
@@ -57,14 +57,14 @@ impl StockTicker {
         let filters_vec: Vec<_> = filters.iter().cloned().collect();
         let encoded = peripheral::encode(&filters_vec)?;
         let args = msgpack::array(&[encoded]);
-        peripheral::do_action(self.dir, "requestFiltered", &args).await?;
+        peripheral::do_action(self.addr, "requestFiltered", &args).await?;
         Ok(())
     }
 
     /// インベントリ内のスロット一覧を取得する。
     pub async fn list(&self) -> Result<Vec<CRSlotInfo>, PeripheralError> {
         let data = peripheral::request_info(
-            self.dir,
+            self.addr,
             "list",
             &msgpack::array(&[]),
         )
@@ -79,7 +79,7 @@ impl StockTicker {
     ) -> Result<Option<CRItemDetail>, PeripheralError> {
         let args = msgpack::array(&[msgpack::int(slot as i32)]);
         let data =
-            peripheral::request_info(self.dir, "getItemDetail", &args).await?;
+            peripheral::request_info(self.addr, "getItemDetail", &args).await?;
         peripheral::decode(&data)
     }
 }

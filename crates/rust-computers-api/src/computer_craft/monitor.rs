@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, Direction, Peripheral};
+use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 /// モニター色 (RRGGBB)。
 /// Monitor color in RRGGBB format.
@@ -80,14 +80,14 @@ pub trait Monitor: Peripheral {
     /// テキストスケールを設定する。
     async fn set_text_scale(&self, scale: MonitorTextScale) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::float64(scale.0 as f64)]);
-        peripheral::do_action(self.direction(), "setTextScale", &args).await?;
+        peripheral::do_action(self.periph_addr(), "setTextScale", &args).await?;
         Ok(())
     }
 
     /// テキストスケールを取得する。
     async fn get_text_scale(&self) -> Result<MonitorTextScale, PeripheralError> {
         let data = peripheral::request_info(
-            self.direction(),
+            self.periph_addr(),
             "getTextScale",
             &msgpack::array(&[]),
         )
@@ -99,7 +99,7 @@ pub trait Monitor: Peripheral {
     /// テキストスケールを即時取得する。
     fn get_text_scale_imm(&self) -> Result<MonitorTextScale, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.direction(),
+            self.periph_addr(),
             "getTextScale",
             &msgpack::array(&[]),
         )?;
@@ -110,21 +110,21 @@ pub trait Monitor: Peripheral {
     /// テキストを書き込む。
     async fn write(&self, text: &str) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::str(text)]);
-        peripheral::do_action(self.direction(), "write", &args).await?;
+        peripheral::do_action(self.periph_addr(), "write", &args).await?;
         Ok(())
     }
 
     /// 画面をスクロールする。
     async fn scroll(&self, y: u32) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::int(y as i32)]);
-        peripheral::do_action(self.direction(), "scroll", &args).await?;
+        peripheral::do_action(self.periph_addr(), "scroll", &args).await?;
         Ok(())
     }
 
     /// カーソル位置を取得する。
     async fn get_cursor_pos(&self) -> Result<MonitorPosition, PeripheralError> {
         let data = peripheral::request_info(
-            self.direction(),
+            self.periph_addr(),
             "getCursorPos",
             &msgpack::array(&[]),
         )
@@ -136,7 +136,7 @@ pub trait Monitor: Peripheral {
     /// カーソル位置を即時取得する。
     fn get_cursor_pos_imm(&self) -> Result<MonitorPosition, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.direction(),
+            self.periph_addr(),
             "getCursorPos",
             &msgpack::array(&[]),
         )?;
@@ -150,14 +150,14 @@ pub trait Monitor: Peripheral {
             msgpack::int(pos.x as i32),
             msgpack::int(pos.y as i32),
         ]);
-        peripheral::do_action(self.direction(), "setCursorPos", &args).await?;
+        peripheral::do_action(self.periph_addr(), "setCursorPos", &args).await?;
         Ok(())
     }
 
     /// カーソル点滅状態を取得する。
     async fn get_cursor_blink(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info(
-            self.direction(),
+            self.periph_addr(),
             "getCursorBlink",
             &msgpack::array(&[]),
         )
@@ -168,7 +168,7 @@ pub trait Monitor: Peripheral {
     /// カーソル点滅状態を即時取得する。
     fn get_cursor_blink_imm(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.direction(),
+            self.periph_addr(),
             "getCursorBlink",
             &msgpack::array(&[]),
         )?;
@@ -178,14 +178,14 @@ pub trait Monitor: Peripheral {
     /// カーソル点滅を設定する。
     async fn set_cursor_blink(&self, blink: bool) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::bool_val(blink)]);
-        peripheral::do_action(self.direction(), "setCursorBlink", &args).await?;
+        peripheral::do_action(self.periph_addr(), "setCursorBlink", &args).await?;
         Ok(())
     }
 
     /// モニターサイズを取得する。
     async fn get_size(&self) -> Result<MonitorSize, PeripheralError> {
         let data = peripheral::request_info(
-            self.direction(),
+            self.periph_addr(),
             "getSize",
             &msgpack::array(&[]),
         )
@@ -197,7 +197,7 @@ pub trait Monitor: Peripheral {
     /// モニターサイズを即時取得する。
     fn get_size_imm(&self) -> Result<MonitorSize, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.direction(),
+            self.periph_addr(),
             "getSize",
             &msgpack::array(&[]),
         )?;
@@ -207,20 +207,20 @@ pub trait Monitor: Peripheral {
 
     /// 画面をクリアする。
     async fn clear(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.direction(), "clear", &msgpack::array(&[])).await?;
+        peripheral::do_action(self.periph_addr(), "clear", &msgpack::array(&[])).await?;
         Ok(())
     }
 
     /// 現在行をクリアする。
     async fn clear_line(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.direction(), "clearLine", &msgpack::array(&[])).await?;
+        peripheral::do_action(self.periph_addr(), "clearLine", &msgpack::array(&[])).await?;
         Ok(())
     }
 
     /// テキスト色を取得する。
     async fn get_text_color(&self) -> Result<MonitorColor, PeripheralError> {
         let data = peripheral::request_info(
-            self.direction(),
+            self.periph_addr(),
             "getTextColour",
             &msgpack::array(&[]),
         )
@@ -232,7 +232,7 @@ pub trait Monitor: Peripheral {
     /// テキスト色を即時取得する。
     fn get_text_color_imm(&self) -> Result<MonitorColor, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.direction(),
+            self.periph_addr(),
             "getTextColour",
             &msgpack::array(&[]),
         )?;
@@ -243,14 +243,14 @@ pub trait Monitor: Peripheral {
     /// テキスト色を設定する。
     async fn set_text_color(&self, color: MonitorColor) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::int(color.0 as i32)]);
-        peripheral::do_action(self.direction(), "setTextColour", &args).await?;
+        peripheral::do_action(self.periph_addr(), "setTextColour", &args).await?;
         Ok(())
     }
 
     /// 背景色を取得する。
     async fn get_background_color(&self) -> Result<MonitorColor, PeripheralError> {
         let data = peripheral::request_info(
-            self.direction(),
+            self.periph_addr(),
             "getBackgroundColour",
             &msgpack::array(&[]),
         )
@@ -262,7 +262,7 @@ pub trait Monitor: Peripheral {
     /// 背景色を即時取得する。
     fn get_background_color_imm(&self) -> Result<MonitorColor, PeripheralError> {
         let data = peripheral::request_info_imm(
-            self.direction(),
+            self.periph_addr(),
             "getBackgroundColour",
             &msgpack::array(&[]),
         )?;
@@ -273,7 +273,7 @@ pub trait Monitor: Peripheral {
     /// 背景色を設定する。
     async fn set_background_color(&self, color: MonitorColor) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[msgpack::int(color.0 as i32)]);
-        peripheral::do_action(self.direction(), "setBackgroundColour", &args).await?;
+        peripheral::do_action(self.periph_addr(), "setBackgroundColour", &args).await?;
         Ok(())
     }
 
@@ -289,7 +289,7 @@ pub trait Monitor: Peripheral {
             msgpack::int(text_color.0 as i32),
             msgpack::int(background_color.0 as i32),
         ]);
-        peripheral::do_action(self.direction(), "blit", &args).await?;
+        peripheral::do_action(self.periph_addr(), "blit", &args).await?;
         Ok(())
     }
 }
@@ -297,18 +297,18 @@ pub trait Monitor: Peripheral {
 /// 通常モニター。
 /// Normal (non-color) monitor.
 pub struct NormalMonitor {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for NormalMonitor {
     const NAME: &'static str = "monitor";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
@@ -319,18 +319,18 @@ impl Monitor for NormalMonitor {
 /// アドバンスドモニター。
 /// Advanced (color) monitor.
 pub struct AdvancedMonitor {
-    dir: Direction,
+    addr: PeriphAddr,
 }
 
 impl Peripheral for AdvancedMonitor {
     const NAME: &'static str = "monitor";
 
-    fn new(dir: Direction) -> Self {
-        Self { dir }
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
     }
 
-    fn direction(&self) -> Direction {
-        self.dir
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
     }
 }
 
