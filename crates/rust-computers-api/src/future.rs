@@ -349,7 +349,188 @@ where
         }
     }
 }
+/// 5 つの Future を並行して poll する。
+/// Poll five futures concurrently.
+pub struct Join5<A: Future, B: Future, C: Future, D: Future, E: Future> {
+    a: Option<Pin<Box<A>>>,
+    b: Option<Pin<Box<B>>>,
+    c: Option<Pin<Box<C>>>,
+    d: Option<Pin<Box<D>>>,
+    e: Option<Pin<Box<E>>>,
+    result_a: Option<A::Output>,
+    result_b: Option<B::Output>,
+    result_c: Option<C::Output>,
+    result_d: Option<D::Output>,
+    result_e: Option<E::Output>,
+}
+impl<A, B, C, D, E> Join5<A, B, C, D, E>
+where A: Future, B: Future, C: Future, D: Future, E: Future,
+{
+    pub fn new(a: A, b: B, c: C, d: D, e: E) -> Self {
+        Self {
+            a: Some(Box::pin(a)), b: Some(Box::pin(b)),
+            c: Some(Box::pin(c)), d: Some(Box::pin(d)), e: Some(Box::pin(e)),
+            result_a: None, result_b: None, result_c: None, result_d: None, result_e: None,
+        }
+    }
+}
+impl<A, B, C, D, E> Future for Join5<A, B, C, D, E>
+where A: Future, B: Future, C: Future, D: Future, E: Future,
+{
+    type Output = (A::Output, B::Output, C::Output, D::Output, E::Output);
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = unsafe { self.get_unchecked_mut() };
+        macro_rules! poll_slot { ($slot:ident, $res:ident) => {
+            if this.$res.is_none() { if let Some(ref mut f) = this.$slot {
+                if let Poll::Ready(v) = f.as_mut().poll(cx) { this.$res = Some(v); this.$slot = None; }
+            }}
+        }; }
+        poll_slot!(a, result_a); poll_slot!(b, result_b); poll_slot!(c, result_c);
+        poll_slot!(d, result_d); poll_slot!(e, result_e);
+        if this.result_a.is_some() && this.result_b.is_some() && this.result_c.is_some()
+            && this.result_d.is_some() && this.result_e.is_some() {
+            Poll::Ready((this.result_a.take().unwrap(), this.result_b.take().unwrap(),
+                         this.result_c.take().unwrap(), this.result_d.take().unwrap(),
+                         this.result_e.take().unwrap()))
+        } else { Poll::Pending }
+    }
+}
 
+/// 6 つの Future を並行して poll する。
+/// Poll six futures concurrently.
+pub struct Join6<A: Future, B: Future, C: Future, D: Future, E: Future, F: Future> {
+    a: Option<Pin<Box<A>>>, b: Option<Pin<Box<B>>>, c: Option<Pin<Box<C>>>,
+    d: Option<Pin<Box<D>>>, e: Option<Pin<Box<E>>>, f: Option<Pin<Box<F>>>,
+    result_a: Option<A::Output>, result_b: Option<B::Output>, result_c: Option<C::Output>,
+    result_d: Option<D::Output>, result_e: Option<E::Output>, result_f: Option<F::Output>,
+}
+impl<A, B, C, D, E, F> Join6<A, B, C, D, E, F>
+where A: Future, B: Future, C: Future, D: Future, E: Future, F: Future,
+{
+    pub fn new(a: A, b: B, c: C, d: D, e: E, f: F) -> Self {
+        Self {
+            a: Some(Box::pin(a)), b: Some(Box::pin(b)), c: Some(Box::pin(c)),
+            d: Some(Box::pin(d)), e: Some(Box::pin(e)), f: Some(Box::pin(f)),
+            result_a: None, result_b: None, result_c: None,
+            result_d: None, result_e: None, result_f: None,
+        }
+    }
+}
+impl<A, B, C, D, E, F> Future for Join6<A, B, C, D, E, F>
+where A: Future, B: Future, C: Future, D: Future, E: Future, F: Future,
+{
+    type Output = (A::Output, B::Output, C::Output, D::Output, E::Output, F::Output);
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = unsafe { self.get_unchecked_mut() };
+        macro_rules! poll_slot { ($slot:ident, $res:ident) => {
+            if this.$res.is_none() { if let Some(ref mut f) = this.$slot {
+                if let Poll::Ready(v) = f.as_mut().poll(cx) { this.$res = Some(v); this.$slot = None; }
+            }}
+        }; }
+        poll_slot!(a, result_a); poll_slot!(b, result_b); poll_slot!(c, result_c);
+        poll_slot!(d, result_d); poll_slot!(e, result_e); poll_slot!(f, result_f);
+        if this.result_a.is_some() && this.result_b.is_some() && this.result_c.is_some()
+            && this.result_d.is_some() && this.result_e.is_some() && this.result_f.is_some() {
+            Poll::Ready((this.result_a.take().unwrap(), this.result_b.take().unwrap(),
+                         this.result_c.take().unwrap(), this.result_d.take().unwrap(),
+                         this.result_e.take().unwrap(), this.result_f.take().unwrap()))
+        } else { Poll::Pending }
+    }
+}
+
+/// 7 つの Future を並行して poll する。
+/// Poll seven futures concurrently.
+pub struct Join7<A: Future, B: Future, C: Future, D: Future, E: Future, F: Future, G: Future> {
+    a: Option<Pin<Box<A>>>, b: Option<Pin<Box<B>>>, c: Option<Pin<Box<C>>>,
+    d: Option<Pin<Box<D>>>, e: Option<Pin<Box<E>>>, f: Option<Pin<Box<F>>>, g: Option<Pin<Box<G>>>,
+    result_a: Option<A::Output>, result_b: Option<B::Output>, result_c: Option<C::Output>,
+    result_d: Option<D::Output>, result_e: Option<E::Output>, result_f: Option<F::Output>,
+    result_g: Option<G::Output>,
+}
+impl<A, B, C, D, E, F, G> Join7<A, B, C, D, E, F, G>
+where A: Future, B: Future, C: Future, D: Future, E: Future, F: Future, G: Future,
+{
+    pub fn new(a: A, b: B, c: C, d: D, e: E, f: F, g: G) -> Self {
+        Self {
+            a: Some(Box::pin(a)), b: Some(Box::pin(b)), c: Some(Box::pin(c)),
+            d: Some(Box::pin(d)), e: Some(Box::pin(e)), f: Some(Box::pin(f)), g: Some(Box::pin(g)),
+            result_a: None, result_b: None, result_c: None, result_d: None,
+            result_e: None, result_f: None, result_g: None,
+        }
+    }
+}
+impl<A, B, C, D, E, F, G> Future for Join7<A, B, C, D, E, F, G>
+where A: Future, B: Future, C: Future, D: Future, E: Future, F: Future, G: Future,
+{
+    type Output = (A::Output, B::Output, C::Output, D::Output, E::Output, F::Output, G::Output);
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = unsafe { self.get_unchecked_mut() };
+        macro_rules! poll_slot { ($slot:ident, $res:ident) => {
+            if this.$res.is_none() { if let Some(ref mut f) = this.$slot {
+                if let Poll::Ready(v) = f.as_mut().poll(cx) { this.$res = Some(v); this.$slot = None; }
+            }}
+        }; }
+        poll_slot!(a, result_a); poll_slot!(b, result_b); poll_slot!(c, result_c);
+        poll_slot!(d, result_d); poll_slot!(e, result_e); poll_slot!(f, result_f);
+        poll_slot!(g, result_g);
+        if this.result_a.is_some() && this.result_b.is_some() && this.result_c.is_some()
+            && this.result_d.is_some() && this.result_e.is_some() && this.result_f.is_some()
+            && this.result_g.is_some() {
+            Poll::Ready((this.result_a.take().unwrap(), this.result_b.take().unwrap(),
+                         this.result_c.take().unwrap(), this.result_d.take().unwrap(),
+                         this.result_e.take().unwrap(), this.result_f.take().unwrap(),
+                         this.result_g.take().unwrap()))
+        } else { Poll::Pending }
+    }
+}
+
+/// 8 つの Future を並行して poll する。
+/// Poll eight futures concurrently.
+pub struct Join8<A: Future, B: Future, C: Future, D: Future, E: Future, F: Future, G: Future, H: Future> {
+    a: Option<Pin<Box<A>>>, b: Option<Pin<Box<B>>>, c: Option<Pin<Box<C>>>,
+    d: Option<Pin<Box<D>>>, e: Option<Pin<Box<E>>>, f: Option<Pin<Box<F>>>,
+    g: Option<Pin<Box<G>>>, h: Option<Pin<Box<H>>>,
+    result_a: Option<A::Output>, result_b: Option<B::Output>, result_c: Option<C::Output>,
+    result_d: Option<D::Output>, result_e: Option<E::Output>, result_f: Option<F::Output>,
+    result_g: Option<G::Output>, result_h: Option<H::Output>,
+}
+impl<A, B, C, D, E, F, G, H> Join8<A, B, C, D, E, F, G, H>
+where A: Future, B: Future, C: Future, D: Future, E: Future, F: Future, G: Future, H: Future,
+{
+    pub fn new(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H) -> Self {
+        Self {
+            a: Some(Box::pin(a)), b: Some(Box::pin(b)), c: Some(Box::pin(c)),
+            d: Some(Box::pin(d)), e: Some(Box::pin(e)), f: Some(Box::pin(f)),
+            g: Some(Box::pin(g)), h: Some(Box::pin(h)),
+            result_a: None, result_b: None, result_c: None, result_d: None,
+            result_e: None, result_f: None, result_g: None, result_h: None,
+        }
+    }
+}
+impl<A, B, C, D, E, F, G, H> Future for Join8<A, B, C, D, E, F, G, H>
+where A: Future, B: Future, C: Future, D: Future, E: Future, F: Future, G: Future, H: Future,
+{
+    type Output = (A::Output, B::Output, C::Output, D::Output, E::Output, F::Output, G::Output, H::Output);
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = unsafe { self.get_unchecked_mut() };
+        macro_rules! poll_slot { ($slot:ident, $res:ident) => {
+            if this.$res.is_none() { if let Some(ref mut f) = this.$slot {
+                if let Poll::Ready(v) = f.as_mut().poll(cx) { this.$res = Some(v); this.$slot = None; }
+            }}
+        }; }
+        poll_slot!(a, result_a); poll_slot!(b, result_b); poll_slot!(c, result_c);
+        poll_slot!(d, result_d); poll_slot!(e, result_e); poll_slot!(f, result_f);
+        poll_slot!(g, result_g); poll_slot!(h, result_h);
+        if this.result_a.is_some() && this.result_b.is_some() && this.result_c.is_some()
+            && this.result_d.is_some() && this.result_e.is_some() && this.result_f.is_some()
+            && this.result_g.is_some() && this.result_h.is_some() {
+            Poll::Ready((this.result_a.take().unwrap(), this.result_b.take().unwrap(),
+                         this.result_c.take().unwrap(), this.result_d.take().unwrap(),
+                         this.result_e.take().unwrap(), this.result_f.take().unwrap(),
+                         this.result_g.take().unwrap(), this.result_h.take().unwrap()))
+        } else { Poll::Pending }
+    }
+}
 /// 内部マクロ: Join を構築する。
 /// Internal macro: build a Join combinator.
 #[macro_export]
@@ -362,5 +543,17 @@ macro_rules! join {
     };
     ($a:expr, $b:expr, $c:expr, $d:expr $(,)?) => {
         $crate::future::Join4::new($a, $b, $c, $d)
+    };
+    ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr $(,)?) => {
+        $crate::future::Join5::new($a, $b, $c, $d, $e)
+    };
+    ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr $(,)?) => {
+        $crate::future::Join6::new($a, $b, $c, $d, $e, $f)
+    };
+    ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr, $g:expr $(,)?) => {
+        $crate::future::Join7::new($a, $b, $c, $d, $e, $f, $g)
+    };
+    ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr, $g:expr, $h:expr $(,)?) => {
+        $crate::future::Join8::new($a, $b, $c, $d, $e, $f, $g, $h)
     };
 }

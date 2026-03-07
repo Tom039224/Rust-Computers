@@ -157,4 +157,16 @@ macro_rules! parallel {
     ($a:expr, $b:expr, $c:expr, $d:expr $(,)?) => {
         $crate::future::Join4::new($a, $b, $c, $d)
     };
+    ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr $(,)?) => {
+        $crate::future::Join5::new($a, $b, $c, $d, $e)
+    };
+    ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr $(,)?) => {
+        $crate::future::Join6::new($a, $b, $c, $d, $e, $f)
+    };
+    ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr, $g:expr $(,)?) => {
+        $crate::future::Join7::new($a, $b, $c, $d, $e, $f, $g)
+    };
+    ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr, $g:expr, $h:expr $(,)?) => {
+        $crate::future::Join8::new($a, $b, $c, $d, $e, $f, $g, $h)
+    };
 }
