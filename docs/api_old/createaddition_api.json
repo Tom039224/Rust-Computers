@@ -1,0 +1,419 @@
+{
+  "mod": "createaddition",
+  "description": "Create Additionのコンピュータークラフト連携ペリフェラル一覧。全メソッドはmainThread=trueのため、Luaからは非同期（os.pullEvent等で待機）で実行される。getType()のみ即時実行。",
+  "peripherals": [
+    {
+      "type": "electric_motor",
+      "description": "エレクトリックモーター。回転軸（Shaft）を制御し、Create機械系にキネティックエネルギーを供給する。",
+      "methods": [
+        {
+          "lua_name": "getType",
+          "params": [],
+          "returns": [{"type": "string", "description": "ペリフェラルタイプ名（\"electric_motor\"）"}],
+          "immediate": true,
+          "description": "ペリフェラルのタイプ文字列を即時返す"
+        },
+        {
+          "lua_name": "setSpeed",
+          "params": [
+            {"name": "rpm", "type": "number", "required": true, "description": "目標回転数（RPM）。正値で正転、負値で逆転。絶対値の最大はCreate設定に依存"}
+          ],
+          "returns": [],
+          "immediate": false,
+          "description": "モーターの回転速度を設定する"
+        },
+        {
+          "lua_name": "stop",
+          "params": [],
+          "returns": [],
+          "immediate": false,
+          "description": "モーターを停止する（setSpeed(0)と同等）"
+        },
+        {
+          "lua_name": "getSpeed",
+          "params": [],
+          "returns": [{"type": "number", "description": "現在の回転速度 (RPM)"}],
+          "immediate": false,
+          "description": "モーターの現在の回転速度を返す"
+        },
+        {
+          "lua_name": "getStressCapacity",
+          "params": [],
+          "returns": [{"type": "number", "description": "ストレスキャパシティ（Stress Unit）"}],
+          "immediate": false,
+          "description": "モーターが供給できる最大ストレスキャパシティを返す"
+        },
+        {
+          "lua_name": "getEnergyConsumption",
+          "params": [],
+          "returns": [{"type": "number", "description": "エネルギー消費量 (FE/tick)"}],
+          "immediate": false,
+          "description": "現在のエネルギー消費量を返す"
+        },
+        {
+          "lua_name": "rotate",
+          "params": [
+            {"name": "deg", "type": "number", "required": true,  "description": "回転させる角度（度）"},
+            {"name": "rpm", "type": "number", "required": false, "description": "回転速度 (RPM)。省略時は現在のsetSpeedの値を使用"}
+          ],
+          "returns": [{"type": "number", "description": "回転完了までの推定秒数"}],
+          "immediate": false,
+          "description": "指定角度だけ回転させ、完了までの推定秒数を返す"
+        },
+        {
+          "lua_name": "translate",
+          "params": [
+            {"name": "dist", "type": "number", "required": true,  "description": "移動させる距離（ブロック数）"},
+            {"name": "rpm",  "type": "number", "required": false, "description": "移動速度 (RPM)。省略時は現在のsetSpeedの値を使用"}
+          ],
+          "returns": [{"type": "number", "description": "移動完了までの推定秒数"}],
+          "immediate": false,
+          "description": "指定距離だけ移動させ（ピストン/プーリー等）、完了までの推定秒数を返す"
+        },
+        {
+          "lua_name": "getMaxInsert",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大エネルギー入力量 (FE/tick)"}],
+          "immediate": false,
+          "description": "モーターが受け入れ可能な最大エネルギー入力量を返す"
+        },
+        {
+          "lua_name": "getMaxExtract",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大エネルギー出力量（常に 0）"}],
+          "immediate": false,
+          "description": "モーターからのエネルギー出力量を返す（常に0、モーターは出力しない）"
+        }
+      ]
+    },
+    {
+      "type": "modular_accumulator",
+      "description": "モジュラーアキュムレーター。FEエネルギーを大量に蓄電する複数ブロック構造の蓄電器。",
+      "methods": [
+        {
+          "lua_name": "getEnergy",
+          "params": [],
+          "returns": [{"type": "number", "description": "現在の蓄積エネルギー量 (FE)"}],
+          "immediate": false,
+          "description": "アキュムレーターの現在の蓄積エネルギー量を返す"
+        },
+        {
+          "lua_name": "getCapacity",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大エネルギー容量 (FE)"}],
+          "immediate": false,
+          "description": "アキュムレーターの最大エネルギー容量を返す"
+        },
+        {
+          "lua_name": "getPercent",
+          "params": [],
+          "returns": [{"type": "number", "description": "エネルギー充電割合（0.0〜1.0）"}],
+          "immediate": false,
+          "description": "アキュムレーターの充電割合を返す"
+        },
+        {
+          "lua_name": "getMaxInsert",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大エネルギー入力量 (FE/tick)"}],
+          "immediate": false,
+          "description": "アキュムレーターが受け入れ可能な最大エネルギー入力量を返す"
+        },
+        {
+          "lua_name": "getMaxExtract",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大エネルギー出力量 (FE/tick)"}],
+          "immediate": false,
+          "description": "アキュムレーターから取り出し可能な最大エネルギー量を返す"
+        },
+        {
+          "lua_name": "getHeight",
+          "params": [],
+          "returns": [{"type": "number", "description": "アキュムレーター構造体の高さ（ブロック数）"}],
+          "immediate": false,
+          "description": "複数ブロック構造のアキュムレーターの高さを返す"
+        },
+        {
+          "lua_name": "getWidth",
+          "params": [],
+          "returns": [{"type": "number", "description": "アキュムレーター構造体の幅（ブロック数）"}],
+          "immediate": false,
+          "description": "複数ブロック構造のアキュムレーターの幅を返す"
+        }
+      ]
+    },
+    {
+      "type": "digital_adapter",
+      "description": "デジタルアダプター。隣接するCreate機械（スピードコントローラー・ストレスゲージ・ピストン・プーリー・ベアリング・エレベーター・ディスプレイリンク等）を読み制御する。",
+      "methods": [
+        {
+          "lua_name": "clearLine",
+          "params": [],
+          "returns": [],
+          "immediate": false,
+          "description": "ディスプレイリンクの現在行をクリアする"
+        },
+        {
+          "lua_name": "clear",
+          "params": [],
+          "returns": [],
+          "immediate": false,
+          "description": "ディスプレイリンクの全行をクリアする"
+        },
+        {
+          "lua_name": "print",
+          "params": [
+            {"name": "text", "type": "string", "required": true, "description": "表示するテキスト"}
+          ],
+          "returns": [],
+          "immediate": false,
+          "description": "ディスプレイリンクにテキストを出力する（改行後に次行へ）"
+        },
+        {
+          "lua_name": "getLine",
+          "params": [],
+          "returns": [{"type": "number", "description": "現在のカーソル行番号（1始まり）"}],
+          "immediate": false,
+          "description": "ディスプレイリンクの現在のカーソル行番号を返す"
+        },
+        {
+          "lua_name": "setLine",
+          "params": [
+            {"name": "ln", "type": "number", "required": true, "description": "設定する行番号（1始まり）"}
+          ],
+          "returns": [{"type": "number", "description": "設定後の行番号"}],
+          "immediate": false,
+          "description": "ディスプレイリンクのカーソル行を指定行に設定する"
+        },
+        {
+          "lua_name": "getMaxLines",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大行数"}],
+          "immediate": false,
+          "description": "ディスプレイリンクの最大行数を返す"
+        },
+        {
+          "lua_name": "setTargetSpeed",
+          "params": [
+            {"name": "direction", "type": "string", "required": true,  "description": "対象スピードコントローラーの方向（例: \"north\"）"},
+            {"name": "speed",     "type": "number", "required": true,  "description": "目標速度 (RPM)。-256〜256"}
+          ],
+          "returns": [],
+          "immediate": false,
+          "description": "隣接するスピードコントローラーの目標速度を設定する"
+        },
+        {
+          "lua_name": "getTargetSpeed",
+          "params": [
+            {"name": "direction", "type": "string", "required": true}
+          ],
+          "returns": [{"type": "number", "description": "設定されている目標速度 (RPM)"}],
+          "immediate": false,
+          "description": "隣接するスピードコントローラーの目標速度を返す"
+        },
+        {
+          "lua_name": "getKineticStress",
+          "params": [
+            {"name": "direction", "type": "string", "required": true, "description": "対象ストレスゲージの方向"}
+          ],
+          "returns": [{"type": "number", "description": "現在のストレス使用量 (SU)"}],
+          "immediate": false,
+          "description": "隣接するストレスゲージの現在ストレス使用量を返す"
+        },
+        {
+          "lua_name": "getKineticCapacity",
+          "params": [
+            {"name": "direction", "type": "string", "required": true}
+          ],
+          "returns": [{"type": "number", "description": "最大ストレスキャパシティ (SU)"}],
+          "immediate": false,
+          "description": "隣接するストレスゲージの最大ストレスキャパシティを返す"
+        },
+        {
+          "lua_name": "getKineticSpeed",
+          "params": [
+            {"name": "direction", "type": "string", "required": true, "description": "対象スピードゲージの方向"}
+          ],
+          "returns": [{"type": "number", "description": "現在の速度 (RPM)"}],
+          "immediate": false,
+          "description": "隣接するスピードゲージの現在速度を返す"
+        },
+        {
+          "lua_name": "getKineticTopSpeed",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大回転速度 (RPM)"}],
+          "immediate": false,
+          "description": "Createの設定で許可されている最大回転速度を返す"
+        },
+        {
+          "lua_name": "getPulleyDistance",
+          "params": [
+            {"name": "direction", "type": "string", "required": true, "description": "対象プーリーの方向"}
+          ],
+          "returns": [{"type": "number", "description": "プーリーの展開距離（ブロック数）"}],
+          "immediate": false,
+          "description": "隣接するプーリーの現在の展開距離を返す"
+        },
+        {
+          "lua_name": "getPistonDistance",
+          "params": [
+            {"name": "direction", "type": "string", "required": true, "description": "対象ピストンの方向"}
+          ],
+          "returns": [{"type": "number", "description": "ピストンの伸長距離（ブロック数）"}],
+          "immediate": false,
+          "description": "隣接するメカニカルピストンの現在の伸長距離を返す"
+        },
+        {
+          "lua_name": "getBearingAngle",
+          "params": [
+            {"name": "direction", "type": "string", "required": true, "description": "対象メカニカルベアリングの方向"}
+          ],
+          "returns": [{"type": "number", "description": "現在の回転角度（度）"}],
+          "immediate": false,
+          "description": "隣接するメカニカルベアリングの現在の回転角度を返す"
+        },
+        {
+          "lua_name": "getElevatorFloor",
+          "params": [
+            {"name": "direction", "type": "string", "required": true, "description": "対象エレベータープーリーの方向"}
+          ],
+          "returns": [{"type": "number", "description": "現在のフロアインデックス（0始まり）"}],
+          "immediate": false,
+          "description": "エレベータープーリーの現在のフロアインデックスを返す"
+        },
+        {
+          "lua_name": "hasElevatorArrived",
+          "params": [
+            {"name": "direction", "type": "string", "required": true}
+          ],
+          "returns": [{"type": "boolean", "description": "フロアに到着済みか否か"}],
+          "immediate": false,
+          "description": "エレベータープーリーが目的フロアに到着しているか返す"
+        },
+        {
+          "lua_name": "getElevatorFloors",
+          "params": [
+            {"name": "direction", "type": "string", "required": true}
+          ],
+          "returns": [{"type": "number", "description": "登録済みフロア数"}],
+          "immediate": false,
+          "description": "エレベータープーリーの登録済みフロア数を返す"
+        },
+        {
+          "lua_name": "getElevatorFloorName",
+          "params": [
+            {"name": "direction", "type": "string", "required": true},
+            {"name": "index",     "type": "number", "required": true, "description": "フロアインデックス（0始まり）"}
+          ],
+          "returns": [{"type": "string", "description": "フロア名"}],
+          "immediate": false,
+          "description": "指定インデックスのフロア名を返す"
+        },
+        {
+          "lua_name": "gotoElevatorFloor",
+          "params": [
+            {"name": "direction", "type": "string", "required": true},
+            {"name": "index",     "type": "number", "required": true, "description": "移動先フロアインデックス"}
+          ],
+          "returns": [{"type": "number", "description": "移動開始のステータスコード"}],
+          "immediate": false,
+          "description": "エレベータープーリーを指定フロアに移動させる"
+        },
+        {
+          "lua_name": "getDurationAngle",
+          "params": [
+            {"name": "deg", "type": "number", "required": true, "description": "回転角度（度）"},
+            {"name": "rpm", "type": "number", "required": true, "description": "回転速度 (RPM)"}
+          ],
+          "returns": [{"type": "number", "description": "要する秒数"}],
+          "immediate": false,
+          "description": "指定角度の回転に要する秒数を計算して返す"
+        },
+        {
+          "lua_name": "getDurationDistance",
+          "params": [
+            {"name": "blocks", "type": "number", "required": true, "description": "移動距離（ブロック数）"},
+            {"name": "rpm",    "type": "number", "required": true, "description": "移動速度 (RPM)"}
+          ],
+          "returns": [{"type": "number", "description": "要する秒数"}],
+          "immediate": false,
+          "description": "指定距離の移動に要する秒数を計算して返す"
+        }
+      ]
+    },
+    {
+      "type": "portable_energy_interface",
+      "description": "ポータブルエネルギーインターフェース。コントラプション（Contraption）に搭載してFEエネルギーを収受する。",
+      "methods": [
+        {
+          "lua_name": "getEnergy",
+          "params": [],
+          "returns": [{"type": "number", "description": "現在の蓄積エネルギー量 (FE)"}],
+          "immediate": false,
+          "description": "ポータブルエネルギーインターフェースの現在のエネルギー量を返す"
+        },
+        {
+          "lua_name": "getCapacity",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大エネルギー容量 (FE)"}],
+          "immediate": false,
+          "description": "最大エネルギー容量を返す"
+        },
+        {
+          "lua_name": "isConnected",
+          "params": [],
+          "returns": [{"type": "boolean", "description": "コントラプションに接続されているか否か"}],
+          "immediate": false,
+          "description": "コントラプションが電力供給ポイントに接続されているか返す"
+        },
+        {
+          "lua_name": "getMaxInsert",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大エネルギー入力量 (FE/tick)"}],
+          "immediate": false,
+          "description": "受け入れ可能な最大エネルギー入力量を返す"
+        },
+        {
+          "lua_name": "getMaxExtract",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大エネルギー出力量 (FE/tick)"}],
+          "immediate": false,
+          "description": "取り出し可能な最大エネルギー出力量を返す"
+        }
+      ]
+    },
+    {
+      "type": "redstone_relay",
+      "description": "レッドストーンリレー。FEエネルギーをコントロールしつつレッドストーン信号の有無を検知する。",
+      "methods": [
+        {
+          "lua_name": "getMaxInsert",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大エネルギー入力量 (FE/tick)"}],
+          "immediate": false,
+          "description": "レッドストーンリレーの最大エネルギー入力量を返す"
+        },
+        {
+          "lua_name": "getMaxExtract",
+          "params": [],
+          "returns": [{"type": "number", "description": "最大エネルギー出力量 (FE/tick)"}],
+          "immediate": false,
+          "description": "レッドストーンリレーの最大エネルギー出力量を返す"
+        },
+        {
+          "lua_name": "getThroughput",
+          "params": [],
+          "returns": [{"type": "number", "description": "現在のエネルギースループット (FE/tick)"}],
+          "immediate": false,
+          "description": "レッドストーンリレーの現在のエネルギースループットを返す"
+        },
+        {
+          "lua_name": "isPowered",
+          "params": [],
+          "returns": [{"type": "boolean", "description": "レッドストーン信号を受信中か否か"}],
+          "immediate": false,
+          "description": "レッドストーンリレーがレッドストーン信号を受信しているか返す"
+        }
+      ]
+    }
+  ]
+}

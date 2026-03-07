@@ -1,0 +1,124 @@
+//! CC:Tweaked Speaker ペリフェラル。
+//! CC:Tweaked Speaker peripheral.
+
+use crate::error::PeripheralError;
+use crate::msgpack;
+use crate::peripheral::{self, Direction, Peripheral};
+
+/// スピーカー楽器。
+/// Speaker instrument types.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SpeakerInstrument {
+    Harp,
+    Basedrum,
+    Snare,
+    Hat,
+    Bass,
+    Flute,
+    Bell,
+    Guitar,
+    Chime,
+    Xylophone,
+    IronXylophone,
+    CowBell,
+    Didgeridoo,
+    Bit,
+    Banjo,
+    Pling,
+}
+
+impl SpeakerInstrument {
+    /// 楽器名文字列を返す。
+    /// Return the instrument name string.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Harp => "harp",
+            Self::Basedrum => "basedrum",
+            Self::Snare => "snare",
+            Self::Hat => "hat",
+            Self::Bass => "bass",
+            Self::Flute => "flute",
+            Self::Bell => "bell",
+            Self::Guitar => "guitar",
+            Self::Chime => "chime",
+            Self::Xylophone => "xylophone",
+            Self::IronXylophone => "iron_xylophone",
+            Self::CowBell => "cow_bell",
+            Self::Didgeridoo => "didgeridoo",
+            Self::Bit => "bit",
+            Self::Banjo => "banjo",
+            Self::Pling => "pling",
+        }
+    }
+}
+
+/// スピーカーペリフェラル。
+/// Speaker peripheral.
+pub struct Speaker {
+    dir: Direction,
+}
+
+impl Peripheral for Speaker {
+    const NAME: &'static str = "speaker";
+
+    fn new(dir: Direction) -> Self {
+        Self { dir }
+    }
+
+    fn direction(&self) -> Direction {
+        self.dir
+    }
+}
+
+impl Speaker {
+    /// ノート音を再生する。
+    /// Play a note.
+    pub async fn play_note(
+        &self,
+        instrument: SpeakerInstrument,
+        volume: Option<f32>,
+        pitch: Option<f32>,
+    ) -> Result<(), PeripheralError> {
+        let mut args = alloc::vec![msgpack::str(instrument.as_str())];
+        if let Some(v) = volume {
+            args.push(msgpack::float64(v as f64));
+            if let Some(p) = pitch {
+                args.push(msgpack::float64(p as f64));
+            }
+        } else if let Some(p) = pitch {
+            args.push(msgpack::nil());
+            args.push(msgpack::float64(p as f64));
+        }
+        peripheral::do_action(self.dir, "playNote", &msgpack::array(&args)).await?;
+        Ok(())
+    }
+
+    /// サウンドを再生する。
+    /// Play a sound.
+    pub async fn play_sound(
+        &self,
+        name: &str,
+        volume: Option<f32>,
+        pitch: Option<f32>,
+    ) -> Result<(), PeripheralError> {
+        let mut args = alloc::vec![msgpack::str(name)];
+        if let Some(v) = volume {
+            args.push(msgpack::float64(v as f64));
+            if let Some(p) = pitch {
+                args.push(msgpack::float64(p as f64));
+            }
+        } else if let Some(p) = pitch {
+            args.push(msgpack::nil());
+            args.push(msgpack::float64(p as f64));
+        }
+        peripheral::do_action(self.dir, "playSound", &msgpack::array(&args)).await?;
+        Ok(())
+    }
+
+    /// 再生を停止する。
+    /// Stop playback.
+    pub async fn stop(&self) -> Result<(), PeripheralError> {
+        peripheral::do_action(self.dir, "stop", &msgpack::array(&[])).await?;
+        Ok(())
+    }
+}

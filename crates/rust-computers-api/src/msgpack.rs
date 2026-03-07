@@ -93,6 +93,26 @@ pub fn array(items: &[Vec<u8>]) -> Vec<u8> {
     out
 }
 
+/// バイナリデータを bin 8/16 としてエンコードする。
+/// Encode binary data as MessagePack bin format.
+pub fn bytes(data: &[u8]) -> Vec<u8> {
+    let len = data.len();
+    let mut out = if len <= 0xFF {
+        let mut v = Vec::with_capacity(2 + len);
+        v.push(0xC4);
+        v.push(len as u8);
+        v
+    } else {
+        let mut v = Vec::with_capacity(3 + len);
+        v.push(0xC5);
+        v.push((len >> 8) as u8);
+        v.push(len as u8);
+        v
+    };
+    out.extend_from_slice(data);
+    out
+}
+
 /// f64 を float64 (0xCB + 8 bytes big-endian IEEE 754) としてエンコードする。
 /// Encode an f64 as MessagePack float64.
 pub fn float64(v: f64) -> Vec<u8> {
@@ -819,4 +839,43 @@ impl From<&str> for Value {
 impl From<alloc::string::String> for Value {
     #[inline]
     fn from(v: alloc::string::String) -> Self { Self::String(v) }
+}
+
+impl Default for Value {
+    fn default() -> Self {
+        Self::Nil
+    }
+}
+
+/// Value を MessagePack バイト列にエンコードする。
+/// Encode a Value to MessagePack bytes.
+pub fn encode_value(val: &Value) -> Vec<u8> {
+    match val {
+        Value::Nil => nil(),
+        Value::Bool(b) => bool_val(*b),
+        Value::Integer(i) => int64(*i),
+        Value::Float(f) => float64(*f),
+        Value::String(s) => str(s),
+        Value::Binary(b) => bytes(b),
+        Value::Array(arr) => {
+            let items: Vec<Vec<u8>> = arr.iter().map(encode_value).collect();
+            array(&items)
+        }
+        Value::Map(map) => {
+            let count = map.len();
+            let mut out = Vec::new();
+            if count <= 15 {
+                out.push(0x80 | count as u8);
+            } else {
+                out.push(0xDE);
+                out.push((count >> 8) as u8);
+                out.push(count as u8);
+            }
+            for (k, v) in map {
+                out.extend_from_slice(&str(k));
+                out.extend_from_slice(&encode_value(v));
+            }
+            out
+        }
+    }
 }

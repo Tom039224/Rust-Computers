@@ -257,6 +257,77 @@ pub fn is_mod_available(mod_name: &str) -> bool {
     unsafe { ffi::host_is_mod_available(mid) != 0 }
 }
 
+// ==================================================================
+// Peripheral trait / ペリフェラル trait
+// ==================================================================
+
+use crate::error::PeripheralError;
+
+/// 全ペリフェラル構造体が実装する trait。
+/// Trait implemented by all peripheral structs.
+pub trait Peripheral: Sized {
+    /// CC:Tweaked 上のペリフェラル型名 (例: `"create:creative_motor"`)
+    const NAME: &'static str;
+    /// 指定方向に新しいインスタンスを作成する。
+    fn new(dir: Direction) -> Self;
+    /// このインスタンスが参照する方向を返す。
+    fn direction(&self) -> Direction;
+}
+
+/// 指定方向にある名前一致ペリフェラルを同期的に取得する。
+/// Synchronously wrap a peripheral in the given direction if its type matches.
+pub fn wrap_imm<T: Peripheral>(dir: Direction) -> Result<T, PeripheralError> {
+    let args = crate::msgpack::array(&[crate::msgpack::str(T::NAME)]);
+    let data = request_info_imm(dir, "hasType", &args)?;
+    let (val, _) = crate::msgpack::Value::decode(&data).unwrap_or((crate::msgpack::Value::Nil, 0));
+    match val {
+        crate::msgpack::Value::Bool(true) => Ok(T::new(dir)),
+        _ => Err(PeripheralError::NotFound),
+    }
+}
+
+/// 全方向から名前一致ペリフェラルを同期的に検索する。
+/// Synchronously find all peripherals matching the given type.
+pub fn find_imm<T: Peripheral>() -> alloc::vec::Vec<T> {
+    let mut result = alloc::vec::Vec::new();
+    for id in 0..=5u32 {
+        if let Some(dir) = Direction::from_id(id) {
+            if wrap_imm::<T>(dir).is_ok() {
+                result.push(T::new(dir));
+            }
+        }
+    }
+    result
+}
+
+/// 指定方向にある名前一致ペリフェラルを非同期的に取得する。
+/// Asynchronously wrap a peripheral in the given direction.
+pub async fn wrap<T: Peripheral>(dir: Direction) -> Result<T, PeripheralError> {
+    let args = crate::msgpack::array(&[crate::msgpack::str(T::NAME)]);
+    let data = request_info(dir, "hasType", &args).await?;
+    let (val, _) = crate::msgpack::Value::decode(&data).unwrap_or((crate::msgpack::Value::Nil, 0));
+    match val {
+        crate::msgpack::Value::Bool(true) => Ok(T::new(dir)),
+        _ => Err(PeripheralError::NotFound),
+    }
+}
+
+// ==================================================================
+// Decode helpers
+// ==================================================================
+
+/// msgpack レスポンスバイト列からデシリアライズする。
+/// Deserialize from msgpack response bytes.
+pub fn decode<'de, T: serde::Deserialize<'de>>(data: &[u8]) -> Result<T, PeripheralError> {
+    crate::serde_msgpack::from_bytes(data).map_err(|_| PeripheralError::DecodeFailed)
+}
+
+/// serde でペイロードを msgpack バイト列にエンコードする。
+/// Encode a payload to msgpack bytes via serde.
+pub fn encode<T: serde::Serialize>(val: &T) -> Result<alloc::vec::Vec<u8>, PeripheralError> {
+    crate::serde_msgpack::to_bytes(val).map_err(|_| PeripheralError::DecodeFailed)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

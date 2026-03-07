@@ -70,3 +70,44 @@ impl fmt::Display for BridgeError {
         }
     }
 }
+
+// ==================================================================
+// PeripheralError
+// ==================================================================
+
+/// ペリフェラル操作エラー。
+/// Peripheral operation error.
+#[derive(Debug, Clone)]
+pub enum PeripheralError {
+    /// ブリッジ通信エラー / Bridge communication error
+    Bridge(BridgeError),
+    /// ペリフェラルが見つからない / Peripheral not found
+    NotFound,
+    /// レスポンスのデコード失敗 / Response decode failure
+    DecodeFailed,
+    /// 予期しないエラー (メッセージ付き) / Unexpected error (with message)
+    Unexpected(alloc::string::String),
+}
+
+impl From<BridgeError> for PeripheralError {
+    fn from(e: BridgeError) -> Self {
+        Self::Bridge(e)
+    }
+}
+
+impl From<crate::serde_msgpack::Error> for PeripheralError {
+    fn from(_e: crate::serde_msgpack::Error) -> Self {
+        Self::DecodeFailed
+    }
+}
+
+impl fmt::Display for PeripheralError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Bridge(e)      => write!(f, "bridge error: {}", e),
+            Self::NotFound       => write!(f, "peripheral not found"),
+            Self::DecodeFailed   => write!(f, "response decode failed"),
+            Self::Unexpected(s)  => write!(f, "unexpected error: {}", s),
+        }
+    }
+}
