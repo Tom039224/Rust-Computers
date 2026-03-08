@@ -278,20 +278,28 @@ public class CcMonitorPeripheral implements PeripheralType {
         try {
             Object serverMonitor = mGetServerMonitor.invoke(be);
 
-            // serverMonitor が null の場合は createServerTerminal() でモニターを初期化する。
-            // CC:Tweaked の ServerMonitor は CC コンピューターが接続した時だけ生成されるが、
-            // createServerTerminal() → createServerMonitor() → new ServerMonitor() + rebuild() を呼べば
-            // CC コンピューターなしでも初期化できる。
-            // 新しく置いたモニターは xIndex=0, yIndex=0, width=1, height=1 がデフォルトなので条件を満たす。
+            // serverMonitor が null、または terminal が null の場合は createServerTerminal() で初期化する。
             //
-            // If serverMonitor is null, initialize the monitor via createServerTerminal().
-            // CC:Tweaked only creates ServerMonitor when a CC computer connects, but calling
-            // createServerTerminal() → createServerMonitor() → new ServerMonitor() + rebuild()
-            // works without a CC computer. A freshly-placed monitor has xIndex=0, yIndex=0 by default.
-            if (serverMonitor == null && mCreateServerTerminal != null) {
-                LOGGER.debug("CcMonitorPeripheral: serverMonitor null — calling createServerTerminal() to init");
-                mCreateServerTerminal.invoke(be);
-                serverMonitor = mGetServerMonitor.invoke(be);
+            // terminal が null になるケース:
+            //   モニターがRustコンピューターに隣接しない場所に拡張された場合、CC:Tweaked は
+            //   resize() → needsTerminal=false（CCペリフェラル未接続）→ ServerMonitor.reset()
+            //   の流れでターミナルをリセットする。この場合 serverMonitor 自体は null でないが
+            //   getTerminal() が null を返す。createServerTerminal() を呼ぶと内部で
+            //   terminal==null を検知して rebuild() してくれるため初期化が完了する。
+            //
+            // If serverMonitor is null OR terminal is null, call createServerTerminal() to re-initialize.
+            // When the monitor is expanded at a position not adjacent to the Rust computer, CC:Tweaked
+            // calls resize() → needsTerminal=false (no CC peripheral) → ServerMonitor.reset(), which
+            // clears the terminal. serverMonitor itself is non-null in this case, but getTerminal()
+            // returns null. createServerTerminal() detects terminal==null and calls rebuild(), restoring it.
+            if (mCreateServerTerminal != null) {
+                boolean terminalMissing = serverMonitor == null
+                        || mGetTerminal.invoke(serverMonitor) == null;
+                if (terminalMissing) {
+                    LOGGER.debug("CcMonitorPeripheral: serverMonitor/terminal null — calling createServerTerminal() to init");
+                    mCreateServerTerminal.invoke(be);
+                    serverMonitor = mGetServerMonitor.invoke(be);
+                }
             }
 
             if (serverMonitor == null) {
