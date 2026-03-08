@@ -16,6 +16,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.ModList;
@@ -291,8 +292,10 @@ public class RustComputers {
             default    -> { u = 0.5f; v = 0.5f; }
         }
 
-        CcMonitorPeripheral.queueTouchEvent(pos, u, v);
-        LOGGER.debug("Monitor touch queued at {} face={} u={} v={}", pos, face, u, v);
+        BlockEntity monitorBe = level.getBlockEntity(pos);
+        net.minecraft.core.BlockPos originPos = CcMonitorPeripheral.resolveMonitorOrigin(monitorBe, pos);
+        CcMonitorPeripheral.queueTouchEvent(originPos, u, v);
+        LOGGER.debug("Monitor touch queued at {} (origin={}) face={} u={} v={}", pos, originPos, face, u, v);
     }
 
     /**

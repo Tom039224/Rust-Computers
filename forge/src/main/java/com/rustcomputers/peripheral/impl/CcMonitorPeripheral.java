@@ -109,6 +109,8 @@ public class CcMonitorPeripheral implements PeripheralType {
      * works correctly even without a CC computer attached.
      */
     @Nullable private static Method mCreateServerTerminal;
+    /** MonitorBlockEntity.toWorldPos(int, int) — マルチブロックモニターのオリジン位置取得 */
+    @Nullable private static Method mToWorldPos;
 
     private static boolean reflectionInitialized = false;
     private static boolean reflectionOk = false;
@@ -133,6 +135,24 @@ public class CcMonitorPeripheral implements PeripheralType {
      */
     public static void queueTouchEvent(BlockPos pos, float u, float v) {
         TOUCH_QUEUE.computeIfAbsent(pos, k -> new ArrayDeque<>()).offer(new float[]{u, v});
+    }
+
+    /**
+     * モニター BE の toWorldPos(0, 0) を使ってオリジン（xIndex=0, yIndex=0）ブロック位置を返す。
+     * マルチブロックモニターでタッチキューの位置を統一するために使用する。
+     * Returns the origin block (xIndex=0, yIndex=0) of a monitor block entity.
+     * Used to unify touch-queue keys for multi-block monitors.
+     *
+     * @param be       MonitorBlockEntity インスタンス（または任意オブジェクト）
+     * @param fallback toWorldPos が失敗した場合に返す位置
+     */
+    public static BlockPos resolveMonitorOrigin(Object be, BlockPos fallback) {
+        if (mToWorldPos == null || be == null) return fallback;
+        try {
+            return (BlockPos) mToWorldPos.invoke(be, 0, 0);
+        } catch (Exception e) {
+            return fallback;
+        }
     }
 
     // ----------------------------------------------------------------
@@ -202,6 +222,13 @@ public class CcMonitorPeripheral implements PeripheralType {
                 LOGGER.warn("CcMonitorPeripheral: createServerTerminal() not found — monitor init will fail");
             }
 
+            try {
+                mToWorldPos = monitorBeClass.getDeclaredMethod("toWorldPos", int.class, int.class);
+                mToWorldPos.setAccessible(true);
+            } catch (NoSuchMethodException ex) {
+                LOGGER.warn("CcMonitorPeripheral: toWorldPos() not found — multi-block monitor touch origin falls back to peripheral pos");
+            }
+
             reflectionOk = true;
             LOGGER.info("CcMonitorPeripheral: reflection initialized successfully");
 
@@ -252,7 +279,8 @@ public class CcMonitorPeripheral implements PeripheralType {
             return MsgPack.bool(rl != null && "monitor_advanced".equals(rl.getPath()));
         }
         if ("pollTouch".equals(methodName)) {
-            ArrayDeque<float[]> q = TOUCH_QUEUE.get(peripheralPos);
+            BlockPos originPos = resolveMonitorOrigin(be, peripheralPos);
+            ArrayDeque<float[]> q = TOUCH_QUEUE.get(originPos);
             if (q == null || q.isEmpty()) return MsgPack.nil();
             float[] frac = q.poll();
             // ターミナルサイズでキャラクター座標変換 / convert fraction to char coords
