@@ -8,8 +8,6 @@ import com.rustcomputers.peripheral.MsgPack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -53,6 +51,7 @@ public final class HostFunctions {
             hostDoAction(),
             hostRequestInfoImm(),
             hostPollResult(),
+            hostFetchResult(),
             hostIsModAvailable(),
             hostGetComputerId(),
             hostFindPeripheralsByTypeImm(),
@@ -89,17 +88,17 @@ public final class HostFunctions {
      * 標準入力（行単位）のリクエスト。Enter が押されるまで Pending。
      * Request a line of standard input. Pending until Enter is pressed.
      *
-     * <p>Rust 側が確保した result バッファのアドレスとサイズを受け取る。</p>
-     * <p>Receives the address and size of the result buffer allocated by Rust.</p>
+     * <p>2 フェーズ取得方式: リクエスト時にはバッファ不要。結果は Java 側で䔍持し、
+     * host_fetch_result 呼び出し時に WASM メモリに書き込む。</p>
+     * <p>Two-phase fetch: no buffer at request time. Result is held by Java
+     * and written to WASM memory when host_fetch_result is called.</p>
      */
     private HostFunction hostStdinReadLine() {
         return new HostFunction(
             MODULE, "host_stdin_read_line",
-            FunctionType.of(List.of(ValType.I32, ValType.I32), List.of(ValType.I64)),
+            FunctionType.of(List.of(), List.of(ValType.I64)),
             (Instance inst, long... args) -> {
-                int resultPtr   = (int) args[0];
-                int resultBufSz = (int) args[1];
-                long requestId = engine.requestStdinLine(resultPtr, resultBufSz);
+                long requestId = engine.requestStdinLine();
                 return new long[]{ requestId };
             }
         );
@@ -113,12 +112,15 @@ public final class HostFunctions {
     /**
      * ペリフェラル情報取得リクエスト（非同期、次 tick 以降に結果）。
      * Peripheral info request (async, result available next tick or later).
+     *
+     * <p>2 フェーズ取得方式: リクエスト時にはバッファ不要。</p>
+     * <p>Two-phase fetch: no result buffer at request time.</p>
      */
     private HostFunction hostRequestInfo() {
         return new HostFunction(
             MODULE, "host_request_info",
             FunctionType.of(
-                List.of(ValType.I32, ValType.I32, ValType.I32, ValType.I32, ValType.I32, ValType.I32),
+                List.of(ValType.I32, ValType.I32, ValType.I32, ValType.I32),
                 List.of(ValType.I64)
             ),
             (Instance inst, long... args) -> {
@@ -126,14 +128,11 @@ public final class HostFunctions {
                 int methodId    = (int) args[1];
                 int argsPtr     = (int) args[2];
                 int argsLen     = (int) args[3];
-                int resultPtr   = (int) args[4];
-                int resultBufSz = (int) args[5];
 
                 long requestId = engine.issuePeripheralRequest(
                     PendingResult.Type.INFO,
                     periphId, methodId,
-                    inst.memory(), argsPtr, argsLen,
-                    resultPtr, resultBufSz
+                    inst.memory(), argsPtr, argsLen
                 );
                 return new long[]{ requestId };
             }
@@ -148,12 +147,15 @@ public final class HostFunctions {
     /**
      * ペリフェラルアクション実行リクエスト（非同期）。
      * Peripheral action request (async).
+     *
+     * <p>2 フェーズ取得方式: リクエスト時にはバッファ不要。</p>
+     * <p>Two-phase fetch: no result buffer at request time.</p>
      */
     private HostFunction hostDoAction() {
         return new HostFunction(
             MODULE, "host_do_action",
             FunctionType.of(
-                List.of(ValType.I32, ValType.I32, ValType.I32, ValType.I32, ValType.I32, ValType.I32),
+                List.of(ValType.I32, ValType.I32, ValType.I32, ValType.I32),
                 List.of(ValType.I64)
             ),
             (Instance inst, long... args) -> {
@@ -161,14 +163,11 @@ public final class HostFunctions {
                 int methodId    = (int) args[1];
                 int argsPtr     = (int) args[2];
                 int argsLen     = (int) args[3];
-                int resultPtr   = (int) args[4];
-                int resultBufSz = (int) args[5];
 
                 long requestId = engine.issuePeripheralRequest(
                     PendingResult.Type.ACTION,
                     periphId, methodId,
-                    inst.memory(), argsPtr, argsLen,
-                    resultPtr, resultBufSz
+                    inst.memory(), argsPtr, argsLen
                 );
                 return new long[]{ requestId };
             }
@@ -213,62 +212,104 @@ public final class HostFunctions {
     }
 
     // ==================================================================
-    // host_poll_result(request_id: i64, written_bytes_ptr: i32) → i32
+    // host_poll_result(request_id: i64) → i64
     // ==================================================================
 
     /**
-     * 保留結果をポーリングする。
-     * Poll a pending result.
+     * 保留結果をポーリングする（2 フェーズ取得フェーズ 1）。
+     * Poll a pending result (two-phase fetch phase 1).
      *
-     * @return 0=pending, 1=ready, 負=error
+     * <p>戻り値 = 0: pending / 正値 (payload.length + 1): ready / 負: error</p>
+     * <p>Return: 0 = pending / positive (payload.length + 1) = ready / negative = error</p>
+     *
+     * <p>offset-by-1 方式で 0 (空結果) と pending (0) を区別する。</p>
+     * <p>offset-by-1 encoding distinguishes ready-with-empty from pending.</p>
      */
     private HostFunction hostPollResult() {
         return new HostFunction(
             MODULE, "host_poll_result",
-            FunctionType.of(List.of(ValType.I64, ValType.I32), List.of(ValType.I32)),
+            FunctionType.of(List.of(ValType.I64), List.of(ValType.I64)),
             (Instance inst, long... args) -> {
-                long requestId      = args[0];
-                int writtenBytesPtr = (int) args[1];
+                long requestId = args[0];
+
+                PendingResult pr = engine.getRequestManager().get(requestId);
+                if (pr == null) {
+                    return new long[]{ (long) ErrorCodes.ERR_INVALID_REQUEST_ID };
+                }
+
+                if (!pr.isCompleted()) {
+                    return new long[]{ 0L }; // Pending
+                }
+
+                // エラーチェック / Check for error
+                if (pr.getErrorCode() != 0) {
+                    engine.getRequestManager().remove(requestId);
+                    return new long[]{ (long) pr.getErrorCode() };
+                }
+
+                // offset-by-1 で結果サイズを返す（0 の空結果でも 1 と返り pending、0 と区別する）
+                // Return result size with offset-by-1 (empty result returns 1, not 0)
+                byte[] payload = pr.getPayload();
+                long resultSize = (payload != null) ? payload.length : 0L;
+                // host_fetch_result でデータを読み出すまでマネージャを削除しない
+                // Do NOT remove from manager yet; host_fetch_result will remove it
+                return new long[]{ resultSize + 1L };
+            }
+        );
+    }
+
+    // ==================================================================
+    // host_fetch_result(request_id: i64, result_ptr: i32, result_buf_size: i32) → i32
+    // ==================================================================
+
+    /**
+     * 完了した結果データを WASM メモリに転送する（2 フェーズ取得フェーズ 2）。
+     * Transfer completed result data into WASM memory (two-phase fetch phase 2).
+     *
+     * <p>{@code host_poll_result} が正値を返した直後に呼び出す。
+     * Rust 側が result のサイズ分だけ動的確保したバッファに書き込む。</p>
+     * <p>Called immediately after {@code host_poll_result} returns a positive value.
+     * Writes to a Rust-dynamically-allocated buffer of exactly the right size.</p>
+     *
+     * @return 書き込みバイト数 (&gt;=0) | エラーコード (&lt;0) /
+     *         written bytes (≥0) | error code (&lt;0)
+     */
+    private HostFunction hostFetchResult() {
+        return new HostFunction(
+            MODULE, "host_fetch_result",
+            FunctionType.of(
+                List.of(ValType.I64, ValType.I32, ValType.I32),
+                List.of(ValType.I32)
+            ),
+            (Instance inst, long... args) -> {
+                long requestId   = args[0];
+                int resultPtr    = (int) args[1];
+                int resultBufSz  = (int) args[2];
 
                 PendingResult pr = engine.getRequestManager().get(requestId);
                 if (pr == null) {
                     return new long[]{ ErrorCodes.ERR_INVALID_REQUEST_ID };
                 }
 
-                if (!pr.isCompleted()) {
-                    return new long[]{ 0 }; // Pending
-                }
-
-                // エラーチェック / Check for error
-                if (pr.getErrorCode() != 0) {
-                    engine.getRequestManager().remove(requestId);
-                    return new long[]{ pr.getErrorCode() };
-                }
-
-                // 結果を WASM メモリに書き込む / Write result to WASM memory
                 byte[] payload = pr.getPayload();
-                if (payload != null && payload.length > 0) {
-                    if (payload.length > pr.getResultBufSize()) {
-                        // バッファ不足 — エラーを返す / Buffer too small — return error
-                        engine.getRequestManager().remove(requestId);
-                        return new long[]{ ErrorCodes.ERR_RESULT_BUF_TOO_SMALL };
-                    }
-                    inst.memory().write(pr.getResultPtr(), payload);
+                engine.getRequestManager().remove(requestId);
 
-                    // written_bytes を書き込む / Write written_bytes
-                    byte[] lenBytes = ByteBuffer.allocate(4)
-                            .order(ByteOrder.LITTLE_ENDIAN)
-                            .putInt(payload.length)
-                            .array();
-                    inst.memory().write(writtenBytesPtr, lenBytes);
-                } else {
-                    // ペイロードが空（void 戻り値等） / Empty payload (void return, etc.)
-                    byte[] zeroBytes = new byte[]{ 0, 0, 0, 0 };
-                    inst.memory().write(writtenBytesPtr, zeroBytes);
+                if (payload == null || payload.length == 0) {
+                    // 空ペイロード / Empty payload
+                    return new long[]{ 0 };
                 }
 
-                engine.getRequestManager().remove(requestId);
-                return new long[]{ 1 }; // Ready
+                if (payload.length > resultBufSz) {
+                    // バッファ不足（Rust 側のバグ: host_poll_result の値 -1 分だけ確保するはず）
+                    // Buffer too small (Rust bug: should allocate host_poll_result value - 1 bytes)
+                    LOGGER.warn("Computer #{}: host_fetch_result: buffer too small ({} < {})",
+                            engine.getComputerId(), resultBufSz, payload.length);
+                    return new long[]{ ErrorCodes.ERR_RESULT_BUF_TOO_SMALL };
+                }
+
+                // WASM メモリに書き込む / Write to WASM memory
+                inst.memory().write(resultPtr, payload);
+                return new long[]{ payload.length };
             }
         );
     }

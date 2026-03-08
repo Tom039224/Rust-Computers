@@ -83,13 +83,6 @@ pub struct RequestFuture {
     /// リクエスト ID / Request ID
     request_id: i64,
 
-    /// 結果バッファ（Rust 側で事前確保） / Result buffer (pre-allocated by Rust)
-    result_buf: Vec<u8>,
-
-    /// host_poll_result が書き込みバイト数を格納する場所（4 バイト、LE）
-    /// Location where host_poll_result writes the byte count (4 bytes, LE)
-    written_bytes_buf: i32,
-
     /// 1tick 遅れ強制フラグ: true の内は必ず Pending を返す。
     /// 1-tick delay flag: returns Pending while true.
     first_poll: bool,
@@ -101,12 +94,9 @@ impl RequestFuture {
     ///
     /// # 引数 / Arguments
     /// - `request_id`: ホスト関数が返した request_id / request ID from host function
-    /// - `result_buf`: 結果バッファ（既に確保済み） / result buffer (already allocated)
-    pub fn new(request_id: i64, result_buf: Vec<u8>) -> Self {
+    pub fn new(request_id: i64) -> Self {
         Self {
             request_id,
-            result_buf,
-            written_bytes_buf: 0,
             first_poll: true,
         }
     }
@@ -132,27 +122,41 @@ impl Future for RequestFuture {
             return Poll::Pending;
         }
 
-        // written_bytes_buf のアドレスを取得 / Get address of written_bytes_buf
-        let written_ptr = &mut this.written_bytes_buf as *mut i32 as i32;
-
-        // ポーリング / Poll
-        let status = unsafe { ffi::host_poll_result(this.request_id, written_ptr) };
+        // フェーズ 1: 完了確認とサイズ取得
+        // Phase 1: Check completion and get result size
+        let status = unsafe { ffi::host_poll_result(this.request_id) };
 
         match status {
             0 => Poll::Pending, // 未完了 / Not ready
-            1 => {
-                // 完了 — 書き込みバイト数を読み取る / Ready — read the written byte count
-                let written = this.written_bytes_buf as usize;
-                let data = if written > 0 && written <= this.result_buf.len() {
-                    this.result_buf[..written].to_vec()
+            size if size > 0 => {
+                // 完了 — offset-by-1: actual_size = size - 1
+                // Ready — offset-by-1: actual_size = size - 1
+                let actual_size = (size as usize) - 1;
+                if actual_size == 0 {
+                    // 空ペイロード / Empty payload
+                    Poll::Ready(Ok(alloc::vec![]))
                 } else {
-                    Vec::new()
-                };
-                Poll::Ready(Ok(data))
+                    // フェーズ 2: 動的確保したバッファにデータを転送
+                    // Phase 2: Fetch data into dynamically allocated buffer
+                    let mut buf = alloc::vec![0u8; actual_size];
+                    let written = unsafe {
+                        ffi::host_fetch_result(
+                            this.request_id,
+                            buf.as_ptr() as i32,
+                            actual_size as i32,
+                        )
+                    };
+                    if written < 0 {
+                        Poll::Ready(Err(BridgeError::from_code(written)))
+                    } else {
+                        buf.truncate(written as usize);
+                        Poll::Ready(Ok(buf))
+                    }
+                }
             }
             err_code => {
                 // エラー / Error
-                Poll::Ready(Err(BridgeError::from_code(err_code)))
+                Poll::Ready(Err(BridgeError::from_code(err_code as i32)))
             }
         }
     }

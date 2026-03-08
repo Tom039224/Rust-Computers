@@ -49,8 +49,6 @@ use crate::ffi;
 struct InFlightRequest {
     key: (u32, u32),
     request_id: i64,
-    result_buf: Vec<u8>,
-    written_bytes_buf: i32,
     is_action: bool,
 }
 
@@ -156,31 +154,29 @@ pub(crate) fn read_action_results(periph_id: u32, method_id: u32) -> Vec<Result<
 ///
 /// `WaitForNextTickFuture::poll()` の初回呼び出しで実行される。
 /// Executed on the first poll of `WaitForNextTickFuture::poll()`.
+///
+/// result バッファはリクエスト時には不要。結果サイズが判明してから
+/// `poll_all()` 内で動的確保する（2 フェーズ取得）。
+/// No result buffer is needed at request time. It will be dynamically
+/// allocated in `poll_all()` once the result size is known (two-phase fetch).
 pub(crate) fn flush() {
     let inner = BOOK_STORE.inner();
-
-    const RESULT_BUF_SIZE: usize = 4096;
 
     // 情報リクエスト（上書き済み最終値のみ発行）
     // Info requests (issue only the final value after overwrite)
     let pending_requests = core::mem::take(&mut inner.pending_requests);
     for ((periph_id, method_id), args) in pending_requests {
-        let result_buf = vec![0u8; RESULT_BUF_SIZE];
         let request_id = unsafe {
             ffi::host_request_info(
                 periph_id,
                 method_id,
                 args.as_ptr() as i32,
                 args.len() as i32,
-                result_buf.as_ptr() as i32,
-                result_buf.len() as i32,
             )
         };
         inner.in_flight.push(InFlightRequest {
             key: (periph_id, method_id),
             request_id,
-            result_buf,
-            written_bytes_buf: 0,
             is_action: false,
         });
     }
@@ -189,22 +185,17 @@ pub(crate) fn flush() {
     // Action requests (issue all in the order they were booked)
     let pending_actions = core::mem::take(&mut inner.pending_actions);
     for (periph_id, method_id, args) in pending_actions {
-        let result_buf = vec![0u8; RESULT_BUF_SIZE];
         let request_id = unsafe {
             ffi::host_do_action(
                 periph_id,
                 method_id,
                 args.as_ptr() as i32,
                 args.len() as i32,
-                result_buf.as_ptr() as i32,
-                result_buf.len() as i32,
             )
         };
         inner.in_flight.push(InFlightRequest {
             key: (periph_id, method_id),
             request_id,
-            result_buf,
-            written_bytes_buf: 0,
             is_action: true,
         });
     }
@@ -228,35 +219,55 @@ pub(crate) fn poll_all() -> bool {
     // Use take since we can't drain a Vec of non-Copy items directly
     let in_flight = core::mem::take(&mut inner.in_flight);
 
-    for mut req in in_flight {
-        let written_ptr = &mut req.written_bytes_buf as *mut i32 as i32;
-        let status = unsafe { ffi::host_poll_result(req.request_id, written_ptr) };
+    for req in in_flight {
+        // フェーズ 1: 完了確認とサイズ取得
+        // Phase 1: Check completion and get result size
+        let status = unsafe { ffi::host_poll_result(req.request_id) };
 
         match status {
             0 => {
                 // まだ未完了 / Still pending
                 remaining.push(req);
             }
-            1 => {
-                // 完了 / Ready
-                let written = req.written_bytes_buf as usize;
-                let data = if written > 0 && written <= req.result_buf.len() {
-                    req.result_buf[..written].to_vec()
+            size if size > 0 => {
+                // 完了 — offset-by-1 返値をデコード: actual_size = size - 1
+                // Ready — decode offset-by-1 return: actual_size = size - 1
+                // (値 1 = 空結果, 値 n > 1 = n-1 バイトの結果)
+                // (value 1 = empty result, value n > 1 = result of n-1 bytes)
+                let actual_size = (size as usize) - 1;
+                let result_entry = if actual_size == 0 {
+                    // 空ペイロード（void 戻り値等） / Empty payload (void return etc.)
+                    Ok(Vec::new())
                 } else {
-                    Vec::new()
+                    // フェーズ 2: 動的確保したバッファにデータを転送
+                    // Phase 2: Fetch data into dynamically allocated buffer
+                    let mut buf = vec![0u8; actual_size];
+                    let written = unsafe {
+                        ffi::host_fetch_result(
+                            req.request_id,
+                            buf.as_ptr() as i32,
+                            actual_size as i32,
+                        )
+                    };
+                    if written < 0 {
+                        Err(BridgeError::from_code(written))
+                    } else {
+                        buf.truncate(written as usize);
+                        Ok(buf)
+                    }
                 };
                 if req.is_action {
                     inner.action_results
                         .entry(req.key)
                         .or_insert_with(Vec::new)
-                        .push(Ok(data));
+                        .push(result_entry);
                 } else {
-                    inner.results.insert(req.key, Ok(data));
+                    inner.results.insert(req.key, result_entry);
                 }
             }
             err_code => {
                 // エラー / Error
-                let err = Err(BridgeError::from_code(err_code));
+                let err = Err(BridgeError::from_code(err_code as i32));
                 if req.is_action {
                     inner.action_results
                         .entry(req.key)

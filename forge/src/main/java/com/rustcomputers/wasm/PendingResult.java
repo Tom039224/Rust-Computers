@@ -27,12 +27,6 @@ public final class PendingResult {
     private final long requestId;
     private final Type type;
 
-    /** WASM が確保した結果バッファのアドレス / WASM-allocated result buffer address */
-    private final int resultPtr;
-
-    /** 結果バッファのサイズ / Result buffer size */
-    private final int resultBufSize;
-
     /** 発行された tick 番号（タイムアウト計算用） / Tick number when issued (for timeout) */
     private final long issuedAtTick;
 
@@ -49,15 +43,11 @@ public final class PendingResult {
     /**
      * @param requestId    リクエスト ID / request ID
      * @param type         リクエスト種別 / request type
-     * @param resultPtr    WASM 側結果バッファアドレス / WASM result buffer address
-     * @param resultBufSize 結果バッファサイズ / result buffer size
      * @param currentTick  現在の tick 番号 / current tick number
      */
-    public PendingResult(long requestId, Type type, int resultPtr, int resultBufSize, long currentTick) {
+    public PendingResult(long requestId, Type type, long currentTick) {
         this.requestId = requestId;
         this.type = type;
-        this.resultPtr = resultPtr;
-        this.resultBufSize = resultBufSize;
         this.issuedAtTick = currentTick;
     }
 
@@ -94,8 +84,6 @@ public final class PendingResult {
 
     public long getRequestId()    { return requestId; }
     public Type getType()         { return type; }
-    public int  getResultPtr()    { return resultPtr; }
-    public int  getResultBufSize(){ return resultBufSize; }
     public long getIssuedAtTick() { return issuedAtTick; }
     public boolean isCompleted()  { return completed; }
     public int  getErrorCode()    { return errorCode; }

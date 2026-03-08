@@ -29,10 +29,11 @@ extern "C" {
     /// 行入力リクエストを発行する。Enter が押されるまで Pending。
     /// Issue a line-input request. Pending until Enter is pressed.
     ///
-    /// - `result_ptr`: 結果バッファのアドレス / result buffer address
-    /// - `result_buf_size`: 結果バッファのサイズ / result buffer size
+    /// 結果は `host_poll_result` / `host_fetch_result` の 2 フェーズで取得する。
+    /// Retrieve the result using the two-phase `host_poll_result` / `host_fetch_result`.
+    ///
     /// - 戻り値: request_id (>0) / return: request_id (>0)
-    pub fn host_stdin_read_line(result_ptr: i32, result_buf_size: i32) -> i64;
+    pub fn host_stdin_read_line() -> i64;
 
     // ==================================================================
     // ペリフェラル操作 / Peripheral operations
@@ -45,16 +46,15 @@ extern "C" {
     /// - `method_id`: メソッド ID (CRC32) / method ID (CRC32)
     /// - `args_ptr`: 引数バッファ（MessagePack）/ argument buffer (MessagePack)
     /// - `args_len`: 引数バイト長 / argument byte length
-    /// - `result_ptr`: 結果バッファ / result buffer
-    /// - `result_buf_size`: 結果バッファサイズ / result buffer size
     /// - 戻り値: request_id (>0) | error (<0) / return: request_id (>0) | error (<0)
+    ///
+    /// 結果は `host_poll_result` / `host_fetch_result` の 2 フェーズで取得する。
+    /// Retrieve the result using the two-phase `host_poll_result` / `host_fetch_result`.
     pub fn host_request_info(
         periph_id: u32,
         method_id: u32,
         args_ptr: i32,
         args_len: i32,
-        result_ptr: i32,
-        result_buf_size: i32,
     ) -> i64;
 
     /// ペリフェラルアクション実行リクエスト（非同期）。
@@ -67,8 +67,6 @@ extern "C" {
         method_id: u32,
         args_ptr: i32,
         args_len: i32,
-        result_ptr: i32,
-        result_buf_size: i32,
     ) -> i64;
 
     /// 即時ペリフェラル情報取得（同 tick 内即返）。
@@ -96,14 +94,35 @@ extern "C" {
     // ポーリング / Polling
     // ==================================================================
 
-    /// 保留結果をポーリングする。
-    /// Poll a pending result.
+    /// 保留結果をポーリングする（フェーズ 1: サイズ確認）。
+    /// Poll a pending result (Phase 1: check size).
     ///
     /// - `request_id`: リクエスト ID / request ID
-    /// - `written_bytes_ptr`: 書き込みバイト数の格納先アドレス / address to store written byte count
-    /// - 戻り値: 0=pending, 1=ready, <0=error
-    /// - return: 0=pending, 1=ready, <0=error
-    pub fn host_poll_result(request_id: i64, written_bytes_ptr: i32) -> i32;
+    /// - 戻り値:
+    ///   - `0`           : まだ未完了 (Pending) / still pending
+    ///   - 正値 (>0)     : 完了。結果データのバイト数 / ready; result size in bytes
+    ///   - 負値 (<0)     : エラーコード / error code
+    ///
+    /// 完了 (正値) を受け取ったら、Rust 側でそのサイズ分のバッファを動的確保して
+    /// `host_fetch_result` を呼び出す（フェーズ 2）。
+    ///
+    /// When a positive value is received, allocate a buffer of that size on the Rust
+    /// side and call `host_fetch_result` (Phase 2).
+    pub fn host_poll_result(request_id: i64) -> i64;
+
+    /// 完了した結果データを WASM バッファに転送する（フェーズ 2: データ取得）。
+    /// Transfer completed result data into a WASM buffer (Phase 2: fetch data).
+    ///
+    /// `host_poll_result` が正値を返した直後に呼び出す。
+    /// Call immediately after `host_poll_result` returns a positive value.
+    ///
+    /// - `request_id`    : リクエスト ID / request ID
+    /// - `result_ptr`    : Rust 側が動的確保したバッファのアドレス / address of Rust-allocated buffer
+    /// - `result_buf_size`: バッファサイズ（`host_poll_result` が返した値以上） /
+    ///                      buffer size (must be ≥ the value returned by `host_poll_result`)
+    /// - 戻り値: 書き込みバイト数 (>=0) | エラーコード (<0) /
+    ///           return: written bytes (>=0) | error code (<0)
+    pub fn host_fetch_result(request_id: i64, result_ptr: i32, result_buf_size: i32) -> i32;
 
     // ==================================================================
     // メタ情報 / Meta information

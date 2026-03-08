@@ -217,10 +217,6 @@ fn issue_request(
     args: &[u8],
     is_action: bool,
 ) -> RequestFuture {
-    // 結果バッファを確保 / Allocate result buffer
-    const RESULT_BUF_SIZE: usize = 4096;
-    let result_buf = vec![0u8; RESULT_BUF_SIZE];
-
     let mid = method_id(method_name);
 
     let request_id = unsafe {
@@ -230,8 +226,6 @@ fn issue_request(
                 mid,
                 args.as_ptr() as i32,
                 args.len() as i32,
-                result_buf.as_ptr() as i32,
-                result_buf.len() as i32,
             )
         } else {
             ffi::host_request_info(
@@ -239,13 +233,11 @@ fn issue_request(
                 mid,
                 args.as_ptr() as i32,
                 args.len() as i32,
-                result_buf.as_ptr() as i32,
-                result_buf.len() as i32,
             )
         }
     };
 
-    RequestFuture::new(request_id, result_buf)
+    RequestFuture::new(request_id)
 }
 
 // ==================================================================

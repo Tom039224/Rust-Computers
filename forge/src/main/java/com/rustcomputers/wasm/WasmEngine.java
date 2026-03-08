@@ -352,20 +352,16 @@ public final class WasmEngine {
      * stdin 行入力リクエストを発行する。
      * Issue a stdin line input request.
      *
-     * @param resultPtr    Rust 側が確保した結果バッファのアドレス / WASM-allocated result buffer address
-     * @param resultBufSize 結果バッファのサイズ / result buffer size
      * @return request_id
      */
-    public long requestStdinLine(int resultPtr, int resultBufSize) {
+    public long requestStdinLine() {
         // 既存の stdin リクエストがあれば破棄 / Cancel existing stdin request if any
         if (pendingStdinRequestId != null) {
             requestManager.remove(pendingStdinRequestId);
         }
 
         long id = requestManager.nextRequestId();
-        // Rust 側で result バッファを確保済み。Java はそこに UTF-8 文字列を書き込む。
-        // Result buffer is pre-allocated by Rust. Java writes UTF-8 string data there.
-        PendingResult pr = new PendingResult(id, PendingResult.Type.STDIN, resultPtr, resultBufSize, tickCount);
+        PendingResult pr = new PendingResult(id, PendingResult.Type.STDIN, tickCount);
         requestManager.register(pr);
         pendingStdinRequestId = id;
         return id;
@@ -405,14 +401,13 @@ public final class WasmEngine {
     public long issuePeripheralRequest(
             PendingResult.Type type,
             int periphId, int methodId,
-            Memory memory, int argsPtr, int argsLen,
-            int resultPtr, int resultBufSize) {
+            Memory memory, int argsPtr, int argsLen) {
 
         // 引数を読み取る / Read arguments from WASM memory
         byte[] argsData = argsLen > 0 ? memory.readBytes(argsPtr, argsLen) : new byte[0];
 
         long id = requestManager.nextRequestId();
-        PendingResult pr = new PendingResult(id, type, resultPtr, resultBufSize, tickCount);
+        PendingResult pr = new PendingResult(id, type, tickCount);
         requestManager.register(pr);
 
         // ペリフェラルを検索 / Look up peripheral

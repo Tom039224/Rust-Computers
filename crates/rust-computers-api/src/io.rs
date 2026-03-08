@@ -9,7 +9,6 @@
 //! `read_line()` uses `host_stdin_read_line` and asynchronously waits until Enter is pressed.
 
 use alloc::string::String;
-use alloc::vec;
 
 use crate::ffi;
 use crate::future::RequestFuture;
@@ -71,11 +70,6 @@ macro_rules! eprintln {
 // ==================================================================
 // 標準入力 / Standard input
 // ==================================================================
-
-/// stdin 結果バッファのデフォルトサイズ（バイト）。
-/// Default stdin result buffer size in bytes.
-const STDIN_BUF_SIZE: usize = 4096;
-
 /// 1 行の入力を非同期で読み取る。
 /// Asynchronously read one line of input.
 ///
@@ -95,15 +89,11 @@ const STDIN_BUF_SIZE: usize = 4096;
 /// 入力された文字列（UTF-8）。エラー時は空文字列。
 /// The input string (UTF-8). Empty string on error.
 pub async fn read_line() -> String {
-    // Rust 側で結果バッファを確保し、そのアドレスをホストに渡す
-    // Allocate a result buffer on the Rust side and pass its address to the host
-    let mut result_buf = vec![0u8; STDIN_BUF_SIZE];
-    let result_ptr = result_buf.as_mut_ptr() as i32;
-    let result_buf_size = STDIN_BUF_SIZE as i32;
-
-    // ホスト関数を呼び出して request_id を取得
-    // Call host function to get request_id
-    let request_id = unsafe { ffi::host_stdin_read_line(result_ptr, result_buf_size) };
+    // 2 フェーズ取得方式：リクエスト時にはバッファ不要。
+    // 結果サイズ判明後に Rust 側で動的確保する。
+    // Two-phase fetch: no buffer needed at request time.
+    // Rust allocates dynamically once the result size is known.
+    let request_id = unsafe { ffi::host_stdin_read_line() };
 
     if request_id <= 0 {
         // エラーの場合 / On error
@@ -111,7 +101,7 @@ pub async fn read_line() -> String {
     }
 
     // RequestFuture で完了を待つ / Wait for completion via RequestFuture
-    let future = RequestFuture::new(request_id, result_buf);
+    let future = RequestFuture::new(request_id);
     match future.await {
         Ok(data) => {
             // UTF-8 文字列としてデコード / Decode as UTF-8 string
