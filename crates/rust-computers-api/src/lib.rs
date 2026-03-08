@@ -68,6 +68,8 @@ pub mod createaddition;
 pub mod control_craft;
 /// AdvancedPeripherals ペリフェラル群 / AdvancedPeripherals peripherals.
 pub mod advanced_peripherals;
+/// CBC CC Control ペリフェラル群 / CBC CC Control peripherals.
+pub mod cbc_cc_control;
 
 // 再エクスポート / Re-exports
 pub use error::BridgeError;
