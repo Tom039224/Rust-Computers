@@ -13,18 +13,106 @@ use crate::peripheral::{self, PeriphAddr, Peripheral};
 
 use super::ballistic_accelerator::SPCoordinate;
 
+// -----------------------------------------------------------------------
+// entityToMapRadar が返す実際の Kotlin マップ構造:
+//   is_entity: bool                (常に true)
+//   pos: [x, y, z]                 (設定で有効時。個別 x/y/z フィールドはない)
+//   entity_type: String            (設定で有効時。"type" や "id" キーではない)
+//   health, max_health: f64        (LivingEntity かつ設定で有効時)
+//   is_player: bool                (プレイヤーのみ)
+//   nickname: String               (プレイヤーかつ設定で有効時)
+//
+// Actual Kotlin map structure returned by entityToMapRadar:
+//   is_entity: bool                (always true)
+//   pos: [x, y, z]                 (when config enabled; NO individual x/y/z keys)
+//   entity_type: String            (when config enabled; NOT "type" or "id")
+//   health, max_health: f64        (LivingEntity when config enabled)
+//   is_player: bool                (players only)
+//   nickname: String               (players when config enabled)
+// -----------------------------------------------------------------------
+
+/// msgpack デコード用の生構造体。
+/// Raw helper struct for msgpack deserialization.
+#[derive(Deserialize)]
+struct SPEntityInfoRaw {
+    #[serde(default)]
+    pub is_entity: bool,
+    /// 座標リスト [x, y, z]
+    pub pos: Option<[f64; 3]>,
+    /// エンティティタイプ文字列 (例: "minecraft:skeleton")
+    pub entity_type: Option<String>,
+    pub is_player: Option<bool>,
+    /// プレイヤー名
+    pub nickname: Option<String>,
+    pub health: Option<f64>,
+    pub max_health: Option<f64>,
+    pub armor_value: Option<i32>,
+    pub is_baby: Option<bool>,
+    pub is_blocking: Option<bool>,
+    pub is_sleeping: Option<bool>,
+    pub is_fall_flying: Option<bool>,
+    pub speed: Option<f64>,
+}
+
 /// エンティティ情報。
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// `name` にはプレイヤーなら `nickname`、それ以外なら `entity_type` が入る。
+/// `x`/`y`/`z` は Lua の `pos` リストから展開される。
+#[derive(Debug, Clone, Serialize)]
 pub struct SPEntityInfo {
+    /// X 座標 (pos[0])
     pub x: f64,
+    /// Y 座標 (pos[1])
     pub y: f64,
+    /// Z 座標 (pos[2])
     pub z: f64,
-    /// エンティティ登録 ID (例: "minecraft:skeleton")
-    pub id: String,
-    /// エンティティタイプ文字列 (Lua キー: "type")
-    #[serde(rename = "type")]
-    pub entity_type: String,
+    /// エンティティ表示名: プレイヤーは nickname、それ以外は entity_type
+    /// Display name: nickname for players, entity_type for others
     pub name: String,
+    /// エンティティタイプ文字列 (例: "minecraft:skeleton")
+    pub entity_type: String,
+    pub is_entity: bool,
+    pub is_player: bool,
+    pub nickname: Option<String>,
+    pub health: Option<f64>,
+    pub max_health: Option<f64>,
+    pub armor_value: Option<i32>,
+    pub is_baby: Option<bool>,
+    pub is_blocking: Option<bool>,
+    pub is_sleeping: Option<bool>,
+    pub is_fall_flying: Option<bool>,
+    pub speed: Option<f64>,
+}
+
+impl<'de> Deserialize<'de> for SPEntityInfo {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let raw = SPEntityInfoRaw::deserialize(deserializer)?;
+        let [x, y, z] = raw.pos.unwrap_or([0.0, 0.0, 0.0]);
+        let entity_type = raw.entity_type.unwrap_or_default();
+        let is_player = raw.is_player.unwrap_or(false);
+        let name = if is_player {
+            raw.nickname.clone().unwrap_or_else(|| entity_type.clone())
+        } else {
+            entity_type.clone()
+        };
+        Ok(SPEntityInfo {
+            x,
+            y,
+            z,
+            name,
+            entity_type,
+            is_entity: raw.is_entity,
+            is_player,
+            nickname: raw.nickname,
+            health: raw.health,
+            max_health: raw.max_health,
+            armor_value: raw.armor_value,
+            is_baby: raw.is_baby,
+            is_blocking: raw.is_blocking,
+            is_sleeping: raw.is_sleeping,
+            is_fall_flying: raw.is_fall_flying,
+            speed: raw.speed,
+        })
+    }
 }
 
 /// シップ情報。
