@@ -1,6 +1,7 @@
 //! Some-Peripherals Raycaster。
 
 use alloc::collections::BTreeMap;
+use alloc::vec::Vec;
 use alloc::string::String;
 
 use serde::{Deserialize, Serialize};
@@ -95,9 +96,11 @@ impl Raycaster {
         peripheral::book_action(self.addr, "addStickers", &args);
     }
 
-    pub fn read_last_add_stickers(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "addStickers")?;
-        Ok(())
+    pub fn read_last_add_stickers(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "addStickers")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 設定情報を取得する (imm 対応)。

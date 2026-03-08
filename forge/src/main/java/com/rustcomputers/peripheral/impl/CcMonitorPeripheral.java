@@ -1,6 +1,7 @@
 package com.rustcomputers.peripheral.impl;
 
 import com.rustcomputers.peripheral.MsgPack;
+import com.rustcomputers.peripheral.PeripheralDisconnectedException;
 import com.rustcomputers.peripheral.PeripheralException;
 import com.rustcomputers.peripheral.PeripheralType;
 import net.minecraft.core.BlockPos;
@@ -232,8 +233,8 @@ public class CcMonitorPeripheral implements PeripheralType {
 
         BlockEntity be = level.getBlockEntity(peripheralPos);
         if (be == null || !monitorBeClass.isInstance(be)) {
-            throw new PeripheralException(
-                    "No MonitorBlockEntity at " + peripheralPos);
+            throw new PeripheralDisconnectedException(
+                    "Monitor disconnected: no MonitorBlockEntity at " + peripheralPos);
         }
 
         // terminal が不要なメソッドを先に処理

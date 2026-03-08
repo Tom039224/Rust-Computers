@@ -1,6 +1,7 @@
 //! Control-Craft Spinalyzer ペリフェラル。
 
 use serde::{Deserialize, Serialize};
+use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
@@ -142,9 +143,11 @@ impl Spinalyzer {
         ]);
         peripheral::book_action(self.addr, "applyInvariantForce", &args);
     }
-    pub fn read_last_apply_invariant_force(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyInvariantForce")?;
-        Ok(())
+    pub fn read_last_apply_invariant_force(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyInvariantForce")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ワールド空間固定方向のトルクを印加する。
@@ -156,9 +159,11 @@ impl Spinalyzer {
         ]);
         peripheral::book_action(self.addr, "applyInvariantTorque", &args);
     }
-    pub fn read_last_apply_invariant_torque(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyInvariantTorque")?;
-        Ok(())
+    pub fn read_last_apply_invariant_torque(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyInvariantTorque")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 船ローカル座標系の力を印加する（回転に追従）。
@@ -170,9 +175,11 @@ impl Spinalyzer {
         ]);
         peripheral::book_action(self.addr, "applyRotDependentForce", &args);
     }
-    pub fn read_last_apply_rot_dependent_force(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyRotDependentForce")?;
-        Ok(())
+    pub fn read_last_apply_rot_dependent_force(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyRotDependentForce")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 船ローカル座標系のトルクを印加する（回転に追従）。
@@ -184,8 +191,10 @@ impl Spinalyzer {
         ]);
         peripheral::book_action(self.addr, "applyRotDependentTorque", &args);
     }
-    pub fn read_last_apply_rot_dependent_torque(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyRotDependentTorque")?;
-        Ok(())
+    pub fn read_last_apply_rot_dependent_torque(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyRotDependentTorque")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

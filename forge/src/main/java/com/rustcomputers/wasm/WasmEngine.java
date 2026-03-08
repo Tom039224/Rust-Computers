@@ -10,6 +10,7 @@ import com.rustcomputers.Config;
 import com.rustcomputers.peripheral.AttachedPeripheral;
 import com.rustcomputers.peripheral.KnownMod;
 import com.rustcomputers.peripheral.MsgPack;
+import com.rustcomputers.peripheral.PeripheralDisconnectedException;
 import com.rustcomputers.peripheral.PeripheralException;
 import com.rustcomputers.peripheral.PeripheralProvider;
 import net.minecraftforge.fml.ModList;
@@ -436,6 +437,10 @@ public final class WasmEngine {
             byte[] result = ap.type().callMethod(methodName, argsData,
                     serverLevel, ap.peripheralPos());
             pr.complete(result != null ? result : new byte[0]);
+        } catch (PeripheralDisconnectedException e) {
+            LOGGER.debug("Computer #{}: peripheral disconnected during '{}': {}",
+                    computerId, methodName, e.getMessage());
+            pr.completeWithError(ErrorCodes.ERR_PERIPHERAL_DISCONNECTED);
         } catch (PeripheralException e) {
             LOGGER.warn("Computer #{}: peripheral method '{}' threw: {}",
                     computerId, methodName, e.getMessage());

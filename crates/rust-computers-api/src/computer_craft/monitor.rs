@@ -1,6 +1,7 @@
 //! CC:Tweaked Monitor ペリフェラル。
 //! CC:Tweaked Monitor peripheral.
 
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 use crate::error::PeripheralError;
@@ -95,9 +96,11 @@ impl Monitor {
         let args = msgpack::array(&[msgpack::float64(scale.0 as f64)]);
         peripheral::book_action(self.addr, "setTextScale", &args);
     }
-    pub fn read_last_set_text_scale(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTextScale")?;
-        Ok(())
+    pub fn read_last_set_text_scale(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTextScale")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// テキストスケールを取得する。
@@ -126,9 +129,11 @@ impl Monitor {
         let args = msgpack::array(&[msgpack::str(text)]);
         peripheral::book_action(self.addr, "write", &args);
     }
-    pub fn read_last_write(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "write")?;
-        Ok(())
+    pub fn read_last_write(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "write")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 画面をスクロールする。
@@ -136,9 +141,11 @@ impl Monitor {
         let args = msgpack::array(&[msgpack::int(y as i32)]);
         peripheral::book_action(self.addr, "scroll", &args);
     }
-    pub fn read_last_scroll(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "scroll")?;
-        Ok(())
+    pub fn read_last_scroll(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "scroll")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// カーソル位置を取得する。
@@ -170,9 +177,11 @@ impl Monitor {
         ]);
         peripheral::book_action(self.addr, "setCursorPos", &args);
     }
-    pub fn read_last_set_cursor_pos(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setCursorPos")?;
-        Ok(())
+    pub fn read_last_set_cursor_pos(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setCursorPos")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// カーソル点滅状態を取得する。
@@ -199,9 +208,11 @@ impl Monitor {
         let args = msgpack::array(&[msgpack::bool_val(blink)]);
         peripheral::book_action(self.addr, "setCursorBlink", &args);
     }
-    pub fn read_last_set_cursor_blink(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setCursorBlink")?;
-        Ok(())
+    pub fn read_last_set_cursor_blink(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setCursorBlink")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// モニターサイズを取得する。
@@ -229,18 +240,22 @@ impl Monitor {
     pub fn book_next_clear(&mut self) {
         peripheral::book_action(self.addr, "clear", &msgpack::array(&[]));
     }
-    pub fn read_last_clear(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "clear")?;
-        Ok(())
+    pub fn read_last_clear(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "clear")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 現在行をクリアする。
     pub fn book_next_clear_line(&mut self) {
         peripheral::book_action(self.addr, "clearLine", &msgpack::array(&[]));
     }
-    pub fn read_last_clear_line(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "clearLine")?;
-        Ok(())
+    pub fn read_last_clear_line(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "clearLine")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// テキスト色を取得する。
@@ -269,9 +284,11 @@ impl Monitor {
         let args = msgpack::array(&[msgpack::int(color.0 as i32)]);
         peripheral::book_action(self.addr, "setTextColour", &args);
     }
-    pub fn read_last_set_text_color(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTextColour")?;
-        Ok(())
+    pub fn read_last_set_text_color(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTextColour")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 背景色を取得する。
@@ -300,9 +317,11 @@ impl Monitor {
         let args = msgpack::array(&[msgpack::int(color.0 as i32)]);
         peripheral::book_action(self.addr, "setBackgroundColour", &args);
     }
-    pub fn read_last_set_background_color(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setBackgroundColour")?;
-        Ok(())
+    pub fn read_last_set_background_color(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setBackgroundColour")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// blit で文字列を描画する。
@@ -314,8 +333,10 @@ impl Monitor {
         ]);
         peripheral::book_action(self.addr, "blit", &args);
     }
-    pub fn read_last_blit(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "blit")?;
-        Ok(())
+    pub fn read_last_blit(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "blit")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

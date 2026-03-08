@@ -1,6 +1,7 @@
 //! Toms-Peripherals Keyboard。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -28,8 +29,10 @@ impl Keyboard {
         peripheral::book_action(self.addr, "setFireNativeEvents", &args);
     }
 
-    pub fn read_last_set_fire_native_events(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setFireNativeEvents")?;
-        Ok(())
+    pub fn read_last_set_fire_native_events(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setFireNativeEvents")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

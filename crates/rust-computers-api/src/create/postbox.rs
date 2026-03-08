@@ -34,9 +34,11 @@ impl Postbox {
         peripheral::book_action(self.addr, "setAddress", &args);
     }
 
-    pub fn read_last_set_address(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setAddress")?;
-        Ok(())
+    pub fn read_last_set_address(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setAddress")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// アドレスを取得する。
@@ -103,9 +105,11 @@ impl Postbox {
         Ok(())
     }
 
-    pub fn read_last_set_configuration(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setConfiguration")?;
-        Ok(())
+    pub fn read_last_set_configuration(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setConfiguration")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     // ====== イベント系 / Events ======

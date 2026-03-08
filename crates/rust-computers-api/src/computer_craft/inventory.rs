@@ -2,6 +2,7 @@
 //! CC:Tweaked Inventory peripheral.
 
 use alloc::collections::BTreeMap;
+use alloc::vec::Vec;
 use alloc::string::String;
 
 use serde::{Deserialize, Serialize};
@@ -113,9 +114,14 @@ impl Inventory {
         }
         peripheral::book_action(self.addr, "pushItems", &msgpack::array(&args));
     }
-    pub fn read_last_push_items(&self) -> Result<u32, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "pushItems")?;
-        peripheral::decode(&data)
+    pub fn read_last_push_items(&self) -> Vec<Result<u32, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "pushItems")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 別のインベントリからアイテムを引き出す。
@@ -142,8 +148,13 @@ impl Inventory {
         }
         peripheral::book_action(self.addr, "pullItems", &msgpack::array(&args));
     }
-    pub fn read_last_pull_items(&self) -> Result<u32, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "pullItems")?;
-        peripheral::decode(&data)
+    pub fn read_last_pull_items(&self) -> Vec<Result<u32, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "pullItems")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 }

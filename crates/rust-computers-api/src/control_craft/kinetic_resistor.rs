@@ -1,6 +1,7 @@
 //! Control-Craft KineticResistor ペリフェラル。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -50,8 +51,10 @@ impl KineticResistor {
         let args = msgpack::array(&[msgpack::float64(ratio)]);
         peripheral::book_action(self.addr, "setRatio", &args);
     }
-    pub fn read_last_set_ratio(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setRatio")?;
-        Ok(())
+    pub fn read_last_set_ratio(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setRatio")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

@@ -54,9 +54,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
         peripheral::book_action(self.addr, "exportItem", &args);
     }
-    pub fn read_last_export_item(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "exportItem")?;
-        peripheral::decode(&data)
+    pub fn read_last_export_item(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "exportItem")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 外部インベントリからアイテムを取り込む。
@@ -64,9 +69,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
         peripheral::book_action(self.addr, "importItem", &args);
     }
-    pub fn read_last_import_item(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "importItem")?;
-        peripheral::decode(&data)
+    pub fn read_last_import_item(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "importItem")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 指定ペリフェラルへアイテムを出力する。
@@ -74,9 +84,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
         peripheral::book_action(self.addr, "exportItemToPeripheral", &args);
     }
-    pub fn read_last_export_item_to_peripheral(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "exportItemToPeripheral")?;
-        peripheral::decode(&data)
+    pub fn read_last_export_item_to_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "exportItemToPeripheral")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 指定ペリフェラルからアイテムを取り込む。
@@ -84,9 +99,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
         peripheral::book_action(self.addr, "importItemFromPeripheral", &args);
     }
-    pub fn read_last_import_item_from_peripheral(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "importItemFromPeripheral")?;
-        peripheral::decode(&data)
+    pub fn read_last_import_item_from_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "importItemFromPeripheral")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     // ─── 流体操作 ────────────────────────────────────────────
@@ -115,9 +135,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
         peripheral::book_action(self.addr, "exportFluid", &args);
     }
-    pub fn read_last_export_fluid(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "exportFluid")?;
-        peripheral::decode(&data)
+    pub fn read_last_export_fluid(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "exportFluid")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 外部から流体を取り込む。
@@ -125,9 +150,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
         peripheral::book_action(self.addr, "importFluid", &args);
     }
-    pub fn read_last_import_fluid(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "importFluid")?;
-        peripheral::decode(&data)
+    pub fn read_last_import_fluid(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "importFluid")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 指定ペリフェラルへ流体を出力する。
@@ -135,9 +165,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
         peripheral::book_action(self.addr, "exportFluidToPeripheral", &args);
     }
-    pub fn read_last_export_fluid_to_peripheral(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "exportFluidToPeripheral")?;
-        peripheral::decode(&data)
+    pub fn read_last_export_fluid_to_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "exportFluidToPeripheral")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 指定ペリフェラルから流体を取り込む。
@@ -145,9 +180,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
         peripheral::book_action(self.addr, "importFluidFromPeripheral", &args);
     }
-    pub fn read_last_import_fluid_from_peripheral(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "importFluidFromPeripheral")?;
-        peripheral::decode(&data)
+    pub fn read_last_import_fluid_from_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "importFluidFromPeripheral")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     // ─── ケミカル操作 ────────────────────────────────────────
@@ -176,9 +216,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
         peripheral::book_action(self.addr, "exportChemical", &args);
     }
-    pub fn read_last_export_chemical(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "exportChemical")?;
-        peripheral::decode(&data)
+    pub fn read_last_export_chemical(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "exportChemical")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 外部からケミカルを取り込む。
@@ -186,9 +231,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
         peripheral::book_action(self.addr, "importChemical", &args);
     }
-    pub fn read_last_import_chemical(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "importChemical")?;
-        peripheral::decode(&data)
+    pub fn read_last_import_chemical(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "importChemical")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 指定ペリフェラルへケミカルを出力する。
@@ -200,9 +250,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
         peripheral::book_action(self.addr, "exportChemicalToPeripheral", &args);
     }
-    pub fn read_last_export_chemical_to_peripheral(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "exportChemicalToPeripheral")?;
-        peripheral::decode(&data)
+    pub fn read_last_export_chemical_to_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "exportChemicalToPeripheral")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 指定ペリフェラルからケミカルを取り込む。
@@ -214,9 +269,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
         peripheral::book_action(self.addr, "importChemicalFromPeripheral", &args);
     }
-    pub fn read_last_import_chemical_from_peripheral(&self) -> Result<i64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "importChemicalFromPeripheral")?;
-        peripheral::decode(&data)
+    pub fn read_last_import_chemical_from_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "importChemicalFromPeripheral")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     // ─── クラフト ────────────────────────────────────────────
@@ -226,9 +286,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec()]);
         peripheral::book_action(self.addr, "craftItem", &args);
     }
-    pub fn read_last_craft_item(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "craftItem")?;
-        peripheral::decode(&data)
+    pub fn read_last_craft_item(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "craftItem")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 指定流体のクラフトを要求する。
@@ -236,9 +301,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec()]);
         peripheral::book_action(self.addr, "craftFluid", &args);
     }
-    pub fn read_last_craft_fluid(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "craftFluid")?;
-        peripheral::decode(&data)
+    pub fn read_last_craft_fluid(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "craftFluid")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 指定ケミカルのクラフトを要求する。
@@ -246,9 +316,14 @@ impl RSBridge {
         let args = msgpack::array(&[filter.to_vec()]);
         peripheral::book_action(self.addr, "craftChemical", &args);
     }
-    pub fn read_last_craft_chemical(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "craftChemical")?;
-        peripheral::decode(&data)
+    pub fn read_last_craft_chemical(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "craftChemical")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 指定アイテムのクラフトが進行中かを返す。

@@ -1,6 +1,7 @@
 //! Control-Craft Jet ペリフェラル。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -29,9 +30,11 @@ impl Jet {
         let args = msgpack::array(&[msgpack::float64(thrust)]);
         peripheral::book_action(self.addr, "setOutputThrust", &args);
     }
-    pub fn read_last_set_output_thrust(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setOutputThrust")?;
-        Ok(())
+    pub fn read_last_set_output_thrust(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setOutputThrust")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 水平方向チルト角度 (deg) を設定する。
@@ -39,9 +42,11 @@ impl Jet {
         let args = msgpack::array(&[msgpack::float64(angle)]);
         peripheral::book_action(self.addr, "setHorizontalTilt", &args);
     }
-    pub fn read_last_set_horizontal_tilt(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setHorizontalTilt")?;
-        Ok(())
+    pub fn read_last_set_horizontal_tilt(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setHorizontalTilt")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 垂直方向チルト角度 (deg) を設定する。
@@ -49,8 +54,10 @@ impl Jet {
         let args = msgpack::array(&[msgpack::float64(angle)]);
         peripheral::book_action(self.addr, "setVerticalTilt", &args);
     }
-    pub fn read_last_set_vertical_tilt(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setVerticalTilt")?;
-        Ok(())
+    pub fn read_last_set_vertical_tilt(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setVerticalTilt")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

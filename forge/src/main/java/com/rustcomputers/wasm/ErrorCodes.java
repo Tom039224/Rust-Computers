@@ -36,6 +36,9 @@ public final class ErrorCodes {
     /** 結果が失われた（タイムアウト等で破棄された） / Result lost (discarded due to timeout, etc.) */
     public static final int ERR_RESULT_LOST = -9;
 
+    /** ペリフェラルが切断・破壊されている / Peripheral has been disconnected or broken */
+    public static final int ERR_PERIPHERAL_DISCONNECTED = -10;
+
     /**
      * エラーコードを人間が読める文字列に変換する。
      * Convert an error code to a human-readable string.
@@ -45,15 +48,16 @@ public final class ErrorCodes {
      */
     public static String describe(int code) {
         return switch (code) {
-            case ERR_INVALID_REQUEST_ID  -> "INVALID_REQUEST_ID";
-            case ERR_INVALID_PERIPHERAL  -> "INVALID_PERIPHERAL";
-            case ERR_METHOD_NOT_FOUND    -> "METHOD_NOT_FOUND";
-            case ERR_JAVA_EXCEPTION      -> "JAVA_EXCEPTION";
-            case ERR_TIMEOUT             -> "TIMEOUT";
-            case ERR_FUEL_EXHAUSTED      -> "FUEL_EXHAUSTED";
-            case ERR_RESULT_BUF_TOO_SMALL -> "RESULT_BUF_TOO_SMALL";
-            case ERR_MOD_NOT_AVAILABLE   -> "MOD_NOT_AVAILABLE";
-            case ERR_RESULT_LOST         -> "RESULT_LOST";
+            case ERR_INVALID_REQUEST_ID      -> "INVALID_REQUEST_ID";
+            case ERR_INVALID_PERIPHERAL      -> "INVALID_PERIPHERAL";
+            case ERR_METHOD_NOT_FOUND        -> "METHOD_NOT_FOUND";
+            case ERR_JAVA_EXCEPTION          -> "JAVA_EXCEPTION";
+            case ERR_TIMEOUT                 -> "TIMEOUT";
+            case ERR_FUEL_EXHAUSTED          -> "FUEL_EXHAUSTED";
+            case ERR_RESULT_BUF_TOO_SMALL    -> "RESULT_BUF_TOO_SMALL";
+            case ERR_MOD_NOT_AVAILABLE       -> "MOD_NOT_AVAILABLE";
+            case ERR_RESULT_LOST             -> "RESULT_LOST";
+            case ERR_PERIPHERAL_DISCONNECTED -> "PERIPHERAL_DISCONNECTED";
             default -> "UNKNOWN_ERROR(" + code + ")";
         };
     }

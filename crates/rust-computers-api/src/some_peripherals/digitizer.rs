@@ -1,6 +1,7 @@
 //! Some-Peripherals Digitizer。
 
 use alloc::string::String;
+use alloc::vec::Vec;
 
 use serde::{Deserialize, Serialize};
 
@@ -50,9 +51,14 @@ impl Digitizer {
         peripheral::book_action(self.addr, "digitizeAmount", &args);
     }
 
-    pub fn read_last_digitize_amount(&self) -> Result<String, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "digitizeAmount")?;
-        peripheral::decode(&data)
+    pub fn read_last_digitize_amount(&self) -> Vec<Result<String, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "digitizeAmount")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// デジタルアイテムを物理化してスロット0に戻す。
@@ -64,9 +70,14 @@ impl Digitizer {
         peripheral::book_action(self.addr, "rematerializeAmount", &msgpack::array(&args));
     }
 
-    pub fn read_last_rematerialize_amount(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "rematerializeAmount")?;
-        peripheral::decode(&data)
+    pub fn read_last_rematerialize_amount(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "rematerializeAmount")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 2つのデジタルアイテムを合成する。
@@ -83,9 +94,14 @@ impl Digitizer {
         peripheral::book_action(self.addr, "mergeDigitalItems", &msgpack::array(&args));
     }
 
-    pub fn read_last_merge_digital_items(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "mergeDigitalItems")?;
-        peripheral::decode(&data)
+    pub fn read_last_merge_digital_items(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "mergeDigitalItems")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// デジタルアイテムスタックを分割する。
@@ -94,9 +110,14 @@ impl Digitizer {
         peripheral::book_action(self.addr, "separateDigitalItem", &args);
     }
 
-    pub fn read_last_separate_digital_item(&self) -> Result<String, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "separateDigitalItem")?;
-        peripheral::decode(&data)
+    pub fn read_last_separate_digital_item(&self) -> Vec<Result<String, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "separateDigitalItem")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// UUID が存在するか確認する。

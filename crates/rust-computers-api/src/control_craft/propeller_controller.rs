@@ -1,6 +1,7 @@
 //! Control-Craft PropellerController ペリフェラル。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -56,8 +57,10 @@ impl PropellerController {
         let args = msgpack::array(&[msgpack::float64(speed)]);
         peripheral::book_action(self.addr, "setTargetSpeed", &args);
     }
-    pub fn read_last_set_target_speed(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTargetSpeed")?;
-        Ok(())
+    pub fn read_last_set_target_speed(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTargetSpeed")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

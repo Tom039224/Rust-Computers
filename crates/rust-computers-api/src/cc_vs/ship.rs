@@ -210,9 +210,11 @@ impl Ship {
         peripheral::book_action(self.addr, "setSlug", &args);
     }
 
-    pub fn read_last_set_slug(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setSlug")?;
-        Ok(())
+    pub fn read_last_set_slug(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setSlug")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 静的状態を設定する。
@@ -221,9 +223,11 @@ impl Ship {
         peripheral::book_action(self.addr, "setStatic", &args);
     }
 
-    pub fn read_last_set_static(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setStatic")?;
-        Ok(())
+    pub fn read_last_set_static(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setStatic")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// スケールを設定する。
@@ -232,9 +236,11 @@ impl Ship {
         peripheral::book_action(self.addr, "setScale", &args);
     }
 
-    pub fn read_last_set_scale_value(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setScale")?;
-        Ok(())
+    pub fn read_last_set_scale_value(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setScale")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// テレポートする。
@@ -244,9 +250,11 @@ impl Ship {
         Ok(())
     }
 
-    pub fn read_last_teleport(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "teleport")?;
-        Ok(())
+    pub fn read_last_teleport(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "teleport")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     // ====== 力の印加系 (allow_op) ======
@@ -272,9 +280,11 @@ impl Ship {
         peripheral::book_action(self.addr, "applyWorldForce", &msgpack::array(&args));
     }
 
-    pub fn read_last_apply_world_force(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyWorldForce")?;
-        Ok(())
+    pub fn read_last_apply_world_force(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyWorldForce")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ワールド座標系でトルクを印加する。
@@ -292,9 +302,11 @@ impl Ship {
         peripheral::book_action(self.addr, "applyWorldTorque", &args);
     }
 
-    pub fn read_last_apply_world_torque(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyWorldTorque")?;
-        Ok(())
+    pub fn read_last_apply_world_torque(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyWorldTorque")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// モデル座標系で力を印加する。
@@ -318,9 +330,11 @@ impl Ship {
         peripheral::book_action(self.addr, "applyModelForce", &msgpack::array(&args));
     }
 
-    pub fn read_last_apply_model_force(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyModelForce")?;
-        Ok(())
+    pub fn read_last_apply_model_force(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyModelForce")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// モデル座標系でトルクを印加する。
@@ -338,9 +352,11 @@ impl Ship {
         peripheral::book_action(self.addr, "applyModelTorque", &args);
     }
 
-    pub fn read_last_apply_model_torque(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyModelTorque")?;
-        Ok(())
+    pub fn read_last_apply_model_torque(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyModelTorque")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ワールド力をモデル座標系位置に対して印加する。
@@ -364,9 +380,11 @@ impl Ship {
         peripheral::book_action(self.addr, "applyWorldForceToModelPos", &args);
     }
 
-    pub fn read_last_apply_world_force_to_model_pos(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyWorldForceToModelPos")?;
-        Ok(())
+    pub fn read_last_apply_world_force_to_model_pos(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyWorldForceToModelPos")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ボディ座標系で力を印加する。
@@ -390,9 +408,11 @@ impl Ship {
         peripheral::book_action(self.addr, "applyBodyForce", &msgpack::array(&args));
     }
 
-    pub fn read_last_apply_body_force(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyBodyForce")?;
-        Ok(())
+    pub fn read_last_apply_body_force(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyBodyForce")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ボディ座標系でトルクを印加する。
@@ -410,9 +430,11 @@ impl Ship {
         peripheral::book_action(self.addr, "applyBodyTorque", &args);
     }
 
-    pub fn read_last_apply_body_torque(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyBodyTorque")?;
-        Ok(())
+    pub fn read_last_apply_body_torque(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyBodyTorque")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ワールド力をボディ座標系位置に対して印加する。
@@ -436,9 +458,11 @@ impl Ship {
         peripheral::book_action(self.addr, "applyWorldForceToBodyPos", &args);
     }
 
-    pub fn read_last_apply_world_force_to_body_pos(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyWorldForceToBodyPos")?;
-        Ok(())
+    pub fn read_last_apply_world_force_to_body_pos(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyWorldForceToBodyPos")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     // ====== イベント系 ======

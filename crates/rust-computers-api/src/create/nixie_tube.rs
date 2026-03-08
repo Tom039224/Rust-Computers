@@ -2,6 +2,7 @@
 //! Create Nixie Tube peripheral.
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -39,9 +40,11 @@ impl NixieTube {
         peripheral::book_action(self.addr, "setText", &args);
     }
 
-    pub fn read_last_set_text(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setText")?;
-        Ok(())
+    pub fn read_last_set_text(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setText")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// テキストカラーを設定する。
@@ -50,9 +53,11 @@ impl NixieTube {
         peripheral::book_action(self.addr, "setTextColour", &args);
     }
 
-    pub fn read_last_set_text_colour(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTextColour")?;
-        Ok(())
+    pub fn read_last_set_text_colour(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTextColour")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// シグナル表示を設定する。front は必須、back はオプション。
@@ -71,8 +76,10 @@ impl NixieTube {
         Ok(())
     }
 
-    pub fn read_last_set_signal(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setSignal")?;
-        Ok(())
+    pub fn read_last_set_signal(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setSignal")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

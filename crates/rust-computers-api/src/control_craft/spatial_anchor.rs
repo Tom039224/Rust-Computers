@@ -1,6 +1,7 @@
 //! Control-Craft SpatialAnchor ペリフェラル。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -29,9 +30,11 @@ impl SpatialAnchor {
         let args = msgpack::array(&[msgpack::bool_val(enabled)]);
         peripheral::book_action(self.addr, "setStatic", &args);
     }
-    pub fn read_last_set_static(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setStatic")?;
-        Ok(())
+    pub fn read_last_set_static(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setStatic")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// アンカーの動作状態を設定する。
@@ -39,9 +42,11 @@ impl SpatialAnchor {
         let args = msgpack::array(&[msgpack::bool_val(enabled)]);
         peripheral::book_action(self.addr, "setRunning", &args);
     }
-    pub fn read_last_set_running(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setRunning")?;
-        Ok(())
+    pub fn read_last_set_running(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setRunning")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// アンカーのオフセット距離を設定する。
@@ -49,9 +54,11 @@ impl SpatialAnchor {
         let args = msgpack::array(&[msgpack::float64(offset)]);
         peripheral::book_action(self.addr, "setOffset", &args);
     }
-    pub fn read_last_set_offset(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setOffset")?;
-        Ok(())
+    pub fn read_last_set_offset(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setOffset")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 位置制御 (PPID) のゲインを設定する。
@@ -63,9 +70,11 @@ impl SpatialAnchor {
         ]);
         peripheral::book_action(self.addr, "setPPID", &args);
     }
-    pub fn read_last_set_ppid(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setPPID")?;
-        Ok(())
+    pub fn read_last_set_ppid(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setPPID")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 回転制御 (QPID) のゲインを設定する。
@@ -77,9 +86,11 @@ impl SpatialAnchor {
         ]);
         peripheral::book_action(self.addr, "setQPID", &args);
     }
-    pub fn read_last_set_qpid(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setQPID")?;
-        Ok(())
+    pub fn read_last_set_qpid(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setQPID")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// チャンネル番号 (long) を設定する。
@@ -87,8 +98,10 @@ impl SpatialAnchor {
         let args = msgpack::array(&[msgpack::int64(channel)]);
         peripheral::book_action(self.addr, "setChannel", &args);
     }
-    pub fn read_last_set_channel(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setChannel")?;
-        Ok(())
+    pub fn read_last_set_channel(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setChannel")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

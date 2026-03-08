@@ -1,6 +1,7 @@
 //! Control-Craft CannonMount ペリフェラル。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -51,9 +52,11 @@ impl CannonMount {
         let args = msgpack::array(&[msgpack::float64(pitch)]);
         peripheral::book_action(self.addr, "setPitch", &args);
     }
-    pub fn read_last_set_pitch(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setPitch")?;
-        Ok(())
+    pub fn read_last_set_pitch(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setPitch")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ヨー角度 (deg) を設定する。
@@ -61,26 +64,32 @@ impl CannonMount {
         let args = msgpack::array(&[msgpack::float64(yaw)]);
         peripheral::book_action(self.addr, "setYaw", &args);
     }
-    pub fn read_last_set_yaw(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setYaw")?;
-        Ok(())
+    pub fn read_last_set_yaw(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setYaw")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// コントラプションを組み立てる (mainThread)。
     pub fn book_next_assemble(&mut self) {
         peripheral::book_action(self.addr, "assemble", &msgpack::array(&[]));
     }
-    pub fn read_last_assemble(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "assemble")?;
-        Ok(())
+    pub fn read_last_assemble(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "assemble")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// コントラプションを分解する (mainThread)。
     pub fn book_next_disassemble(&mut self) {
         peripheral::book_action(self.addr, "disassemble", &msgpack::array(&[]));
     }
-    pub fn read_last_disassemble(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "disassemble")?;
-        Ok(())
+    pub fn read_last_disassemble(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "disassemble")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

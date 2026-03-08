@@ -1,6 +1,7 @@
 //! Control-Craft FlapBearing ペリフェラル。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -50,26 +51,32 @@ impl FlapBearing {
         let args = msgpack::array(&[msgpack::float64(angle)]);
         peripheral::book_action(self.addr, "setAngle", &args);
     }
-    pub fn read_last_set_angle(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setAngle")?;
-        Ok(())
+    pub fn read_last_set_angle(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setAngle")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 次のティックにコントラプションを組み立てる。
     pub fn book_next_assemble_next_tick(&mut self) {
         peripheral::book_action(self.addr, "assembleNextTick", &msgpack::array(&[]));
     }
-    pub fn read_last_assemble_next_tick(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "assembleNextTick")?;
-        Ok(())
+    pub fn read_last_assemble_next_tick(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "assembleNextTick")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 次のティックにコントラプションを分解する。
     pub fn book_next_disassemble_next_tick(&mut self) {
         peripheral::book_action(self.addr, "disassembleNextTick", &msgpack::array(&[]));
     }
-    pub fn read_last_disassemble_next_tick(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "disassembleNextTick")?;
-        Ok(())
+    pub fn read_last_disassemble_next_tick(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "disassembleNextTick")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

@@ -1,6 +1,7 @@
 //! Control-Craft Slider ペリフェラル。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -78,9 +79,11 @@ impl Slider {
         let args = msgpack::array(&[msgpack::float64(scale)]);
         peripheral::book_action(self.addr, "setOutputForce", &args);
     }
-    pub fn read_last_set_output_force(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setOutputForce")?;
-        Ok(())
+    pub fn read_last_set_output_force(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setOutputForce")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// PID ゲインを設定する。
@@ -92,9 +95,11 @@ impl Slider {
         ]);
         peripheral::book_action(self.addr, "setPID", &args);
     }
-    pub fn read_last_set_pid(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setPID")?;
-        Ok(())
+    pub fn read_last_set_pid(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setPID")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 目標値を設定する。
@@ -102,26 +107,32 @@ impl Slider {
         let args = msgpack::array(&[msgpack::float64(target)]);
         peripheral::book_action(self.addr, "setTargetValue", &args);
     }
-    pub fn read_last_set_target_value(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTargetValue")?;
-        Ok(())
+    pub fn read_last_set_target_value(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTargetValue")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// スライダーをロック（固定）する。
     pub fn book_next_lock(&mut self) {
         peripheral::book_action(self.addr, "lock", &msgpack::array(&[]));
     }
-    pub fn read_last_lock(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "lock")?;
-        Ok(())
+    pub fn read_last_lock(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "lock")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// スライダーのロックを解除する。
     pub fn book_next_unlock(&mut self) {
         peripheral::book_action(self.addr, "unlock", &msgpack::array(&[]));
     }
-    pub fn read_last_unlock(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "unlock")?;
-        Ok(())
+    pub fn read_last_unlock(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "unlock")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

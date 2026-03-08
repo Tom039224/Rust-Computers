@@ -2,6 +2,7 @@
 //! Create Tablecloth Shop peripheral.
 
 use alloc::string::String;
+use alloc::vec::Vec;
 use crate::error::PeripheralError;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
@@ -60,9 +61,11 @@ impl TableclothShop {
         peripheral::book_action(self.addr, "setAddress", &args);
     }
 
-    pub fn read_last_set_address(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setAddress")?;
-        Ok(())
+    pub fn read_last_set_address(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setAddress")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 価格タグアイテムを取得する。
@@ -85,9 +88,11 @@ impl TableclothShop {
         peripheral::book_action(self.addr, "setPriceTagItem", &args);
     }
 
-    pub fn read_last_set_price_tag_item(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setPriceTagItem")?;
-        Ok(())
+    pub fn read_last_set_price_tag_item(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setPriceTagItem")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 価格タグの数量を取得する。
@@ -110,9 +115,11 @@ impl TableclothShop {
         peripheral::book_action(self.addr, "setPriceTagCount", &args);
     }
 
-    pub fn read_last_set_price_tag_count(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setPriceTagCount")?;
-        Ok(())
+    pub fn read_last_set_price_tag_count(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setPriceTagCount")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 商品情報を取得する。
@@ -135,8 +142,10 @@ impl TableclothShop {
         peripheral::book_action(self.addr, "setWares", &args);
     }
 
-    pub fn read_last_set_wares(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setWares")?;
-        Ok(())
+    pub fn read_last_set_wares(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setWares")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

@@ -64,9 +64,11 @@ impl StockTicker {
         Ok(())
     }
 
-    pub fn read_last_request_filtered(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "requestFiltered")?;
-        Ok(())
+    pub fn read_last_request_filtered(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "requestFiltered")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// インベントリ内のスロット一覧を取得する。

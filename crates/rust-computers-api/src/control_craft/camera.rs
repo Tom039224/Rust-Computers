@@ -217,9 +217,11 @@ impl Camera {
         let args = msgpack::array(&[msgpack::float64(degrees)]);
         peripheral::book_action(self.addr, "setPitch", &args);
     }
-    pub fn read_last_set_pitch(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setPitch")?;
-        Ok(())
+    pub fn read_last_set_pitch(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setPitch")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ヨーを設定する。
@@ -227,18 +229,22 @@ impl Camera {
         let args = msgpack::array(&[msgpack::float64(degrees)]);
         peripheral::book_action(self.addr, "setYaw", &args);
     }
-    pub fn read_last_set_yaw(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setYaw")?;
-        Ok(())
+    pub fn read_last_set_yaw(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setYaw")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// アウトラインをユーザーに表示する。
     pub fn book_next_outline_to_user(&mut self) {
         peripheral::book_action(self.addr, "outlineToUser", &msgpack::array(&[]));
     }
-    pub fn read_last_outline_to_user(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "outlineToUser")?;
-        Ok(())
+    pub fn read_last_outline_to_user(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "outlineToUser")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ピッチとヨーを強制設定する。
@@ -246,9 +252,11 @@ impl Camera {
         let args = msgpack::array(&[msgpack::float64(pitch), msgpack::float64(yaw)]);
         peripheral::book_action(self.addr, "forcePitchYaw", &args);
     }
-    pub fn read_last_force_pitch_yaw(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "forcePitchYaw")?;
-        Ok(())
+    pub fn read_last_force_pitch_yaw(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "forcePitchYaw")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// クリップ範囲を設定する。
@@ -256,9 +264,11 @@ impl Camera {
         let args = msgpack::array(&[msgpack::float64(range)]);
         peripheral::book_action(self.addr, "setClipRange", &args);
     }
-    pub fn read_last_set_clip_range(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setClipRange")?;
-        Ok(())
+    pub fn read_last_set_clip_range(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setClipRange")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// コーン角度を設定する。
@@ -266,9 +276,11 @@ impl Camera {
         let args = msgpack::array(&[msgpack::float64(angle)]);
         peripheral::book_action(self.addr, "setConeAngle", &args);
     }
-    pub fn read_last_set_cone_angle(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setConeAngle")?;
-        Ok(())
+    pub fn read_last_set_cone_angle(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setConeAngle")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// レイキャスト (指定座標)。
@@ -309,8 +321,10 @@ impl Camera {
     pub fn book_next_reset(&mut self) {
         peripheral::book_action(self.addr, "reset", &msgpack::array(&[]));
     }
-    pub fn read_last_reset(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "reset")?;
-        Ok(())
+    pub fn read_last_reset(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "reset")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

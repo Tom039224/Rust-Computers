@@ -1,6 +1,7 @@
 //! Create Additions DigitalAdapter。
 
 use alloc::string::String;
+use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
@@ -31,18 +32,22 @@ impl DigitalAdapter {
         let args = msgpack::array(&[msgpack::int(line)]);
         peripheral::book_action(self.addr, "clearLine", &args);
     }
-    pub fn read_last_clear_line(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "clearLine")?;
-        Ok(())
+    pub fn read_last_clear_line(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "clearLine")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 全行をクリアする。
     pub fn book_next_clear(&mut self) {
         peripheral::book_action(self.addr, "clear", &msgpack::array(&[]));
     }
-    pub fn read_last_clear(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "clear")?;
-        Ok(())
+    pub fn read_last_clear(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "clear")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 次の空き行にテキストを出力する。
@@ -50,9 +55,11 @@ impl DigitalAdapter {
         let args = msgpack::array(&[msgpack::str(text)]);
         peripheral::book_action(self.addr, "print", &args);
     }
-    pub fn read_last_print(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "print")?;
-        Ok(())
+    pub fn read_last_print(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "print")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 指定行のテキストを取得する。
@@ -70,9 +77,11 @@ impl DigitalAdapter {
         let args = msgpack::array(&[msgpack::int(line), msgpack::str(text)]);
         peripheral::book_action(self.addr, "setLine", &args);
     }
-    pub fn read_last_set_line(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setLine")?;
-        Ok(())
+    pub fn read_last_set_line(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setLine")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ディスプレイの最大行数を返す。
@@ -91,9 +100,11 @@ impl DigitalAdapter {
         let args = msgpack::array(&[msgpack::str(dir), msgpack::float64(speed)]);
         peripheral::book_action(self.addr, "setTargetSpeed", &args);
     }
-    pub fn read_last_set_target_speed(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTargetSpeed")?;
-        Ok(())
+    pub fn read_last_set_target_speed(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTargetSpeed")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 指定方向の目標速度を取得する。
@@ -222,9 +233,14 @@ impl DigitalAdapter {
         let args = msgpack::array(&[msgpack::str(dir), msgpack::int(index)]);
         peripheral::book_action(self.addr, "gotoElevatorFloor", &args);
     }
-    pub fn read_last_goto_elevator_floor(&self) -> Result<f64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "gotoElevatorFloor")?;
-        peripheral::decode(&data)
+    pub fn read_last_goto_elevator_floor(&self) -> Vec<Result<f64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "gotoElevatorFloor")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     // ─── ユーティリティ ──────────────────────────────────────

@@ -1,6 +1,7 @@
 //! AdvancedPeripherals EnergyDetector。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -45,8 +46,10 @@ impl EnergyDetector {
         let args = msgpack::array(&[msgpack::float64(rate)]);
         peripheral::book_action(self.addr, "setTransferRateLimit", &args);
     }
-    pub fn read_last_set_transfer_rate_limit(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTransferRateLimit")?;
-        Ok(())
+    pub fn read_last_set_transfer_rate_limit(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTransferRateLimit")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

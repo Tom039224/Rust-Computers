@@ -1,6 +1,7 @@
 //! Create Additions ElectricMotor。
 
 use alloc::string::String;
+use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
@@ -47,18 +48,22 @@ impl ElectricMotor {
         let args = msgpack::array(&[msgpack::float64(speed)]);
         peripheral::book_action(self.addr, "setSpeed", &args);
     }
-    pub fn read_last_set_speed(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setSpeed")?;
-        Ok(())
+    pub fn read_last_set_speed(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setSpeed")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 停止する。
     pub fn book_next_stop(&mut self) {
         peripheral::book_action(self.addr, "stop", &msgpack::array(&[]));
     }
-    pub fn read_last_stop(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "stop")?;
-        Ok(())
+    pub fn read_last_stop(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "stop")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 現在の速度を取得する。
@@ -96,9 +101,14 @@ impl ElectricMotor {
         }
         peripheral::book_action(self.addr, "rotate", &msgpack::array(&args));
     }
-    pub fn read_last_rotate(&self) -> Result<f64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "rotate")?;
-        peripheral::decode(&data)
+    pub fn read_last_rotate(&self) -> Vec<Result<f64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "rotate")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 指定距離移動する。所要秒数を返す。
@@ -109,9 +119,14 @@ impl ElectricMotor {
         }
         peripheral::book_action(self.addr, "translate", &msgpack::array(&args));
     }
-    pub fn read_last_translate(&self) -> Result<f64, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "translate")?;
-        peripheral::decode(&data)
+    pub fn read_last_translate(&self) -> Vec<Result<f64, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "translate")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// 最大挿入エネルギーを取得する。

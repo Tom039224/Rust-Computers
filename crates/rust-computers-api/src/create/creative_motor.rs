@@ -2,6 +2,7 @@
 //! Create Creative Motor peripheral.
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -29,9 +30,11 @@ impl CreativeMotor {
         peripheral::book_action(self.addr, "setGeneratedSpeed", &args);
     }
 
-    pub fn read_last_set_generated_speed(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setGeneratedSpeed")?;
-        Ok(())
+    pub fn read_last_set_generated_speed(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setGeneratedSpeed")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 現在の生成回転速度を取得する。

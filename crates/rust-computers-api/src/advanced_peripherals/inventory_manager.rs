@@ -76,9 +76,14 @@ impl InventoryManager {
         }
         peripheral::book_action(self.addr, "addItemToPlayer", &msgpack::array(&args));
     }
-    pub fn read_last_add_item_to_player(&self) -> Result<u32, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "addItemToPlayer")?;
-        peripheral::decode(&data)
+    pub fn read_last_add_item_to_player(&self) -> Vec<Result<u32, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "addItemToPlayer")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// プレイヤーからアイテムを除去する。
@@ -93,9 +98,14 @@ impl InventoryManager {
         }
         peripheral::book_action(self.addr, "removeItemFromPlayer", &msgpack::array(&args));
     }
-    pub fn read_last_remove_item_from_player(&self) -> Result<u32, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "removeItemFromPlayer")?;
-        peripheral::decode(&data)
+    pub fn read_last_remove_item_from_player(&self) -> Vec<Result<u32, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "removeItemFromPlayer")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// インベントリ一覧を取得する。

@@ -1,6 +1,7 @@
 //! Toms-Peripherals WatchDogTimer。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -66,9 +67,11 @@ impl WatchDogTimer {
         peripheral::book_action(self.addr, "setEnabled", &args);
     }
 
-    pub fn read_last_set_enabled(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setEnabled")?;
-        Ok(())
+    pub fn read_last_set_enabled(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setEnabled")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// タイムアウトを設定する (ticks)。
@@ -77,9 +80,11 @@ impl WatchDogTimer {
         peripheral::book_action(self.addr, "setTimeout", &args);
     }
 
-    pub fn read_last_set_timeout(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTimeout")?;
-        Ok(())
+    pub fn read_last_set_timeout(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTimeout")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// タイマーをリセットする。
@@ -87,8 +92,10 @@ impl WatchDogTimer {
         peripheral::book_action(self.addr, "reset", &msgpack::array(&[]));
     }
 
-    pub fn read_last_reset(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "reset")?;
-        Ok(())
+    pub fn read_last_reset(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "reset")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

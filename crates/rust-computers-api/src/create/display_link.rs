@@ -2,6 +2,7 @@
 //! Create Display Link peripheral.
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -29,9 +30,11 @@ impl DisplayLink {
         peripheral::book_action(self.addr, "setCursorPos", &args);
     }
 
-    pub fn read_last_set_cursor_pos(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setCursorPos")?;
-        Ok(())
+    pub fn read_last_set_cursor_pos(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setCursorPos")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// カーソル位置を取得する。
@@ -102,9 +105,11 @@ impl DisplayLink {
         peripheral::book_action(self.addr, "write", &args);
     }
 
-    pub fn read_last_write(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "write")?;
-        Ok(())
+    pub fn read_last_write(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "write")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// バイト列を書き込む。
@@ -115,9 +120,11 @@ impl DisplayLink {
         Ok(())
     }
 
-    pub fn read_last_write_bytes(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "writeBytes")?;
-        Ok(())
+    pub fn read_last_write_bytes(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "writeBytes")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 現在の行をクリアする。
@@ -125,9 +132,11 @@ impl DisplayLink {
         peripheral::book_action(self.addr, "clearLine", &msgpack::array(&[]));
     }
 
-    pub fn read_last_clear_line(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "clearLine")?;
-        Ok(())
+    pub fn read_last_clear_line(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "clearLine")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ディスプレイ全体をクリアする。
@@ -135,9 +144,11 @@ impl DisplayLink {
         peripheral::book_action(self.addr, "clear", &msgpack::array(&[]));
     }
 
-    pub fn read_last_clear(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "clear")?;
-        Ok(())
+    pub fn read_last_clear(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "clear")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ディスプレイを更新する。
@@ -145,8 +156,10 @@ impl DisplayLink {
         peripheral::book_action(self.addr, "update", &msgpack::array(&[]));
     }
 
-    pub fn read_last_update(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "update")?;
-        Ok(())
+    pub fn read_last_update(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "update")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

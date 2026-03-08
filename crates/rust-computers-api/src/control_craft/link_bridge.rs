@@ -1,6 +1,7 @@
 //! Control-Craft LinkBridge ペリフェラル。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -29,9 +30,11 @@ impl LinkBridge {
         let args = msgpack::array(&[msgpack::float64(index), msgpack::float64(value)]);
         peripheral::book_action(self.addr, "setInput", &args);
     }
-    pub fn read_last_set_input(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setInput")?;
-        Ok(())
+    pub fn read_last_set_input(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setInput")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     // ====== 出力取得 (imm 対応) ======

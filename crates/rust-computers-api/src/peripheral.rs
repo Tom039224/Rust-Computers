@@ -265,7 +265,7 @@ fn issue_request(
 pub fn book_request(addr: impl Into<PeriphAddr>, method_name: &str, args: &[u8]) {
     let addr = addr.into();
     let mid = method_id(method_name);
-    crate::book_store::book(addr.raw(), mid, args.into(), false);
+    crate::book_store::book_request(addr.raw(), mid, args.into());
 }
 
 /// アクションリクエストを予約する（book-read パターン）。
@@ -273,17 +273,24 @@ pub fn book_request(addr: impl Into<PeriphAddr>, method_name: &str, args: &[u8])
 ///
 /// `book_next_*()` メソッドから使用される。
 /// Used from `book_next_*()` methods.
+///
+/// ## 動作 / Behavior
+///
+/// 同じメソッドを同一 tick 内に複数回呼んでも上書きにならず、
+/// 全ての呼び出しが順序通りに発行される。
+/// Calling the same method multiple times within one tick does NOT overwrite;
+/// every call is issued in order.
 pub fn book_action(addr: impl Into<PeriphAddr>, method_name: &str, args: &[u8]) {
     let addr = addr.into();
     let mid = method_id(method_name);
-    crate::book_store::book(addr.raw(), mid, args.into(), true);
+    crate::book_store::book_action(addr.raw(), mid, args.into());
 }
 
-/// 前回の結果を読み取る（book-read パターン）。
-/// Read the last result (book-read pattern).
+/// 前回の情報リクエスト結果を読み取る（book-read パターン、取得系専用）。
+/// Read the last info-request result (book-read pattern, for request-type methods).
 ///
-/// `read_last_*()` メソッドから使用される。
-/// Used from `read_last_*()` methods.
+/// `read_last_*()` メソッド（取得系）から使用される。
+/// Used from `read_last_*()` methods (info/query type).
 ///
 /// # 戻り値 / Returns
 /// - `Ok(bytes)`: 結果バイト列 / result bytes
@@ -300,6 +307,30 @@ pub fn read_result(
         Some(Err(bridge_err)) => Err(crate::error::PeripheralError::Bridge(bridge_err)),
         None => Err(crate::error::PeripheralError::NotRequested),
     }
+}
+
+/// アクション結果を全件読み取る（book-read パターン、反映系専用）。
+/// Read all accumulated action results (book-read pattern, for action-type methods).
+///
+/// `read_last_*()` メソッド（反映系）から使用される。
+/// Used from `read_last_*()` methods (action type).
+///
+/// ## 動作 / Behavior
+/// 同一 tick 内に `book_next_*` を複数回呼んだ場合、全ての結果が Vec として返る。
+/// 0 件の場合は空 Vec（`book_next_*` が未呼び出し）。
+///
+/// If `book_next_*` was called multiple times in the same tick, all results are
+/// returned as a Vec. Returns an empty Vec if `book_next_*` was not called at all.
+///
+/// # 戻り値 / Returns
+/// - 各要素: `Ok(bytes)` または `Err(bridge_err)` / each: Ok(bytes) or Err(bridge_err)
+pub fn read_action_results(
+    addr: impl Into<PeriphAddr>,
+    method_name: &str,
+) -> Vec<Result<Vec<u8>, BridgeError>> {
+    let addr = addr.into();
+    let mid = method_id(method_name);
+    crate::book_store::read_action_results(addr.raw(), mid)
 }
 
 // ==================================================================

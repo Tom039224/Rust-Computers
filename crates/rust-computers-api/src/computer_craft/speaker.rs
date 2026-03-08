@@ -2,6 +2,7 @@
 //! CC:Tweaked Speaker peripheral.
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -91,9 +92,11 @@ impl Speaker {
         }
         peripheral::book_action(self.addr, "playNote", &msgpack::array(&args));
     }
-    pub fn read_last_play_note(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "playNote")?;
-        Ok(())
+    pub fn read_last_play_note(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "playNote")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// サウンドを再生する。
@@ -116,9 +119,11 @@ impl Speaker {
         }
         peripheral::book_action(self.addr, "playSound", &msgpack::array(&args));
     }
-    pub fn read_last_play_sound(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "playSound")?;
-        Ok(())
+    pub fn read_last_play_sound(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "playSound")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 再生を停止する。
@@ -126,8 +131,10 @@ impl Speaker {
     pub fn book_next_stop(&mut self) {
         peripheral::book_action(self.addr, "stop", &msgpack::array(&[]));
     }
-    pub fn read_last_stop(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "stop")?;
-        Ok(())
+    pub fn read_last_stop(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "stop")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

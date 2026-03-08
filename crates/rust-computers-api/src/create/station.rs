@@ -2,6 +2,7 @@
 //! Create Station peripheral.
 
 use alloc::collections::BTreeMap;
+use alloc::vec::Vec;
 use alloc::string::String;
 use crate::error::PeripheralError;
 use crate::msgpack;
@@ -31,9 +32,11 @@ impl Station {
         peripheral::book_action(self.addr, "assemble", &msgpack::array(&[]));
     }
 
-    pub fn read_last_assemble(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "assemble")?;
-        Ok(())
+    pub fn read_last_assemble(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "assemble")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 列車を分解する。
@@ -41,9 +44,11 @@ impl Station {
         peripheral::book_action(self.addr, "disassemble", &msgpack::array(&[]));
     }
 
-    pub fn read_last_disassemble(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "disassemble")?;
-        Ok(())
+    pub fn read_last_disassemble(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "disassemble")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 組み立てモードを設定する。
@@ -52,9 +57,11 @@ impl Station {
         peripheral::book_action(self.addr, "setAssemblyMode", &args);
     }
 
-    pub fn read_last_set_assembly_mode(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setAssemblyMode")?;
-        Ok(())
+    pub fn read_last_set_assembly_mode(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setAssemblyMode")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 組み立てモードかどうかを取得する。
@@ -111,9 +118,11 @@ impl Station {
         peripheral::book_action(self.addr, "setStationName", &args);
     }
 
-    pub fn read_last_set_station_name(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setStationName")?;
-        Ok(())
+    pub fn read_last_set_station_name(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setStationName")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 列車が存在するかどうかを取得する。
@@ -218,9 +227,11 @@ impl Station {
         peripheral::book_action(self.addr, "setTrainName", &args);
     }
 
-    pub fn read_last_set_train_name(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTrainName")?;
-        Ok(())
+    pub fn read_last_set_train_name(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTrainName")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// スケジュールが存在するかどうかを取得する。
@@ -286,9 +297,11 @@ impl Station {
         Ok(())
     }
 
-    pub fn read_last_set_schedule(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setSchedule")?;
-        Ok(())
+    pub fn read_last_set_schedule(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setSchedule")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 列車が指定駅に到達可能かどうかを取得する。

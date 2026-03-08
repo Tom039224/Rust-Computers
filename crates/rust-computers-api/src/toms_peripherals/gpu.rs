@@ -49,9 +49,11 @@ impl GPU {
         peripheral::book_action(self.addr, "setSize", &args);
     }
 
-    pub fn read_last_set_size(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setSize")?;
-        Ok(())
+    pub fn read_last_set_size(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setSize")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// サイズをリフレッシュする。
@@ -59,9 +61,11 @@ impl GPU {
         peripheral::book_action(self.addr, "refreshSize", &msgpack::array(&[]));
     }
 
-    pub fn read_last_refresh_size(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "refreshSize")?;
-        Ok(())
+    pub fn read_last_refresh_size(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "refreshSize")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// サイズ情報を取得する (imm 対応)。
@@ -95,9 +99,11 @@ impl GPU {
         peripheral::book_action(self.addr, "fill", &args);
     }
 
-    pub fn read_last_fill(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "fill")?;
-        Ok(())
+    pub fn read_last_fill(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "fill")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 画面を同期する。
@@ -105,9 +111,11 @@ impl GPU {
         peripheral::book_action(self.addr, "sync", &msgpack::array(&[]));
     }
 
-    pub fn read_last_sync(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "sync")?;
-        Ok(())
+    pub fn read_last_sync(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "sync")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 塗りつぶし矩形を描画する。
@@ -136,9 +144,11 @@ impl GPU {
         peripheral::book_action(self.addr, "filledRectangle", &args);
     }
 
-    pub fn read_last_filled_rectangle(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "filledRectangle")?;
-        Ok(())
+    pub fn read_last_filled_rectangle(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "filledRectangle")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 画像を描画する。
@@ -152,9 +162,11 @@ impl GPU {
         peripheral::book_action(self.addr, "drawImage", &args);
     }
 
-    pub fn read_last_draw_image(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "drawImage")?;
-        Ok(())
+    pub fn read_last_draw_image(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "drawImage")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// テキストを描画する。
@@ -181,9 +193,11 @@ impl GPU {
         peripheral::book_action(self.addr, "drawText", &args);
     }
 
-    pub fn read_last_draw_text(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "drawText")?;
-        Ok(())
+    pub fn read_last_draw_text(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "drawText")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 文字を描画する。
@@ -212,9 +226,11 @@ impl GPU {
         peripheral::book_action(self.addr, "drawChar", &args);
     }
 
-    pub fn read_last_draw_char(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "drawChar")?;
-        Ok(())
+    pub fn read_last_draw_char(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "drawChar")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// テキストの描画長を取得する (imm 対応)。
@@ -240,9 +256,11 @@ impl GPU {
         peripheral::book_action(self.addr, "setFont", &args);
     }
 
-    pub fn read_last_set_font(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setFont")?;
-        Ok(())
+    pub fn read_last_set_font(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setFont")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// カスタム文字をクリアする。
@@ -250,9 +268,11 @@ impl GPU {
         peripheral::book_action(self.addr, "clearChars", &msgpack::array(&[]));
     }
 
-    pub fn read_last_clear_chars(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "clearChars")?;
-        Ok(())
+    pub fn read_last_clear_chars(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "clearChars")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// カスタム文字を追加する。
@@ -264,9 +284,11 @@ impl GPU {
         peripheral::book_action(self.addr, "addNewChar", &args);
     }
 
-    pub fn read_last_add_new_char(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "addNewChar")?;
-        Ok(())
+    pub fn read_last_add_new_char(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "addNewChar")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ウィンドウを作成する (imm 対応)。

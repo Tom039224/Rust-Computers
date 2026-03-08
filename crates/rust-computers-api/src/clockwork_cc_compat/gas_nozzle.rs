@@ -1,6 +1,7 @@
 //! Clockwork CC Compat GasNozzle。
 
 use serde::{Deserialize, Serialize};
+use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
@@ -58,9 +59,11 @@ impl GasNozzle {
         let args = msgpack::array(&[msgpack::float64(value)]);
         peripheral::book_action(self.addr, "setPointer", &args);
     }
-    pub fn read_last_set_pointer(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setPointer")?;
-        Ok(())
+    pub fn read_last_set_pointer(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setPointer")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     // ---- 固有メソッド (imm getters) ----

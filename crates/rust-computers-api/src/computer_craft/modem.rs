@@ -2,6 +2,7 @@
 //! CC:Tweaked Modem peripheral.
 
 use alloc::string::String;
+use alloc::vec::Vec;
 
 use serde::{Deserialize, Serialize};
 
@@ -44,9 +45,11 @@ impl Modem {
         let args = msgpack::array(&[msgpack::int(channel as i32)]);
         peripheral::book_action(self.addr, "open", &args);
     }
-    pub fn read_last_open(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "open")?;
-        Ok(())
+    pub fn read_last_open(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "open")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// チャンネルが開いているか確認する。
@@ -66,9 +69,11 @@ impl Modem {
         let args = msgpack::array(&[msgpack::int(channel as i32)]);
         peripheral::book_action(self.addr, "close", &args);
     }
-    pub fn read_last_close(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "close")?;
-        Ok(())
+    pub fn read_last_close(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "close")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 全チャンネルを閉じる。
@@ -76,9 +81,11 @@ impl Modem {
     pub fn book_next_close_all(&mut self) {
         peripheral::book_action(self.addr, "closeAll", &msgpack::array(&[]));
     }
-    pub fn read_last_close_all(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "closeAll")?;
-        Ok(())
+    pub fn read_last_close_all(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "closeAll")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// serde でシリアライズ可能なペイロードを送信する。
@@ -93,9 +100,11 @@ impl Modem {
             peripheral::book_action(self.addr, "transmit", &args);
         }
     }
-    pub fn read_last_transmit(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "transmit")?;
-        Ok(())
+    pub fn read_last_transmit(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "transmit")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 生文字列ペイロードを送信する。
@@ -108,9 +117,11 @@ impl Modem {
         ]);
         peripheral::book_action(self.addr, "transmit", &args);
     }
-    pub fn read_last_transmit_raw(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "transmit")?;
-        Ok(())
+    pub fn read_last_transmit_raw(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "transmit")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 1tick 待機してメッセージを受信する。来なければ None。

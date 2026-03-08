@@ -1,6 +1,7 @@
 //! Control-Craft CompactFlap ペリフェラル。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -51,9 +52,11 @@ impl CompactFlap {
         let args = msgpack::array(&[msgpack::float64(angle)]);
         peripheral::book_action(self.addr, "setAngle", &args);
     }
-    pub fn read_last_set_angle(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setAngle")?;
-        Ok(())
+    pub fn read_last_set_angle(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setAngle")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// チルト角度 (deg) を設定する。
@@ -61,8 +64,10 @@ impl CompactFlap {
         let args = msgpack::array(&[msgpack::float64(tilt)]);
         peripheral::book_action(self.addr, "setTilt", &args);
     }
-    pub fn read_last_set_tilt(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTilt")?;
-        Ok(())
+    pub fn read_last_set_tilt(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTilt")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

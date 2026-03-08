@@ -41,9 +41,11 @@ impl RedstoneRequester {
         Ok(())
     }
 
-    pub fn read_last_request(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "request")?;
-        Ok(())
+    pub fn read_last_request(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "request")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// リクエストを設定する。
@@ -58,9 +60,11 @@ impl RedstoneRequester {
         Ok(())
     }
 
-    pub fn read_last_set_request(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setRequest")?;
-        Ok(())
+    pub fn read_last_set_request(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setRequest")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// クラフティングリクエストを設定する。
@@ -75,9 +79,11 @@ impl RedstoneRequester {
         Ok(())
     }
 
-    pub fn read_last_set_crafting_request(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setCraftingRequest")?;
-        Ok(())
+    pub fn read_last_set_crafting_request(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setCraftingRequest")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// リクエスト情報を取得する。
@@ -116,9 +122,11 @@ impl RedstoneRequester {
         Ok(())
     }
 
-    pub fn read_last_set_configuration(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setConfiguration")?;
-        Ok(())
+    pub fn read_last_set_configuration(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setConfiguration")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// アドレスを設定する。
@@ -127,9 +135,11 @@ impl RedstoneRequester {
         peripheral::book_action(self.addr, "setAddress", &args);
     }
 
-    pub fn read_last_set_address(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setAddress")?;
-        Ok(())
+    pub fn read_last_set_address(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setAddress")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// アドレスを取得する。

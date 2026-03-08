@@ -1,6 +1,7 @@
 //! AdvancedPeripherals ChatBox。
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -44,9 +45,14 @@ impl ChatBox {
         }
         peripheral::book_action(self.addr, "sendMessage", &msgpack::array(&args));
     }
-    pub fn read_last_send_message(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "sendMessage")?;
-        peripheral::decode(&data)
+    pub fn read_last_send_message(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "sendMessage")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     // ─── sendFormattedMessage ────────────────────────────────
@@ -71,9 +77,14 @@ impl ChatBox {
         }
         peripheral::book_action(self.addr, "sendFormattedMessage", &msgpack::array(&args));
     }
-    pub fn read_last_send_formatted_message(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "sendFormattedMessage")?;
-        peripheral::decode(&data)
+    pub fn read_last_send_formatted_message(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "sendFormattedMessage")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     // ─── sendMessageToPlayer ─────────────────────────────────
@@ -99,9 +110,14 @@ impl ChatBox {
         }
         peripheral::book_action(self.addr, "sendMessageToPlayer", &msgpack::array(&args));
     }
-    pub fn read_last_send_message_to_player(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "sendMessageToPlayer")?;
-        peripheral::decode(&data)
+    pub fn read_last_send_message_to_player(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "sendMessageToPlayer")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     // ─── sendFormattedMessageToPlayer ────────────────────────
@@ -164,9 +180,14 @@ impl ChatBox {
         }
         peripheral::book_action(self.addr, "sendToastToPlayer", &msgpack::array(&args));
     }
-    pub fn read_last_send_toast_to_player(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "sendToastToPlayer")?;
-        peripheral::decode(&data)
+    pub fn read_last_send_toast_to_player(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "sendToastToPlayer")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     // ─── sendFormattedToastToPlayer ──────────────────────────

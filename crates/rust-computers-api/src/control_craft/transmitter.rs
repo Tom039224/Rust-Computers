@@ -66,9 +66,11 @@ impl Transmitter {
         let args = msgpack::array(&items);
         peripheral::book_action(self.addr, "callRemoteAsync", &args);
     }
-    pub fn read_last_call_remote_async(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "callRemoteAsync")?;
-        Ok(())
+    pub fn read_last_call_remote_async(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "callRemoteAsync")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 使用する通信プロトコル番号 (long) を設定する。
@@ -76,8 +78,10 @@ impl Transmitter {
         let args = msgpack::array(&[msgpack::int64(protocol)]);
         peripheral::book_action(self.addr, "setProtocol", &args);
     }
-    pub fn read_last_set_protocol(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setProtocol")?;
-        Ok(())
+    pub fn read_last_set_protocol(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setProtocol")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

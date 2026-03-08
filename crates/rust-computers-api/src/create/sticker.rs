@@ -2,6 +2,7 @@
 //! Create Sticker peripheral.
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -76,9 +77,14 @@ impl Sticker {
         peripheral::book_action(self.addr, "extend", &msgpack::array(&[]));
     }
 
-    pub fn read_last_extend(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "extend")?;
-        peripheral::decode(&data)
+    pub fn read_last_extend(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "extend")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// スティッカーを収縮させる。成功したかどうかを返す。
@@ -86,9 +92,14 @@ impl Sticker {
         peripheral::book_action(self.addr, "retract", &msgpack::array(&[]));
     }
 
-    pub fn read_last_retract(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "retract")?;
-        peripheral::decode(&data)
+    pub fn read_last_retract(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "retract")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 
     /// スティッカーの伸展/収縮を切り替える。成功したかどうかを返す。
@@ -96,8 +107,13 @@ impl Sticker {
         peripheral::book_action(self.addr, "toggle", &msgpack::array(&[]));
     }
 
-    pub fn read_last_toggle(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "toggle")?;
-        peripheral::decode(&data)
+    pub fn read_last_toggle(&self) -> Vec<Result<bool, PeripheralError>> {
+        peripheral::read_action_results(self.addr, "toggle")
+            .into_iter()
+            .map(|r| match r {
+                Ok(data) => peripheral::decode(&data),
+                Err(e) => Err(PeripheralError::Bridge(e)),
+            })
+            .collect()
     }
 }

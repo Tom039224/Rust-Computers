@@ -28,6 +28,8 @@ pub enum BridgeError {
     ModNotAvailable,
     /// 結果が失われた / Result lost
     ResultLost,
+    /// ペリフェラルが切断された / Peripheral disconnected
+    PeripheralDisconnected,
     /// 不明なエラー / Unknown error
     Unknown(i32),
 }
@@ -48,7 +50,8 @@ impl BridgeError {
             -6 => Self::FuelExhausted,
             -7 => Self::ResultBufTooSmall,
             -8 => Self::ModNotAvailable,
-            -9 => Self::ResultLost,
+            -9  => Self::ResultLost,
+            -10 => Self::PeripheralDisconnected,
             other => Self::Unknown(other),
         }
     }
@@ -63,10 +66,11 @@ impl fmt::Display for BridgeError {
             Self::JavaException     => write!(f, "Java exception"),
             Self::Timeout           => write!(f, "request timed out"),
             Self::FuelExhausted     => write!(f, "fuel exhausted"),
-            Self::ResultBufTooSmall => write!(f, "result buffer too small"),
-            Self::ModNotAvailable   => write!(f, "mod not available"),
-            Self::ResultLost        => write!(f, "result lost"),
-            Self::Unknown(code)     => write!(f, "unknown error ({})", code),
+            Self::ResultBufTooSmall      => write!(f, "result buffer too small"),
+            Self::ModNotAvailable        => write!(f, "mod not available"),
+            Self::ResultLost             => write!(f, "result lost"),
+            Self::PeripheralDisconnected => write!(f, "peripheral disconnected"),
+            Self::Unknown(code)          => write!(f, "unknown error ({})", code),
         }
     }
 }

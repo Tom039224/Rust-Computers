@@ -2,6 +2,7 @@
 //! CC-VS Drag API for ship drag/lift control.
 
 use super::ship::VSVector3;
+use alloc::vec::Vec;
 use crate::error::PeripheralError;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
@@ -80,9 +81,11 @@ impl Drag {
         peripheral::book_action(self.addr, "enableDrag", &msgpack::array(&[]));
     }
 
-    pub fn read_last_enable_drag(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "enableDrag")?;
-        Ok(())
+    pub fn read_last_enable_drag(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "enableDrag")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ドラッグを無効化する。
@@ -90,9 +93,11 @@ impl Drag {
         peripheral::book_action(self.addr, "disableDrag", &msgpack::array(&[]));
     }
 
-    pub fn read_last_disable_drag(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "disableDrag")?;
-        Ok(())
+    pub fn read_last_disable_drag(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "disableDrag")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// リフトを有効化する。
@@ -100,9 +105,11 @@ impl Drag {
         peripheral::book_action(self.addr, "enableLift", &msgpack::array(&[]));
     }
 
-    pub fn read_last_enable_lift(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "enableLift")?;
-        Ok(())
+    pub fn read_last_enable_lift(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "enableLift")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// リフトを無効化する。
@@ -110,9 +117,11 @@ impl Drag {
         peripheral::book_action(self.addr, "disableLift", &msgpack::array(&[]));
     }
 
-    pub fn read_last_disable_lift(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "disableLift")?;
-        Ok(())
+    pub fn read_last_disable_lift(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "disableLift")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 回転ドラッグを有効化する。
@@ -120,9 +129,11 @@ impl Drag {
         peripheral::book_action(self.addr, "enableRotDrag", &msgpack::array(&[]));
     }
 
-    pub fn read_last_enable_rot_drag(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "enableRotDrag")?;
-        Ok(())
+    pub fn read_last_enable_rot_drag(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "enableRotDrag")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 回転ドラッグを無効化する。
@@ -130,9 +141,11 @@ impl Drag {
         peripheral::book_action(self.addr, "disableRotDrag", &msgpack::array(&[]));
     }
 
-    pub fn read_last_disable_rot_drag(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "disableRotDrag")?;
-        Ok(())
+    pub fn read_last_disable_rot_drag(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "disableRotDrag")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 風向を設定する。
@@ -150,9 +163,11 @@ impl Drag {
         peripheral::book_action(self.addr, "setWindDirection", &args);
     }
 
-    pub fn read_last_set_wind_direction(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setWindDirection")?;
-        Ok(())
+    pub fn read_last_set_wind_direction(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setWindDirection")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 風速を設定する。
@@ -161,9 +176,11 @@ impl Drag {
         peripheral::book_action(self.addr, "setWindSpeed", &args);
     }
 
-    pub fn read_last_set_wind_speed(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setWindSpeed")?;
-        Ok(())
+    pub fn read_last_set_wind_speed(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setWindSpeed")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 風インパルスを印加する。
@@ -183,8 +200,10 @@ impl Drag {
         peripheral::book_action(self.addr, "applyWindImpulse", &args);
     }
 
-    pub fn read_last_apply_wind_impulse(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "applyWindImpulse")?;
-        Ok(())
+    pub fn read_last_apply_wind_impulse(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "applyWindImpulse")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

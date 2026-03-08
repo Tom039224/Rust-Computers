@@ -80,9 +80,11 @@ impl Signal {
         peripheral::book_action(self.addr, "setForcedRed", &args);
     }
 
-    pub fn read_last_set_forced_red(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setForcedRed")?;
-        Ok(())
+    pub fn read_last_set_forced_red(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setForcedRed")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// ブロック中の列車名一覧を取得する。
@@ -138,9 +140,11 @@ impl Signal {
         peripheral::book_action(self.addr, "cycleSignalType", &msgpack::array(&[]));
     }
 
-    pub fn read_last_cycle_signal_type(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "cycleSignalType")?;
-        Ok(())
+    pub fn read_last_cycle_signal_type(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "cycleSignalType")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     // ====== イベント系 / Events ======

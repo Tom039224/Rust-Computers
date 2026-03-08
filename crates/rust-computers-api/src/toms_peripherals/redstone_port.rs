@@ -125,9 +125,11 @@ impl RedstonePort {
         peripheral::book_action(self.addr, "setOutput", &args);
     }
 
-    pub fn read_last_set_output(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setOutput")?;
-        Ok(())
+    pub fn read_last_set_output(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setOutput")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// アナログ出力を設定する。
@@ -136,9 +138,11 @@ impl RedstonePort {
         peripheral::book_action(self.addr, "setAnalogOutput", &args);
     }
 
-    pub fn read_last_set_analog_output(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setAnalogOutput")?;
-        Ok(())
+    pub fn read_last_set_analog_output(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setAnalogOutput")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// バンドル出力を設定する。
@@ -147,9 +151,11 @@ impl RedstonePort {
         peripheral::book_action(self.addr, "setBundledOutput", &args);
     }
 
-    pub fn read_last_set_bundled_output(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setBundledOutput")?;
-        Ok(())
+    pub fn read_last_set_bundled_output(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setBundledOutput")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// バンドル入力をテストする。

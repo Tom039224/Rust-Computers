@@ -33,9 +33,11 @@ impl Packager {
         peripheral::book_action(self.addr, "makePackage", &msgpack::array(&[]));
     }
 
-    pub fn read_last_make_package(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "makePackage")?;
-        Ok(())
+    pub fn read_last_make_package(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "makePackage")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// インベントリ内のスロット一覧を取得する。
@@ -83,9 +85,11 @@ impl Packager {
         peripheral::book_action(self.addr, "setAddress", &args);
     }
 
-    pub fn read_last_set_address(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setAddress")?;
-        Ok(())
+    pub fn read_last_set_address(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setAddress")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// パッケージ情報を取得する。

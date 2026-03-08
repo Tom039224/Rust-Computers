@@ -1,6 +1,7 @@
 //! Control-Craft KinematicMotor ペリフェラル。
 
 use alloc::string::String;
+use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
@@ -80,9 +81,11 @@ impl KinematicMotor {
         let args = msgpack::array(&[msgpack::float64(value)]);
         peripheral::book_action(self.addr, "setTargetAngle", &args);
     }
-    pub fn read_last_set_target_angle(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setTargetAngle")?;
-        Ok(())
+    pub fn read_last_set_target_angle(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setTargetAngle")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 制御ターゲットを設定する。
@@ -90,9 +93,11 @@ impl KinematicMotor {
         let args = msgpack::array(&[msgpack::str(target)]);
         peripheral::book_action(self.addr, "setControlTarget", &args);
     }
-    pub fn read_last_set_control_target(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setControlTarget")?;
-        Ok(())
+    pub fn read_last_set_control_target(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setControlTarget")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 強制角度モードのオン/オフを切り替える。
@@ -100,8 +105,10 @@ impl KinematicMotor {
         let args = msgpack::array(&[msgpack::bool_val(enabled)]);
         peripheral::book_action(self.addr, "setIsForcingAngle", &args);
     }
-    pub fn read_last_set_is_forcing_angle(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "setIsForcingAngle")?;
-        Ok(())
+    pub fn read_last_set_is_forcing_angle(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setIsForcingAngle")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 }

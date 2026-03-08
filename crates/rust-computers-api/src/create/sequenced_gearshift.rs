@@ -2,6 +2,7 @@
 //! Create Sequenced Gearshift peripheral.
 
 use crate::error::PeripheralError;
+use alloc::vec::Vec;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
@@ -37,9 +38,11 @@ impl SequencedGearshift {
         peripheral::book_action(self.addr, "rotate", &args);
     }
 
-    pub fn read_last_rotate(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "rotate")?;
-        Ok(())
+    pub fn read_last_rotate(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "rotate")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 指定距離だけ移動させる。
@@ -56,9 +59,11 @@ impl SequencedGearshift {
         peripheral::book_action(self.addr, "moveBy", &args);
     }
 
-    pub fn read_last_move_by(&self) -> Result<(), PeripheralError> {
-        let _ = peripheral::read_result(self.addr, "moveBy")?;
-        Ok(())
+    pub fn read_last_move_by(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "moveBy")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     /// 現在動作中かどうかを取得する。
