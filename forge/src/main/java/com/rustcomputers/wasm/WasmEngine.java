@@ -9,6 +9,7 @@ import com.dylibso.chicory.wasm.WasmModule;
 import com.rustcomputers.Config;
 import com.rustcomputers.peripheral.AttachedPeripheral;
 import com.rustcomputers.peripheral.KnownMod;
+import com.rustcomputers.peripheral.MsgPack;
 import com.rustcomputers.peripheral.PeripheralException;
 import com.rustcomputers.peripheral.PeripheralProvider;
 import net.minecraftforge.fml.ModList;
@@ -459,6 +460,33 @@ public final class WasmEngine {
         AttachedPeripheral ap = peripherals.get(periphId);
         if (ap == null) {
             return ErrorCodes.ERR_INVALID_PERIPHERAL;
+        }
+
+        // ビルトイン "hasType" 処理 / Built-in "hasType" handling
+        // wrap_imm<T> が型チェックに使用する。CRC32("hasType") と一致する場合、
+        // 引数の型名とペリフェラルの型名を比較して bool を返す。
+        // Used by wrap_imm<T> for type checking. If methodId matches CRC32("hasType"),
+        // compare the type name arg against the peripheral's type name and return bool.
+        {
+            CRC32 hasTypeCrc = new CRC32();
+            hasTypeCrc.update("hasType".getBytes(StandardCharsets.UTF_8));
+            if (methodId == (int) hasTypeCrc.getValue()) {
+                try {
+                    byte[] argsData = argsLen > 0 ? memory.readBytes(argsPtr, argsLen) : new byte[0];
+                    String expectedType = MsgPack.decodeFirstString(argsData);
+                    boolean matches = ap.type().getTypeName().equals(expectedType);
+                    byte[] result = MsgPack.bool(matches);
+                    if (result.length > resultBufSize) {
+                        return ErrorCodes.ERR_RESULT_BUF_TOO_SMALL;
+                    }
+                    memory.write(resultPtr, result);
+                    return result.length;
+                } catch (Exception e) {
+                    LOGGER.warn("Computer #{}: hasType check failed: {}",
+                            computerId, e.getMessage());
+                    return ErrorCodes.ERR_JAVA_EXCEPTION;
+                }
+            }
         }
 
         // メソッド名を逆引き / Reverse-lookup method name from CRC32

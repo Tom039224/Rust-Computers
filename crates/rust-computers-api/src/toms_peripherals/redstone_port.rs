@@ -36,33 +36,46 @@ impl RedstonePort {
     }
 
     /// 指定サイドの入力を取得する。
-    pub async fn get_input(&self, side: &str) -> Result<bool, PeripheralError> {
+    pub fn book_next_get_input(&mut self, side: &str) {
         let args = msgpack::array(&[msgpack::str(side)]);
-        let data = peripheral::request_info(self.addr, "getInput", &args).await?;
+        peripheral::book_request(self.addr, "getInput", &args);
+    }
+
+    pub fn read_last_get_input(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getInput")?;
         peripheral::decode(&data)
     }
 
     /// アナログ入力を取得する。
-    pub async fn get_analog_input(&self, side: &str) -> Result<u8, PeripheralError> {
+    pub fn book_next_get_analog_input(&mut self, side: &str) {
         let args = msgpack::array(&[msgpack::str(side)]);
-        let data =
-            peripheral::request_info(self.addr, "getAnalogInput", &args).await?;
+        peripheral::book_request(self.addr, "getAnalogInput", &args);
+    }
+
+    pub fn read_last_get_analog_input(&self) -> Result<u8, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getAnalogInput")?;
         peripheral::decode(&data)
     }
 
     /// バンドル入力を取得する。
-    pub async fn get_bundled_input(&self, side: &str) -> Result<u16, PeripheralError> {
+    pub fn book_next_get_bundled_input(&mut self, side: &str) {
         let args = msgpack::array(&[msgpack::str(side)]);
-        let data =
-            peripheral::request_info(self.addr, "getBundledInput", &args).await?;
+        peripheral::book_request(self.addr, "getBundledInput", &args);
+    }
+
+    pub fn read_last_get_bundled_input(&self) -> Result<u16, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getBundledInput")?;
         peripheral::decode(&data)
     }
 
     /// 出力を取得する (imm 対応)。
-    pub async fn get_output(&self, side: &str) -> Result<bool, PeripheralError> {
+    pub fn book_next_get_output(&mut self, side: &str) {
         let args = msgpack::array(&[msgpack::str(side)]);
-        let data =
-            peripheral::request_info(self.addr, "getOutput", &args).await?;
+        peripheral::book_request(self.addr, "getOutput", &args);
+    }
+
+    pub fn read_last_get_output(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getOutput")?;
         peripheral::decode(&data)
     }
 
@@ -73,10 +86,13 @@ impl RedstonePort {
     }
 
     /// アナログ出力を取得する (imm 対応)。
-    pub async fn get_analog_output(&self, side: &str) -> Result<u8, PeripheralError> {
+    pub fn book_next_get_analog_output(&mut self, side: &str) {
         let args = msgpack::array(&[msgpack::str(side)]);
-        let data =
-            peripheral::request_info(self.addr, "getAnalogOutput", &args).await?;
+        peripheral::book_request(self.addr, "getAnalogOutput", &args);
+    }
+
+    pub fn read_last_get_analog_output(&self) -> Result<u8, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getAnalogOutput")?;
         peripheral::decode(&data)
     }
 
@@ -87,10 +103,13 @@ impl RedstonePort {
     }
 
     /// バンドル出力を取得する (imm 対応)。
-    pub async fn get_bundled_output(&self, side: &str) -> Result<u16, PeripheralError> {
+    pub fn book_next_get_bundled_output(&mut self, side: &str) {
         let args = msgpack::array(&[msgpack::str(side)]);
-        let data =
-            peripheral::request_info(self.addr, "getBundledOutput", &args).await?;
+        peripheral::book_request(self.addr, "getBundledOutput", &args);
+    }
+
+    pub fn read_last_get_bundled_output(&self) -> Result<u16, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getBundledOutput")?;
         peripheral::decode(&data)
     }
 
@@ -101,43 +120,46 @@ impl RedstonePort {
     }
 
     /// 出力を設定する。
-    pub async fn set_output(&self, side: &str, value: bool) -> Result<(), PeripheralError> {
+    pub fn book_next_set_output(&mut self, side: &str, value: bool) {
         let args = msgpack::array(&[msgpack::str(side), msgpack::bool_val(value)]);
-        peripheral::do_action(self.addr, "setOutput", &args).await?;
+        peripheral::book_action(self.addr, "setOutput", &args);
+    }
+
+    pub fn read_last_set_output(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setOutput")?;
         Ok(())
     }
 
     /// アナログ出力を設定する。
-    pub async fn set_analog_output(
-        &self,
-        side: &str,
-        value: u8,
-    ) -> Result<(), PeripheralError> {
+    pub fn book_next_set_analog_output(&mut self, side: &str, value: u8) {
         let args = msgpack::array(&[msgpack::str(side), msgpack::int(value as i32)]);
-        peripheral::do_action(self.addr, "setAnalogOutput", &args).await?;
+        peripheral::book_action(self.addr, "setAnalogOutput", &args);
+    }
+
+    pub fn read_last_set_analog_output(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setAnalogOutput")?;
         Ok(())
     }
 
     /// バンドル出力を設定する。
-    pub async fn set_bundled_output(
-        &self,
-        side: &str,
-        mask: u16,
-    ) -> Result<(), PeripheralError> {
+    pub fn book_next_set_bundled_output(&mut self, side: &str, mask: u16) {
         let args = msgpack::array(&[msgpack::str(side), msgpack::int(mask as i32)]);
-        peripheral::do_action(self.addr, "setBundledOutput", &args).await?;
+        peripheral::book_action(self.addr, "setBundledOutput", &args);
+    }
+
+    pub fn read_last_set_bundled_output(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setBundledOutput")?;
         Ok(())
     }
 
     /// バンドル入力をテストする。
-    pub async fn test_bundled_input(
-        &self,
-        side: &str,
-        mask: u16,
-    ) -> Result<bool, PeripheralError> {
+    pub fn book_next_test_bundled_input(&mut self, side: &str, mask: u16) {
         let args = msgpack::array(&[msgpack::str(side), msgpack::int(mask as i32)]);
-        let data =
-            peripheral::request_info(self.addr, "testBundledInput", &args).await?;
+        peripheral::book_request(self.addr, "testBundledInput", &args);
+    }
+
+    pub fn read_last_test_bundled_input(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "testBundledInput")?;
         peripheral::decode(&data)
     }
 }

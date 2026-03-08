@@ -53,17 +53,18 @@ impl Peripheral for Camera {
     }
 }
 
-macro_rules! imm_getter {
-    ($fn_async:ident, $fn_imm:ident, $method:literal, $ret:ty) => {
-        pub async fn $fn_async(&self) -> Result<$ret, PeripheralError> {
-            let data =
-                peripheral::request_info(self.addr, $method, &msgpack::array(&[])).await?;
+macro_rules! book_read_imm {
+    ($book:ident, $read:ident, $fn_imm:ident, $method:literal, $ret:ty) => {
+        pub fn $book(&mut self) {
+            peripheral::book_request(self.addr, $method, &crate::msgpack::array(&[]));
+        }
+        pub fn $read(&self) -> Result<$ret, PeripheralError> {
+            let data = peripheral::read_result(self.addr, $method)?;
             peripheral::decode(&data)
         }
-
         pub fn $fn_imm(&self) -> Result<$ret, PeripheralError> {
             let data =
-                peripheral::request_info_imm(self.addr, $method, &msgpack::array(&[]))?;
+                peripheral::request_info_imm(self.addr, $method, &crate::msgpack::array(&[]))?;
             peripheral::decode(&data)
         }
     };
@@ -72,71 +73,82 @@ macro_rules! imm_getter {
 impl Camera {
     // ====== imm 対応読み取り系 ======
 
-    imm_getter!(
-        get_abs_view_transform,
+    book_read_imm!(
+        book_next_get_abs_view_transform,
+        read_last_get_abs_view_transform,
         get_abs_view_transform_imm,
         "getAbsViewTransform",
         CTLTransform
     );
-    imm_getter!(get_pitch, get_pitch_imm, "getPitch", f64);
-    imm_getter!(get_yaw, get_yaw_imm, "getYaw", f64);
-    imm_getter!(
-        get_transformed_pitch,
+    book_read_imm!(book_next_get_pitch, read_last_get_pitch, get_pitch_imm, "getPitch", f64);
+    book_read_imm!(book_next_get_yaw, read_last_get_yaw, get_yaw_imm, "getYaw", f64);
+    book_read_imm!(
+        book_next_get_transformed_pitch,
+        read_last_get_transformed_pitch,
         get_transformed_pitch_imm,
         "getTransformedPitch",
         f64
     );
-    imm_getter!(
-        get_transformed_yaw,
+    book_read_imm!(
+        book_next_get_transformed_yaw,
+        read_last_get_transformed_yaw,
         get_transformed_yaw_imm,
         "getTransformedYaw",
         f64
     );
-    imm_getter!(
-        get_clip_distance,
+    book_read_imm!(
+        book_next_get_clip_distance,
+        read_last_get_clip_distance,
         get_clip_distance_imm,
         "getClipDistance",
         f64
     );
-    imm_getter!(
-        latest_ship,
+    book_read_imm!(
+        book_next_latest_ship,
+        read_last_latest_ship,
         latest_ship_imm,
         "latestShip",
         Option<crate::msgpack::Value>
     );
-    imm_getter!(
-        latest_player,
+    book_read_imm!(
+        book_next_latest_player,
+        read_last_latest_player,
         latest_player_imm,
         "latestPlayer",
         Option<crate::msgpack::Value>
     );
-    imm_getter!(
-        latest_entity,
+    book_read_imm!(
+        book_next_latest_entity,
+        read_last_latest_entity,
         latest_entity_imm,
         "latestEntity",
         Option<crate::msgpack::Value>
     );
-    imm_getter!(
-        latest_block,
+    book_read_imm!(
+        book_next_latest_block,
+        read_last_latest_block,
         latest_block_imm,
         "latestBlock",
         Option<crate::msgpack::Value>
     );
-    imm_getter!(
-        get_camera_position,
+    book_read_imm!(
+        book_next_get_camera_position,
+        read_last_get_camera_position,
         get_camera_position_imm,
         "getCameraPosition",
         (f64, f64, f64)
     );
-    imm_getter!(
-        get_abs_view_forward,
+    book_read_imm!(
+        book_next_get_abs_view_forward,
+        read_last_get_abs_view_forward,
         get_abs_view_forward_imm,
         "getAbsViewForward",
         (f64, f64, f64)
     );
-    imm_getter!(is_being_used, is_being_used_imm, "isBeingUsed", bool);
-    imm_getter!(
-        get_direction,
+    book_read_imm!(book_next_is_being_used, read_last_is_being_used, is_being_used_imm, "isBeingUsed", bool);
+    book_read_imm!(
+        book_next_get_direction,
+        read_last_get_direction,
         get_direction_imm,
         "getDirection",
         String
@@ -145,138 +157,160 @@ impl Camera {
     // ====== クリップ系 ======
 
     /// clip (全体)。
-    pub async fn clip(&self) -> Result<CTLRaycastResult, PeripheralError> {
-        let data =
-            peripheral::request_info(self.addr, "clip", &msgpack::array(&[])).await?;
+    pub fn book_next_clip(&mut self) {
+        peripheral::book_request(self.addr, "clip", &msgpack::array(&[]));
+    }
+    pub fn read_last_clip(&self) -> Result<CTLRaycastResult, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "clip")?;
         peripheral::decode(&data)
     }
 
     /// clip (エンティティ)。
-    pub async fn clip_entity(&self) -> Result<CTLRaycastResult, PeripheralError> {
-        let data =
-            peripheral::request_info(self.addr, "clipEntity", &msgpack::array(&[])).await?;
+    pub fn book_next_clip_entity(&mut self) {
+        peripheral::book_request(self.addr, "clipEntity", &msgpack::array(&[]));
+    }
+    pub fn read_last_clip_entity(&self) -> Result<CTLRaycastResult, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "clipEntity")?;
         peripheral::decode(&data)
     }
 
     /// clip (ブロック)。
-    pub async fn clip_block(&self) -> Result<CTLRaycastResult, PeripheralError> {
-        let data =
-            peripheral::request_info(self.addr, "clipBlock", &msgpack::array(&[])).await?;
+    pub fn book_next_clip_block(&mut self) {
+        peripheral::book_request(self.addr, "clipBlock", &msgpack::array(&[]));
+    }
+    pub fn read_last_clip_block(&self) -> Result<CTLRaycastResult, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "clipBlock")?;
         peripheral::decode(&data)
     }
 
     /// clip (全エンティティ)。
-    pub async fn clip_all_entity(&self) -> Result<Vec<CTLRaycastResult>, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "clipAllEntity",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_clip_all_entity(&mut self) {
+        peripheral::book_request(self.addr, "clipAllEntity", &msgpack::array(&[]));
+    }
+    pub fn read_last_clip_all_entity(&self) -> Result<Vec<CTLRaycastResult>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "clipAllEntity")?;
         peripheral::decode(&data)
     }
 
     /// clip (シップ)。
-    pub async fn clip_ship(&self) -> Result<CTLRaycastResult, PeripheralError> {
-        let data =
-            peripheral::request_info(self.addr, "clipShip", &msgpack::array(&[])).await?;
+    pub fn book_next_clip_ship(&mut self) {
+        peripheral::book_request(self.addr, "clipShip", &msgpack::array(&[]));
+    }
+    pub fn read_last_clip_ship(&self) -> Result<CTLRaycastResult, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "clipShip")?;
         peripheral::decode(&data)
     }
 
     /// clip (プレイヤー)。
-    pub async fn clip_player(&self) -> Result<CTLRaycastResult, PeripheralError> {
-        let data =
-            peripheral::request_info(self.addr, "clipPlayer", &msgpack::array(&[])).await?;
+    pub fn book_next_clip_player(&mut self) {
+        peripheral::book_request(self.addr, "clipPlayer", &msgpack::array(&[]));
+    }
+    pub fn read_last_clip_player(&self) -> Result<CTLRaycastResult, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "clipPlayer")?;
         peripheral::decode(&data)
     }
 
     // ====== 状態変更系 ======
 
     /// ピッチを設定する。
-    pub async fn set_pitch(&self, degrees: f64) -> Result<(), PeripheralError> {
+    pub fn book_next_set_pitch(&mut self, degrees: f64) {
         let args = msgpack::array(&[msgpack::float64(degrees)]);
-        peripheral::do_action(self.addr, "setPitch", &args).await?;
+        peripheral::book_action(self.addr, "setPitch", &args);
+    }
+    pub fn read_last_set_pitch(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setPitch")?;
         Ok(())
     }
 
     /// ヨーを設定する。
-    pub async fn set_yaw(&self, degrees: f64) -> Result<(), PeripheralError> {
+    pub fn book_next_set_yaw(&mut self, degrees: f64) {
         let args = msgpack::array(&[msgpack::float64(degrees)]);
-        peripheral::do_action(self.addr, "setYaw", &args).await?;
+        peripheral::book_action(self.addr, "setYaw", &args);
+    }
+    pub fn read_last_set_yaw(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setYaw")?;
         Ok(())
     }
 
     /// アウトラインをユーザーに表示する。
-    pub async fn outline_to_user(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "outlineToUser", &msgpack::array(&[])).await?;
+    pub fn book_next_outline_to_user(&mut self) {
+        peripheral::book_action(self.addr, "outlineToUser", &msgpack::array(&[]));
+    }
+    pub fn read_last_outline_to_user(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "outlineToUser")?;
         Ok(())
     }
 
     /// ピッチとヨーを強制設定する。
-    pub async fn force_pitch_yaw(
-        &self,
-        pitch: f64,
-        yaw: f64,
-    ) -> Result<(), PeripheralError> {
+    pub fn book_next_force_pitch_yaw(&mut self, pitch: f64, yaw: f64) {
         let args = msgpack::array(&[msgpack::float64(pitch), msgpack::float64(yaw)]);
-        peripheral::do_action(self.addr, "forcePitchYaw", &args).await?;
+        peripheral::book_action(self.addr, "forcePitchYaw", &args);
+    }
+    pub fn read_last_force_pitch_yaw(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "forcePitchYaw")?;
         Ok(())
     }
 
     /// クリップ範囲を設定する。
-    pub async fn set_clip_range(&self, range: f64) -> Result<(), PeripheralError> {
+    pub fn book_next_set_clip_range(&mut self, range: f64) {
         let args = msgpack::array(&[msgpack::float64(range)]);
-        peripheral::do_action(self.addr, "setClipRange", &args).await?;
+        peripheral::book_action(self.addr, "setClipRange", &args);
+    }
+    pub fn read_last_set_clip_range(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setClipRange")?;
         Ok(())
     }
 
     /// コーン角度を設定する。
-    pub async fn set_cone_angle(&self, angle: f64) -> Result<(), PeripheralError> {
+    pub fn book_next_set_cone_angle(&mut self, angle: f64) {
         let args = msgpack::array(&[msgpack::float64(angle)]);
-        peripheral::do_action(self.addr, "setConeAngle", &args).await?;
+        peripheral::book_action(self.addr, "setConeAngle", &args);
+    }
+    pub fn read_last_set_cone_angle(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setConeAngle")?;
         Ok(())
     }
 
     /// レイキャスト (指定座標)。
-    pub async fn raycast(
-        &self,
-        x: f64,
-        y: f64,
-        z: f64,
-    ) -> Result<CTLRaycastResult, PeripheralError> {
+    pub fn book_next_raycast(&mut self, x: f64, y: f64, z: f64) {
         let args = msgpack::array(&[
             msgpack::float64(x),
             msgpack::float64(y),
             msgpack::float64(z),
         ]);
-        let data = peripheral::request_info(self.addr, "raycast", &args).await?;
+        peripheral::book_request(self.addr, "raycast", &args);
+    }
+    pub fn read_last_raycast(&self) -> Result<CTLRaycastResult, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "raycast")?;
         peripheral::decode(&data)
     }
 
     /// 範囲内のエンティティを取得する。
-    pub async fn get_entities(
-        &self,
-        radius: f64,
-    ) -> Result<Vec<crate::msgpack::Value>, PeripheralError> {
+    pub fn book_next_get_entities(&mut self, radius: f64) {
         let args = msgpack::array(&[msgpack::float64(radius)]);
-        let data =
-            peripheral::request_info(self.addr, "getEntities", &args).await?;
+        peripheral::book_request(self.addr, "getEntities", &args);
+    }
+    pub fn read_last_get_entities(&self) -> Result<Vec<crate::msgpack::Value>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getEntities")?;
         peripheral::decode(&data)
     }
 
     /// 範囲内のモブを取得する。
-    pub async fn get_mobs(
-        &self,
-        radius: f64,
-    ) -> Result<Vec<crate::msgpack::Value>, PeripheralError> {
+    pub fn book_next_get_mobs(&mut self, radius: f64) {
         let args = msgpack::array(&[msgpack::float64(radius)]);
-        let data = peripheral::request_info(self.addr, "getMobs", &args).await?;
+        peripheral::book_request(self.addr, "getMobs", &args);
+    }
+    pub fn read_last_get_mobs(&self) -> Result<Vec<crate::msgpack::Value>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getMobs")?;
         peripheral::decode(&data)
     }
 
     /// リセットする。
-    pub async fn reset(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "reset", &msgpack::array(&[])).await?;
+    pub fn book_next_reset(&mut self) {
+        peripheral::book_action(self.addr, "reset", &msgpack::array(&[]));
+    }
+    pub fn read_last_reset(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "reset")?;
         Ok(())
     }
 }

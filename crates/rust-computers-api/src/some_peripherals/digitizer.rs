@@ -42,89 +42,91 @@ impl Peripheral for Digitizer {
 
 impl Digitizer {
     /// スロット0 のアイテムをデジタル化してUUIDを返す。
-    pub async fn digitize_amount(
-        &self,
-        amount: Option<u32>,
-    ) -> Result<String, PeripheralError> {
+    pub fn book_next_digitize_amount(&mut self, amount: Option<u32>) {
         let args = match amount {
             Some(a) => msgpack::array(&[msgpack::int(a as i32)]),
             None => msgpack::array(&[]),
         };
-        let data = peripheral::do_action(self.addr, "digitizeAmount", &args).await?;
+        peripheral::book_action(self.addr, "digitizeAmount", &args);
+    }
+
+    pub fn read_last_digitize_amount(&self) -> Result<String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "digitizeAmount")?;
         peripheral::decode(&data)
     }
 
     /// デジタルアイテムを物理化してスロット0に戻す。
-    pub async fn rematerialize_amount(
-        &self,
-        uuid: &str,
-        amount: Option<u32>,
-    ) -> Result<bool, PeripheralError> {
+    pub fn book_next_rematerialize_amount(&mut self, uuid: &str, amount: Option<u32>) {
         let mut args = alloc::vec![msgpack::str(uuid)];
         if let Some(a) = amount {
             args.push(msgpack::int(a as i32));
         }
-        let data =
-            peripheral::do_action(self.addr, "rematerializeAmount", &msgpack::array(&args))
-                .await?;
+        peripheral::book_action(self.addr, "rematerializeAmount", &msgpack::array(&args));
+    }
+
+    pub fn read_last_rematerialize_amount(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "rematerializeAmount")?;
         peripheral::decode(&data)
     }
 
     /// 2つのデジタルアイテムを合成する。
-    pub async fn merge_digital_items(
-        &self,
+    pub fn book_next_merge_digital_items(
+        &mut self,
         into_uuid: &str,
         from_uuid: &str,
         amount: Option<u32>,
-    ) -> Result<bool, PeripheralError> {
+    ) {
         let mut args = alloc::vec![msgpack::str(into_uuid), msgpack::str(from_uuid)];
         if let Some(a) = amount {
             args.push(msgpack::int(a as i32));
         }
-        let data =
-            peripheral::do_action(self.addr, "mergeDigitalItems", &msgpack::array(&args))
-                .await?;
+        peripheral::book_action(self.addr, "mergeDigitalItems", &msgpack::array(&args));
+    }
+
+    pub fn read_last_merge_digital_items(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "mergeDigitalItems")?;
         peripheral::decode(&data)
     }
 
     /// デジタルアイテムスタックを分割する。
-    pub async fn separate_digital_item(
-        &self,
-        from_uuid: &str,
-        amount: u32,
-    ) -> Result<String, PeripheralError> {
+    pub fn book_next_separate_digital_item(&mut self, from_uuid: &str, amount: u32) {
         let args = msgpack::array(&[msgpack::str(from_uuid), msgpack::int(amount as i32)]);
-        let data =
-            peripheral::do_action(self.addr, "separateDigitalItem", &args).await?;
+        peripheral::book_action(self.addr, "separateDigitalItem", &args);
+    }
+
+    pub fn read_last_separate_digital_item(&self) -> Result<String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "separateDigitalItem")?;
         peripheral::decode(&data)
     }
 
     /// UUID が存在するか確認する。
-    pub async fn check_id(&self, uuid: &str) -> Result<SPItemData, PeripheralError> {
+    pub fn book_next_check_id(&mut self, uuid: &str) {
         let args = msgpack::array(&[msgpack::str(uuid)]);
-        let data = peripheral::request_info(self.addr, "checkId", &args).await?;
+        peripheral::book_request(self.addr, "checkId", &args);
+    }
+
+    pub fn read_last_check_id(&self) -> Result<SPItemData, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "checkId")?;
         peripheral::decode(&data)
     }
 
     /// スロット0 のアイテム情報を返す。
-    pub async fn get_item_in_slot(&self) -> Result<SPItemData, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getItemInSlot",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_item_in_slot(&mut self) {
+        peripheral::book_request(self.addr, "getItemInSlot", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_get_item_in_slot(&self) -> Result<SPItemData, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getItemInSlot")?;
         peripheral::decode(&data)
     }
 
     /// スロット0 のアイテム上限数を返す。
-    pub async fn get_item_limit_in_slot(&self) -> Result<u32, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getItemLimitInSlot",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_item_limit_in_slot(&mut self) {
+        peripheral::book_request(self.addr, "getItemLimitInSlot", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_get_item_limit_in_slot(&self) -> Result<u32, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getItemLimitInSlot")?;
         peripheral::decode(&data)
     }
 }

@@ -65,46 +65,45 @@ impl Peripheral for Radar {
 
 impl Radar {
     /// エンティティをスキャンする。
-    pub async fn scan_for_entities(
-        &self,
-        radius: f64,
-    ) -> Result<Vec<SPEntityInfo>, PeripheralError> {
+    pub fn book_next_scan_for_entities(&mut self, radius: f64) {
         let args = msgpack::array(&[msgpack::float64(radius)]);
-        let data =
-            peripheral::request_info(self.addr, "scanForEntities", &args).await?;
+        peripheral::book_request(self.addr, "scanForEntities", &args);
+    }
+
+    pub fn read_last_scan_for_entities(&self) -> Result<Vec<SPEntityInfo>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "scanForEntities")?;
         peripheral::decode(&data)
     }
 
     /// VS シップをスキャンする。
-    pub async fn scan_for_ships(
-        &self,
-        radius: f64,
-    ) -> Result<Vec<SPShipInfo>, PeripheralError> {
+    pub fn book_next_scan_for_ships(&mut self, radius: f64) {
         let args = msgpack::array(&[msgpack::float64(radius)]);
-        let data =
-            peripheral::request_info(self.addr, "scanForShips", &args).await?;
+        peripheral::book_request(self.addr, "scanForShips", &args);
+    }
+
+    pub fn read_last_scan_for_ships(&self) -> Result<Vec<SPShipInfo>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "scanForShips")?;
         peripheral::decode(&data)
     }
 
     /// プレイヤーをスキャンする。
-    pub async fn scan_for_players(
-        &self,
-        radius: f64,
-    ) -> Result<Vec<SPEntityInfo>, PeripheralError> {
+    pub fn book_next_scan_for_players(&mut self, radius: f64) {
         let args = msgpack::array(&[msgpack::float64(radius)]);
-        let data =
-            peripheral::request_info(self.addr, "scanForPlayers", &args).await?;
+        peripheral::book_request(self.addr, "scanForPlayers", &args);
+    }
+
+    pub fn read_last_scan_for_players(&self) -> Result<Vec<SPEntityInfo>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "scanForPlayers")?;
         peripheral::decode(&data)
     }
 
     /// 設定情報を取得する (imm 対応)。
-    pub async fn get_config_info(&self) -> Result<BTreeMap<String, String>, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getConfigInfo",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_config_info(&mut self) {
+        peripheral::book_request(self.addr, "getConfigInfo", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_get_config_info(&self) -> Result<BTreeMap<String, String>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getConfigInfo")?;
         peripheral::decode(&data)
     }
 

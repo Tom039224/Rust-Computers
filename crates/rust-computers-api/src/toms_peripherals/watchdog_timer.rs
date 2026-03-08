@@ -23,13 +23,12 @@ impl Peripheral for WatchDogTimer {
 
 impl WatchDogTimer {
     /// 有効かどうかを取得する (imm 対応)。
-    pub async fn is_enabled(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "isEnabled",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_is_enabled(&mut self) {
+        peripheral::book_request(self.addr, "isEnabled", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_is_enabled(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isEnabled")?;
         peripheral::decode(&data)
     }
 
@@ -43,13 +42,12 @@ impl WatchDogTimer {
     }
 
     /// タイムアウト値を取得する (imm 対応, ticks)。
-    pub async fn get_timeout(&self) -> Result<u32, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getTimeout",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_timeout(&mut self) {
+        peripheral::book_request(self.addr, "getTimeout", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_get_timeout(&self) -> Result<u32, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getTimeout")?;
         peripheral::decode(&data)
     }
 
@@ -63,22 +61,34 @@ impl WatchDogTimer {
     }
 
     /// 有効/無効を設定する。
-    pub async fn set_enabled(&self, enabled: bool) -> Result<(), PeripheralError> {
+    pub fn book_next_set_enabled(&mut self, enabled: bool) {
         let args = msgpack::array(&[msgpack::bool_val(enabled)]);
-        peripheral::do_action(self.addr, "setEnabled", &args).await?;
+        peripheral::book_action(self.addr, "setEnabled", &args);
+    }
+
+    pub fn read_last_set_enabled(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setEnabled")?;
         Ok(())
     }
 
     /// タイムアウトを設定する (ticks)。
-    pub async fn set_timeout(&self, ticks: u32) -> Result<(), PeripheralError> {
+    pub fn book_next_set_timeout(&mut self, ticks: u32) {
         let args = msgpack::array(&[msgpack::int(ticks as i32)]);
-        peripheral::do_action(self.addr, "setTimeout", &args).await?;
+        peripheral::book_action(self.addr, "setTimeout", &args);
+    }
+
+    pub fn read_last_set_timeout(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setTimeout")?;
         Ok(())
     }
 
     /// タイマーをリセットする。
-    pub async fn reset(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "reset", &msgpack::array(&[])).await?;
+    pub fn book_next_reset(&mut self) {
+        peripheral::book_action(self.addr, "reset", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_reset(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "reset")?;
         Ok(())
     }
 }

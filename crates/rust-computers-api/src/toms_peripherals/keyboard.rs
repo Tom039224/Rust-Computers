@@ -23,12 +23,13 @@ impl Peripheral for Keyboard {
 
 impl Keyboard {
     /// ネイティブイベント発火の有効/無効を設定する。
-    pub async fn set_fire_native_events(
-        &self,
-        enabled: bool,
-    ) -> Result<(), PeripheralError> {
+    pub fn book_next_set_fire_native_events(&mut self, enabled: bool) {
         let args = msgpack::array(&[msgpack::bool_val(enabled)]);
-        peripheral::do_action(self.addr, "setFireNativeEvents", &args).await?;
+        peripheral::book_action(self.addr, "setFireNativeEvents", &args);
+    }
+
+    pub fn read_last_set_fire_native_events(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setFireNativeEvents")?;
         Ok(())
     }
 }

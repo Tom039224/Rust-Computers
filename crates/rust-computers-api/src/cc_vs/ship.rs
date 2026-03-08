@@ -103,20 +103,23 @@ impl Peripheral for Ship {
 }
 
 // ============================================================
-// Helper macros for repetitive imm/async getter patterns
+// Helper macros for repetitive book/read/imm getter patterns
 // ============================================================
 
-macro_rules! imm_getter {
-    ($fn_async:ident, $fn_imm:ident, $method:literal, $ret:ty) => {
-        pub async fn $fn_async(&self) -> Result<$ret, PeripheralError> {
-            let data = peripheral::request_info(self.addr, $method, &msgpack::array(&[]))
-                .await?;
+macro_rules! book_read_imm {
+    ($book:ident, $read:ident, $fn_imm:ident, $method:literal, $ret:ty) => {
+        pub fn $book(&mut self) {
+            peripheral::book_request(self.addr, $method, &crate::msgpack::array(&[]));
+        }
+
+        pub fn $read(&self) -> Result<$ret, PeripheralError> {
+            let data = peripheral::read_result(self.addr, $method)?;
             peripheral::decode(&data)
         }
 
         pub fn $fn_imm(&self) -> Result<$ret, PeripheralError> {
             let data =
-                peripheral::request_info_imm(self.addr, $method, &msgpack::array(&[]))?;
+                peripheral::request_info_imm(self.addr, $method, &crate::msgpack::array(&[]))?;
             peripheral::decode(&data)
         }
     };
@@ -125,60 +128,67 @@ macro_rules! imm_getter {
 impl Ship {
     // ====== 読み取り系 (imm 対応) ======
 
-    imm_getter!(get_id, get_id_imm, "getId", i64);
-    imm_getter!(get_mass, get_mass_imm, "getMass", f64);
-    imm_getter!(
-        get_moment_of_inertia_tensor,
+    book_read_imm!(book_next_get_id, read_last_get_id, get_id_imm, "getId", i64);
+    book_read_imm!(book_next_get_mass, read_last_get_mass, get_mass_imm, "getMass", f64);
+    book_read_imm!(
+        book_next_get_moment_of_inertia_tensor,
+        read_last_get_moment_of_inertia_tensor,
         get_moment_of_inertia_tensor_imm,
         "getMomentOfInertiaTensor",
         [[f64; 3]; 3]
     );
-    imm_getter!(get_slug, get_slug_imm, "getSlug", String);
-    imm_getter!(
-        get_angular_velocity,
+    book_read_imm!(book_next_get_slug, read_last_get_slug, get_slug_imm, "getSlug", String);
+    book_read_imm!(
+        book_next_get_angular_velocity,
+        read_last_get_angular_velocity,
         get_angular_velocity_imm,
         "getAngularVelocity",
         VSVector3
     );
-    imm_getter!(get_quaternion, get_quaternion_imm, "getQuaternion", VSQuaternion);
-    imm_getter!(get_scale, get_scale_imm, "getScale", VSVector3);
-    imm_getter!(
-        get_shipyard_position,
+    book_read_imm!(book_next_get_quaternion, read_last_get_quaternion, get_quaternion_imm, "getQuaternion", VSQuaternion);
+    book_read_imm!(book_next_get_scale, read_last_get_scale, get_scale_imm, "getScale", VSVector3);
+    book_read_imm!(
+        book_next_get_shipyard_position,
+        read_last_get_shipyard_position,
         get_shipyard_position_imm,
         "getShipyardPosition",
         VSVector3
     );
-    imm_getter!(get_size, get_size_imm, "getSize", VSVector3);
-    imm_getter!(get_velocity, get_velocity_imm, "getVelocity", VSVector3);
-    imm_getter!(
-        get_worldspace_position,
+    book_read_imm!(book_next_get_size, read_last_get_size, get_size_imm, "getSize", VSVector3);
+    book_read_imm!(book_next_get_velocity, read_last_get_velocity, get_velocity_imm, "getVelocity", VSVector3);
+    book_read_imm!(
+        book_next_get_worldspace_position,
+        read_last_get_worldspace_position,
         get_worldspace_position_imm,
         "getWorldspacePosition",
         VSVector3
     );
-    imm_getter!(is_static, is_static_imm, "isStatic", bool);
-    imm_getter!(
-        get_transformation_matrix,
+    book_read_imm!(book_next_is_static, read_last_is_static, is_static_imm, "isStatic", bool);
+    book_read_imm!(
+        book_next_get_transformation_matrix,
+        read_last_get_transformation_matrix,
         get_transformation_matrix_imm,
         "getTransformationMatrix",
         VSTransformMatrix
     );
-    imm_getter!(get_joints, get_joints_imm, "getJoints", Vec<VSJoint>);
+    book_read_imm!(book_next_get_joints, read_last_get_joints, get_joints_imm, "getJoints", Vec<VSJoint>);
 
-    /// ローカル座標をワールド座標に変換する (imm 対応)。
-    pub async fn transform_position_to_world(
-        &self,
-        pos: VSVector3,
-    ) -> Result<VSVector3, PeripheralError> {
+    /// ローカル座標をワールド座標に変換する (book/read)。
+    pub fn book_next_transform_position_to_world(&mut self, pos: VSVector3) {
         let args = msgpack::array(&[
             msgpack::float64(pos.x),
             msgpack::float64(pos.y),
             msgpack::float64(pos.z),
         ]);
-        let data = peripheral::request_info(self.addr, "transformPositionToWorld", &args).await?;
+        peripheral::book_request(self.addr, "transformPositionToWorld", &args);
+    }
+
+    pub fn read_last_transform_position_to_world(&self) -> Result<VSVector3, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "transformPositionToWorld")?;
         peripheral::decode(&data)
     }
 
+    /// ローカル座標をワールド座標に変換する (imm)。
     pub fn transform_position_to_world_imm(
         &self,
         pos: VSVector3,
@@ -195,43 +205,60 @@ impl Ship {
     // ====== 状態変更系 (allow_op) ======
 
     /// スラグ名を設定する。
-    pub async fn set_slug(&self, name: &str) -> Result<(), PeripheralError> {
+    pub fn book_next_set_slug(&mut self, name: &str) {
         let args = msgpack::array(&[msgpack::str(name)]);
-        peripheral::do_action(self.addr, "setSlug", &args).await?;
+        peripheral::book_action(self.addr, "setSlug", &args);
+    }
+
+    pub fn read_last_set_slug(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setSlug")?;
         Ok(())
     }
 
     /// 静的状態を設定する。
-    pub async fn set_static(&self, is_static: bool) -> Result<(), PeripheralError> {
+    pub fn book_next_set_static(&mut self, is_static: bool) {
         let args = msgpack::array(&[msgpack::bool_val(is_static)]);
-        peripheral::do_action(self.addr, "setStatic", &args).await?;
+        peripheral::book_action(self.addr, "setStatic", &args);
+    }
+
+    pub fn read_last_set_static(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setStatic")?;
         Ok(())
     }
 
     /// スケールを設定する。
-    pub async fn set_scale_value(&self, scale: f64) -> Result<(), PeripheralError> {
+    pub fn book_next_set_scale_value(&mut self, scale: f64) {
         let args = msgpack::array(&[msgpack::float64(scale)]);
-        peripheral::do_action(self.addr, "setScale", &args).await?;
+        peripheral::book_action(self.addr, "setScale", &args);
+    }
+
+    pub fn read_last_set_scale_value(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setScale")?;
         Ok(())
     }
 
     /// テレポートする。
-    pub async fn teleport(&self, data: &VSTeleportData) -> Result<(), PeripheralError> {
+    pub fn book_next_teleport(&mut self, data: &VSTeleportData) -> Result<(), PeripheralError> {
         let args = peripheral::encode(data)?;
-        peripheral::do_action(self.addr, "teleport", &args).await?;
+        peripheral::book_action(self.addr, "teleport", &args);
+        Ok(())
+    }
+
+    pub fn read_last_teleport(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "teleport")?;
         Ok(())
     }
 
     // ====== 力の印加系 (allow_op) ======
 
     /// ワールド座標系で力を印加する。
-    pub async fn apply_world_force(
-        &self,
+    pub fn book_next_apply_world_force(
+        &mut self,
         fx: f64,
         fy: f64,
         fz: f64,
         pos: Option<VSVector3>,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let mut args = alloc::vec![
             msgpack::float64(fx),
             msgpack::float64(fy),
@@ -242,34 +269,42 @@ impl Ship {
             args.push(msgpack::float64(p.y));
             args.push(msgpack::float64(p.z));
         }
-        peripheral::do_action(self.addr, "applyWorldForce", &msgpack::array(&args)).await?;
+        peripheral::book_action(self.addr, "applyWorldForce", &msgpack::array(&args));
+    }
+
+    pub fn read_last_apply_world_force(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "applyWorldForce")?;
         Ok(())
     }
 
     /// ワールド座標系でトルクを印加する。
-    pub async fn apply_world_torque(
-        &self,
+    pub fn book_next_apply_world_torque(
+        &mut self,
         tx: f64,
         ty: f64,
         tz: f64,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let args = msgpack::array(&[
             msgpack::float64(tx),
             msgpack::float64(ty),
             msgpack::float64(tz),
         ]);
-        peripheral::do_action(self.addr, "applyWorldTorque", &args).await?;
+        peripheral::book_action(self.addr, "applyWorldTorque", &args);
+    }
+
+    pub fn read_last_apply_world_torque(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "applyWorldTorque")?;
         Ok(())
     }
 
     /// モデル座標系で力を印加する。
-    pub async fn apply_model_force(
-        &self,
+    pub fn book_next_apply_model_force(
+        &mut self,
         fx: f64,
         fy: f64,
         fz: f64,
         pos: Option<VSVector3>,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let mut args = alloc::vec![
             msgpack::float64(fx),
             msgpack::float64(fy),
@@ -280,36 +315,44 @@ impl Ship {
             args.push(msgpack::float64(p.y));
             args.push(msgpack::float64(p.z));
         }
-        peripheral::do_action(self.addr, "applyModelForce", &msgpack::array(&args)).await?;
+        peripheral::book_action(self.addr, "applyModelForce", &msgpack::array(&args));
+    }
+
+    pub fn read_last_apply_model_force(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "applyModelForce")?;
         Ok(())
     }
 
     /// モデル座標系でトルクを印加する。
-    pub async fn apply_model_torque(
-        &self,
+    pub fn book_next_apply_model_torque(
+        &mut self,
         tx: f64,
         ty: f64,
         tz: f64,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let args = msgpack::array(&[
             msgpack::float64(tx),
             msgpack::float64(ty),
             msgpack::float64(tz),
         ]);
-        peripheral::do_action(self.addr, "applyModelTorque", &args).await?;
+        peripheral::book_action(self.addr, "applyModelTorque", &args);
+    }
+
+    pub fn read_last_apply_model_torque(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "applyModelTorque")?;
         Ok(())
     }
 
     /// ワールド力をモデル座標系位置に対して印加する。
-    pub async fn apply_world_force_to_model_pos(
-        &self,
+    pub fn book_next_apply_world_force_to_model_pos(
+        &mut self,
         fx: f64,
         fy: f64,
         fz: f64,
         px: f64,
         py: f64,
         pz: f64,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let args = msgpack::array(&[
             msgpack::float64(fx),
             msgpack::float64(fy),
@@ -318,18 +361,22 @@ impl Ship {
             msgpack::float64(py),
             msgpack::float64(pz),
         ]);
-        peripheral::do_action(self.addr, "applyWorldForceToModelPos", &args).await?;
+        peripheral::book_action(self.addr, "applyWorldForceToModelPos", &args);
+    }
+
+    pub fn read_last_apply_world_force_to_model_pos(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "applyWorldForceToModelPos")?;
         Ok(())
     }
 
     /// ボディ座標系で力を印加する。
-    pub async fn apply_body_force(
-        &self,
+    pub fn book_next_apply_body_force(
+        &mut self,
         fx: f64,
         fy: f64,
         fz: f64,
         pos: Option<VSVector3>,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let mut args = alloc::vec![
             msgpack::float64(fx),
             msgpack::float64(fy),
@@ -340,36 +387,44 @@ impl Ship {
             args.push(msgpack::float64(p.y));
             args.push(msgpack::float64(p.z));
         }
-        peripheral::do_action(self.addr, "applyBodyForce", &msgpack::array(&args)).await?;
+        peripheral::book_action(self.addr, "applyBodyForce", &msgpack::array(&args));
+    }
+
+    pub fn read_last_apply_body_force(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "applyBodyForce")?;
         Ok(())
     }
 
     /// ボディ座標系でトルクを印加する。
-    pub async fn apply_body_torque(
-        &self,
+    pub fn book_next_apply_body_torque(
+        &mut self,
         tx: f64,
         ty: f64,
         tz: f64,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let args = msgpack::array(&[
             msgpack::float64(tx),
             msgpack::float64(ty),
             msgpack::float64(tz),
         ]);
-        peripheral::do_action(self.addr, "applyBodyTorque", &args).await?;
+        peripheral::book_action(self.addr, "applyBodyTorque", &args);
+    }
+
+    pub fn read_last_apply_body_torque(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "applyBodyTorque")?;
         Ok(())
     }
 
     /// ワールド力をボディ座標系位置に対して印加する。
-    pub async fn apply_world_force_to_body_pos(
-        &self,
+    pub fn book_next_apply_world_force_to_body_pos(
+        &mut self,
         fx: f64,
         fy: f64,
         fz: f64,
         px: f64,
         py: f64,
         pz: f64,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let args = msgpack::array(&[
             msgpack::float64(fx),
             msgpack::float64(fy),
@@ -378,30 +433,45 @@ impl Ship {
             msgpack::float64(py),
             msgpack::float64(pz),
         ]);
-        peripheral::do_action(self.addr, "applyWorldForceToBodyPos", &args).await?;
+        peripheral::book_action(self.addr, "applyWorldForceToBodyPos", &args);
+    }
+
+    pub fn read_last_apply_world_force_to_body_pos(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "applyWorldForceToBodyPos")?;
         Ok(())
     }
 
     // ====== イベント系 ======
 
-    /// 1tick 待機して物理ティックイベントを受信する。
-    pub async fn try_pull_physics_ticks(
-        &self,
-    ) -> Result<Option<VSPhysicsTickData>, PeripheralError> {
-        let data = peripheral::request_info(
+    /// 1tick 待機して物理ティックイベントを受信する (book/read)。
+    pub fn book_next_try_pull_physics_ticks(&mut self) {
+        peripheral::book_request(
             self.addr,
             "try_pull_physics_ticks",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_try_pull_physics_ticks(
+        &self,
+    ) -> Result<Option<VSPhysicsTickData>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "try_pull_physics_ticks")?;
         peripheral::decode(&data)
     }
 
     /// 物理ティックイベントを受信するまで待機する。
     pub async fn pull_physics_ticks(&self) -> Result<VSPhysicsTickData, PeripheralError> {
         loop {
-            if let Some(data) = self.try_pull_physics_ticks().await? {
-                return Ok(data);
+            peripheral::book_request(
+                self.addr,
+                "try_pull_physics_ticks",
+                &crate::msgpack::array(&[]),
+            );
+            crate::wait_for_next_tick().await;
+            let data = peripheral::read_result(self.addr, "try_pull_physics_ticks")?;
+            let result: Option<VSPhysicsTickData> = peripheral::decode(&data)?;
+            if let Some(val) = result {
+                return Ok(val);
             }
         }
     }

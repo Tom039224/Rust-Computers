@@ -26,15 +26,14 @@ impl Peripheral for GoggleLinkPort {
 
 impl GoggleLinkPort {
     /// 接続中の Goggles 一覧を取得する。
-    pub async fn get_connected(
+    pub fn book_next_get_connected(&mut self) {
+        peripheral::book_request(self.addr, "getConnected", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_get_connected(
         &self,
     ) -> Result<BTreeMap<String, crate::msgpack::Value>, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getConnected",
-            &msgpack::array(&[]),
-        )
-        .await?;
+        let data = peripheral::read_result(self.addr, "getConnected")?;
         peripheral::decode(&data)
     }
 }

@@ -350,6 +350,61 @@ public final class MsgPack {
         return pos;
     }
 
+    /**
+     * msgpack 配列の最初の要素を文字列としてデコードする。
+     * Decode the first element of a msgpack array as a string.
+     *
+     * <p>{@code wrap_imm} の {@code hasType} 引数（型名文字列）のデコードに使用する。</p>
+     * <p>Used to decode the {@code hasType} argument (type name string) from {@code wrap_imm}.</p>
+     *
+     * @param data msgpack エンコード済み引数配列 / msgpack-encoded argument array
+     * @return デコードされた文字列 / decoded string
+     * @throws IllegalArgumentException 引数が不正な場合 / if the argument is invalid
+     */
+    public static String decodeFirstString(byte[] data) {
+        int offset = argOffset(data, 0);
+        if (offset < 0 || offset >= data.length) {
+            throw new IllegalArgumentException("Cannot decode first string: no element at index 0");
+        }
+        return decodeStr(data, offset);
+    }
+
+    /**
+     * バイト列の指定位置から msgpack 文字列をデコードする。
+     * Decode a msgpack string from the specified position in bytes.
+     *
+     * @param data   入力バイト列 / input bytes
+     * @param offset 読み取り開始位置 / read start offset
+     * @return デコードされた文字列 / decoded string
+     * @throws IllegalArgumentException 文字列フォーマットが不正な場合 / if not a valid string format
+     */
+    public static String decodeStr(byte[] data, int offset) {
+        if (data == null || offset >= data.length) {
+            throw new IllegalArgumentException("Cannot decode string: insufficient data");
+        }
+        int b = data[offset] & 0xFF;
+        int len;
+        int start;
+        if ((b & 0xE0) == 0xA0) {           // fixstr (0xa0–0xbf)
+            len = b & 0x1F;
+            start = offset + 1;
+        } else if (b == 0xD9) {              // str 8
+            if (offset + 1 >= data.length) throw new IllegalArgumentException("str8 truncated");
+            len = data[offset + 1] & 0xFF;
+            start = offset + 2;
+        } else if (b == 0xDA) {              // str 16
+            if (offset + 2 >= data.length) throw new IllegalArgumentException("str16 truncated");
+            len = ((data[offset + 1] & 0xFF) << 8) | (data[offset + 2] & 0xFF);
+            start = offset + 3;
+        } else {
+            throw new IllegalArgumentException("Not a msgpack string at offset " + offset + " (byte 0x" + Integer.toHexString(b) + ")");
+        }
+        if (start + len > data.length) {
+            throw new IllegalArgumentException("String data truncated");
+        }
+        return new String(data, start, len, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
     // ------------------------------------------------------------------
     // Private helpers
     // ------------------------------------------------------------------

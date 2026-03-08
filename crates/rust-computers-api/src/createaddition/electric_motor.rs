@@ -25,13 +25,11 @@ impl Peripheral for ElectricMotor {
 
 impl ElectricMotor {
     /// ペリフェラルタイプを取得する (imm 対応)。
-    pub async fn get_type(&self) -> Result<String, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getType",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_type(&mut self) {
+        peripheral::book_request(self.addr, "getType", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_type(&self) -> Result<String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getType")?;
         peripheral::decode(&data)
     }
 
@@ -45,100 +43,92 @@ impl ElectricMotor {
     }
 
     /// RPM を設定する (符号で方向制御)。
-    pub async fn set_speed(&self, speed: f64) -> Result<(), PeripheralError> {
+    pub fn book_next_set_speed(&mut self, speed: f64) {
         let args = msgpack::array(&[msgpack::float64(speed)]);
-        peripheral::do_action(self.addr, "setSpeed", &args).await?;
+        peripheral::book_action(self.addr, "setSpeed", &args);
+    }
+    pub fn read_last_set_speed(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setSpeed")?;
         Ok(())
     }
 
     /// 停止する。
-    pub async fn stop(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "stop", &msgpack::array(&[])).await?;
+    pub fn book_next_stop(&mut self) {
+        peripheral::book_action(self.addr, "stop", &msgpack::array(&[]));
+    }
+    pub fn read_last_stop(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "stop")?;
         Ok(())
     }
 
     /// 現在の速度を取得する。
-    pub async fn get_speed(&self) -> Result<f64, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getSpeed",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_speed(&mut self) {
+        peripheral::book_request(self.addr, "getSpeed", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_speed(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getSpeed")?;
         peripheral::decode(&data)
     }
 
     /// ストレス容量を取得する。
-    pub async fn get_stress_capacity(&self) -> Result<f64, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getStressCapacity",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_stress_capacity(&mut self) {
+        peripheral::book_request(self.addr, "getStressCapacity", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_stress_capacity(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getStressCapacity")?;
         peripheral::decode(&data)
     }
 
     /// エネルギー消費量を取得する。
-    pub async fn get_energy_consumption(&self) -> Result<f64, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getEnergyConsumption",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_energy_consumption(&mut self) {
+        peripheral::book_request(self.addr, "getEnergyConsumption", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_energy_consumption(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getEnergyConsumption")?;
         peripheral::decode(&data)
     }
 
     /// 指定角度回転する。所要秒数を返す。
-    pub async fn rotate(
-        &self,
-        degrees: f64,
-        rpm: Option<f64>,
-    ) -> Result<f64, PeripheralError> {
+    pub fn book_next_rotate(&mut self, degrees: f64, rpm: Option<f64>) {
         let mut args = alloc::vec![msgpack::float64(degrees)];
         if let Some(r) = rpm {
             args.push(msgpack::float64(r));
         }
-        let data =
-            peripheral::do_action(self.addr, "rotate", &msgpack::array(&args)).await?;
+        peripheral::book_action(self.addr, "rotate", &msgpack::array(&args));
+    }
+    pub fn read_last_rotate(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "rotate")?;
         peripheral::decode(&data)
     }
 
     /// 指定距離移動する。所要秒数を返す。
-    pub async fn translate(
-        &self,
-        distance: f64,
-        rpm: Option<f64>,
-    ) -> Result<f64, PeripheralError> {
+    pub fn book_next_translate(&mut self, distance: f64, rpm: Option<f64>) {
         let mut args = alloc::vec![msgpack::float64(distance)];
         if let Some(r) = rpm {
             args.push(msgpack::float64(r));
         }
-        let data =
-            peripheral::do_action(self.addr, "translate", &msgpack::array(&args)).await?;
+        peripheral::book_action(self.addr, "translate", &msgpack::array(&args));
+    }
+    pub fn read_last_translate(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "translate")?;
         peripheral::decode(&data)
     }
 
     /// 最大挿入エネルギーを取得する。
-    pub async fn get_max_insert(&self) -> Result<f64, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getMaxInsert",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_max_insert(&mut self) {
+        peripheral::book_request(self.addr, "getMaxInsert", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_max_insert(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getMaxInsert")?;
         peripheral::decode(&data)
     }
 
     /// 最大抽出エネルギーを取得する。
-    pub async fn get_max_extract(&self) -> Result<f64, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getMaxExtract",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_max_extract(&mut self) {
+        peripheral::book_request(self.addr, "getMaxExtract", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_max_extract(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getMaxExtract")?;
         peripheral::decode(&data)
     }
 }

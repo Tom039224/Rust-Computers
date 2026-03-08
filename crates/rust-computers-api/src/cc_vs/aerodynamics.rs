@@ -53,18 +53,21 @@ impl Aerodynamics {
     imm_only!(universal_gas_constant_imm, "universalGasConstant", f64);
     imm_only!(air_molar_mass_imm, "airMolarMass", f64);
 
-    // ====== 関数メソッド (imm 対応) ======
+    // ====== 関数メソッド (book/read + imm 対応) ======
 
-    /// 大気パラメータを取得する (imm)。
-    pub async fn get_atmospheric_parameters(
-        &self,
-    ) -> Result<Option<VSAtmosphericParameters>, PeripheralError> {
-        let data = peripheral::request_info(
+    /// 大気パラメータを取得する (book/read)。
+    pub fn book_next_get_atmospheric_parameters(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getAtmosphericParameters",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_atmospheric_parameters(
+        &self,
+    ) -> Result<Option<VSAtmosphericParameters>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getAtmosphericParameters")?;
         peripheral::decode(&data)
     }
 
@@ -79,17 +82,17 @@ impl Aerodynamics {
         peripheral::decode(&data)
     }
 
-    /// 指定 Y 座標の空気密度 (imm)。
-    pub async fn get_air_density(
-        &self,
-        y: Option<f64>,
-    ) -> Result<Option<f64>, PeripheralError> {
+    /// 指定 Y 座標の空気密度 (book/read)。
+    pub fn book_next_get_air_density(&mut self, y: Option<f64>) {
         let args = match y {
             Some(v) => msgpack::array(&[msgpack::float64(v)]),
             None => msgpack::array(&[]),
         };
-        let data =
-            peripheral::request_info(self.addr, "getAirDensity", &args).await?;
+        peripheral::book_request(self.addr, "getAirDensity", &args);
+    }
+
+    pub fn read_last_get_air_density(&self) -> Result<Option<f64>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getAirDensity")?;
         peripheral::decode(&data)
     }
 
@@ -102,17 +105,17 @@ impl Aerodynamics {
         peripheral::decode(&data)
     }
 
-    /// 指定 Y 座標の大気圧 (imm)。
-    pub async fn get_air_pressure(
-        &self,
-        y: Option<f64>,
-    ) -> Result<Option<f64>, PeripheralError> {
+    /// 指定 Y 座標の大気圧 (book/read)。
+    pub fn book_next_get_air_pressure(&mut self, y: Option<f64>) {
         let args = match y {
             Some(v) => msgpack::array(&[msgpack::float64(v)]),
             None => msgpack::array(&[]),
         };
-        let data =
-            peripheral::request_info(self.addr, "getAirPressure", &args).await?;
+        peripheral::book_request(self.addr, "getAirPressure", &args);
+    }
+
+    pub fn read_last_get_air_pressure(&self) -> Result<Option<f64>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getAirPressure")?;
         peripheral::decode(&data)
     }
 
@@ -125,17 +128,17 @@ impl Aerodynamics {
         peripheral::decode(&data)
     }
 
-    /// 指定 Y 座標の気温 (imm)。
-    pub async fn get_air_temperature(
-        &self,
-        y: Option<f64>,
-    ) -> Result<Option<f64>, PeripheralError> {
+    /// 指定 Y 座標の気温 (book/read)。
+    pub fn book_next_get_air_temperature(&mut self, y: Option<f64>) {
         let args = match y {
             Some(v) => msgpack::array(&[msgpack::float64(v)]),
             None => msgpack::array(&[]),
         };
-        let data =
-            peripheral::request_info(self.addr, "getAirTemperature", &args).await?;
+        peripheral::book_request(self.addr, "getAirTemperature", &args);
+    }
+
+    pub fn read_last_get_air_temperature(&self) -> Result<Option<f64>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getAirTemperature")?;
         peripheral::decode(&data)
     }
 

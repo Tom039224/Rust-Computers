@@ -60,15 +60,15 @@ impl Peripheral for Raycaster {
 impl Raycaster {
     /// レイキャストを実行する。
     #[allow(clippy::too_many_arguments)]
-    pub async fn raycast(
-        &self,
+    pub fn book_next_raycast(
+        &mut self,
         distance: f64,
         variables: Option<(f64, f64, Option<f64>)>,
         euler_mode: Option<bool>,
         im_execute: Option<bool>,
         check_for_blocks: Option<bool>,
         only_distance: Option<bool>,
-    ) -> Result<SPRaycastResult, PeripheralError> {
+    ) {
         let mut args = alloc::vec![msgpack::float64(distance)];
         if let Some((a, b, c)) = variables {
             args.push(msgpack::float64(a));
@@ -81,26 +81,32 @@ impl Raycaster {
             check_for_blocks.map_or_else(|| msgpack::nil(), |v| msgpack::bool_val(v)),
         );
         args.push(only_distance.map_or_else(|| msgpack::nil(), |v| msgpack::bool_val(v)));
-        let data =
-            peripheral::request_info(self.addr, "raycast", &msgpack::array(&args)).await?;
+        peripheral::book_request(self.addr, "raycast", &msgpack::array(&args));
+    }
+
+    pub fn read_last_raycast(&self) -> Result<SPRaycastResult, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "raycast")?;
         peripheral::decode(&data)
     }
 
     /// ステッカーの powered 状態を設定する。
-    pub async fn add_stickers(&self, state: bool) -> Result<(), PeripheralError> {
+    pub fn book_next_add_stickers(&mut self, state: bool) {
         let args = msgpack::array(&[msgpack::bool_val(state)]);
-        peripheral::do_action(self.addr, "addStickers", &args).await?;
+        peripheral::book_action(self.addr, "addStickers", &args);
+    }
+
+    pub fn read_last_add_stickers(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "addStickers")?;
         Ok(())
     }
 
     /// 設定情報を取得する (imm 対応)。
-    pub async fn get_config_info(&self) -> Result<BTreeMap<String, String>, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getConfigInfo",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_config_info(&mut self) {
+        peripheral::book_request(self.addr, "getConfigInfo", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_get_config_info(&self) -> Result<BTreeMap<String, String>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getConfigInfo")?;
         peripheral::decode(&data)
     }
 
@@ -114,13 +120,12 @@ impl Raycaster {
     }
 
     /// ブロックの向きを取得する (imm 対応)。
-    pub async fn get_facing_direction(&self) -> Result<String, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getFacingDirection",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_facing_direction(&mut self) {
+        peripheral::book_request(self.addr, "getFacingDirection", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_get_facing_direction(&self) -> Result<String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getFacingDirection")?;
         peripheral::decode(&data)
     }
 

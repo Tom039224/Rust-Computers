@@ -44,20 +44,18 @@ impl WorldScanner {
     /// * `y` - Y 座標
     /// * `z` - Z 座標
     /// * `is_shipyard` - Valkyrien Skies の shipyard 座標かどうか
-    pub async fn get_block_at(
-        &self,
-        x: i32,
-        y: i32,
-        z: i32,
-        is_shipyard: bool,
-    ) -> Result<SPBlockInfo, PeripheralError> {
+    pub fn book_next_get_block_at(&mut self, x: i32, y: i32, z: i32, is_shipyard: bool) {
         let args = msgpack::array(&[
             msgpack::int(x),
             msgpack::int(y),
             msgpack::int(z),
             msgpack::bool_val(is_shipyard),
         ]);
-        let data = peripheral::request_info(self.addr, "getBlockAt", &args).await?;
+        peripheral::book_request(self.addr, "getBlockAt", &args);
+    }
+
+    pub fn read_last_get_block_at(&self) -> Result<SPBlockInfo, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getBlockAt")?;
         peripheral::decode(&data)
     }
 }

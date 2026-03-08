@@ -216,7 +216,7 @@ public class CcMonitorPeripheral implements PeripheralType {
 
     @Override
     public String getTypeName() {
-        return "cc_monitor";
+        return "monitor";
     }
 
     @Override

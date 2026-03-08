@@ -58,15 +58,15 @@ impl Peripheral for BallisticAccelerator {
 
 impl BallisticAccelerator {
     /// 飛行時間を計算する (imm 対応)。
-    pub async fn time_in_air(
-        &self,
+    pub fn book_next_time_in_air(
+        &mut self,
         y_proj: f64,
         y_tgt: f64,
         y_vel: f64,
         gravity: Option<f64>,
         drag: Option<f64>,
         max_steps: Option<u32>,
-    ) -> Result<SPTimeResult, PeripheralError> {
+    ) {
         let mut args = alloc::vec![
             msgpack::float64(y_proj),
             msgpack::float64(y_tgt),
@@ -75,8 +75,11 @@ impl BallisticAccelerator {
         args.push(gravity.map_or_else(|| msgpack::nil(), |v| msgpack::float64(v)));
         args.push(drag.map_or_else(|| msgpack::nil(), |v| msgpack::float64(v)));
         args.push(max_steps.map_or_else(|| msgpack::nil(), |v| msgpack::int(v as i32)));
-        let data =
-            peripheral::request_info(self.addr, "timeInAir", &msgpack::array(&args)).await?;
+        peripheral::book_request(self.addr, "timeInAir", &msgpack::array(&args));
+    }
+
+    pub fn read_last_time_in_air(&self) -> Result<SPTimeResult, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "timeInAir")?;
         peripheral::decode(&data)
     }
 
@@ -103,8 +106,8 @@ impl BallisticAccelerator {
     }
 
     /// ピッチを試行する (imm 対応)。
-    pub async fn try_pitch(
-        &self,
+    pub fn book_next_try_pitch(
+        &mut self,
         pitch: f64,
         speed: f64,
         length: f64,
@@ -114,12 +117,15 @@ impl BallisticAccelerator {
         gravity: Option<f64>,
         drag: Option<f64>,
         max_steps: Option<u32>,
-    ) -> Result<(f64, f64, f64), PeripheralError> {
+    ) {
         let args = self.build_try_pitch_args(
             pitch, speed, length, dist, cannon, target, gravity, drag, max_steps,
         );
-        let data =
-            peripheral::request_info(self.addr, "tryPitch", &msgpack::array(&args)).await?;
+        peripheral::book_request(self.addr, "tryPitch", &msgpack::array(&args));
+    }
+
+    pub fn read_last_try_pitch(&self) -> Result<(f64, f64, f64), PeripheralError> {
+        let data = peripheral::read_result(self.addr, "tryPitch")?;
         peripheral::decode(&data)
     }
 
@@ -173,8 +179,8 @@ impl BallisticAccelerator {
 
     /// ピッチ角を計算する (imm 対応)。
     #[allow(clippy::too_many_arguments)]
-    pub async fn calculate_pitch(
-        &self,
+    pub fn book_next_calculate_pitch(
+        &mut self,
         cannon: SPCoordinate,
         target: SPCoordinate,
         speed: f64,
@@ -188,7 +194,7 @@ impl BallisticAccelerator {
         num_iterations: Option<u32>,
         num_elements: Option<u32>,
         check_impossible: Option<bool>,
-    ) -> Result<SPPitchResult, PeripheralError> {
+    ) {
         let args = self.build_calc_pitch_args(
             cannon,
             target,
@@ -204,8 +210,11 @@ impl BallisticAccelerator {
             num_elements,
             check_impossible,
         );
-        let data = peripheral::request_info(self.addr, "calculatePitch", &msgpack::array(&args))
-            .await?;
+        peripheral::book_request(self.addr, "calculatePitch", &msgpack::array(&args));
+    }
+
+    pub fn read_last_calculate_pitch(&self) -> Result<SPPitchResult, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "calculatePitch")?;
         peripheral::decode(&data)
     }
 
@@ -290,8 +299,8 @@ impl BallisticAccelerator {
 
     /// バッチでピッチ角を計算する。
     #[allow(clippy::too_many_arguments)]
-    pub async fn batch_calculate_pitches(
-        &self,
+    pub fn book_next_batch_calculate_pitches(
+        &mut self,
         cannon: SPCoordinate,
         targets: &[SPCoordinate],
         speed: f64,
@@ -305,7 +314,7 @@ impl BallisticAccelerator {
         num_iterations: Option<u32>,
         num_elements: Option<u32>,
         check_impossible: Option<bool>,
-    ) -> Result<Vec<SPPitchResult>, PeripheralError> {
+    ) {
         let cannon_encoded = peripheral::encode(&cannon).unwrap_or_default();
         let targets_encoded = peripheral::encode(&targets).unwrap_or_default();
         let mut args = alloc::vec![
@@ -325,26 +334,33 @@ impl BallisticAccelerator {
         args.push(
             check_impossible.map_or_else(|| msgpack::nil(), |v| msgpack::bool_val(v)),
         );
-        let data = peripheral::request_info(
+        peripheral::book_request(
             self.addr,
             "batchCalculatePitches",
             &msgpack::array(&args),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_batch_calculate_pitches(&self) -> Result<Vec<SPPitchResult>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "batchCalculatePitches")?;
         peripheral::decode(&data)
     }
 
     /// ドラッグ係数を取得する (imm 対応)。
-    pub async fn get_drag(
-        &self,
+    pub fn book_next_get_drag(
+        &mut self,
         base_drag: f64,
         dim_drag_multiplier: f64,
-    ) -> Result<f64, PeripheralError> {
+    ) {
         let args = msgpack::array(&[
             msgpack::float64(base_drag),
             msgpack::float64(dim_drag_multiplier),
         ]);
-        let data = peripheral::request_info(self.addr, "getDrag", &args).await?;
+        peripheral::book_request(self.addr, "getDrag", &args);
+    }
+
+    pub fn read_last_get_drag(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getDrag")?;
         peripheral::decode(&data)
     }
 
