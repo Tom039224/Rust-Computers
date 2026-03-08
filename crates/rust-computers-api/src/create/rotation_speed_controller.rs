@@ -24,20 +24,27 @@ impl Peripheral for RotationSpeedController {
 
 impl RotationSpeedController {
     /// ターゲット速度を設定する。
-    pub async fn set_target_speed(&self, speed: i32) -> Result<(), PeripheralError> {
+    pub fn book_next_set_target_speed(&mut self, speed: i32) {
         let args = msgpack::array(&[msgpack::int(speed)]);
-        peripheral::do_action(self.addr, "setTargetSpeed", &args).await?;
+        peripheral::book_action(self.addr, "setTargetSpeed", &args);
+    }
+
+    pub fn read_last_set_target_speed(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setTargetSpeed")?;
         Ok(())
     }
 
     /// 現在のターゲット速度を取得する。
-    pub async fn get_target_speed(&self) -> Result<f32, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_target_speed(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getTargetSpeed",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_target_speed(&self) -> Result<f32, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getTargetSpeed")?;
         peripheral::decode(&data)
     }
 

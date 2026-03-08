@@ -87,6 +87,9 @@ pub enum PeripheralError {
     DecodeFailed,
     /// 予期しないエラー (メッセージ付き) / Unexpected error (with message)
     Unexpected(alloc::string::String),
+    /// `book_next_*` が呼ばれていない状態で `read_last_*` を呼んだ。
+    /// `read_last_*` was called without a prior `book_next_*` call.
+    NotRequested,
 }
 
 impl From<BridgeError> for PeripheralError {
@@ -108,6 +111,7 @@ impl fmt::Display for PeripheralError {
             Self::NotFound       => write!(f, "peripheral not found"),
             Self::DecodeFailed   => write!(f, "response decode failed"),
             Self::Unexpected(s)  => write!(f, "unexpected error: {}", s),
+            Self::NotRequested   => write!(f, "read_last called without prior book_next"),
         }
     }
 }

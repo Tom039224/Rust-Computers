@@ -24,13 +24,16 @@ impl Peripheral for Speedometer {
 
 impl Speedometer {
     /// 現在の回転速度を取得する。
-    pub async fn get_speed(&self) -> Result<f32, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_speed(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getSpeed",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_speed(&self) -> Result<f32, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getSpeed")?;
         peripheral::decode(&data)
     }
 
@@ -45,20 +48,27 @@ impl Speedometer {
     }
 
     /// 速度変化イベントを 1tick 待機して取得する。来なければ None。
-    pub async fn try_pull_speed_change(&self) -> Result<Option<f32>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_try_pull_speed_change(&mut self) {
+        peripheral::book_request(
             self.addr,
             "try_pull_speed_change",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_try_pull_speed_change(&self) -> Result<Option<f32>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "try_pull_speed_change")?;
         peripheral::decode(&data)
     }
 
     /// 速度変化イベントを受信するまで待機する。
     pub async fn pull_speed_change(&self) -> Result<f32, PeripheralError> {
         loop {
-            if let Some(v) = self.try_pull_speed_change().await? {
+            peripheral::book_request(self.addr, "try_pull_speed_change", &msgpack::array(&[]));
+            crate::wait_for_next_tick().await;
+            let data = peripheral::read_result(self.addr, "try_pull_speed_change")?;
+            let result: Option<f32> = peripheral::decode(&data)?;
+            if let Some(v) = result {
                 return Ok(v);
             }
         }

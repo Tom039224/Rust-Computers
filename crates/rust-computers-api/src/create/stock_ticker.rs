@@ -28,58 +28,69 @@ impl Peripheral for StockTicker {
 
 impl StockTicker {
     /// 在庫情報を取得する。
-    pub async fn stock(&self) -> Result<Vec<CRSlotInfo>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_stock(&mut self) {
+        peripheral::book_request(
             self.addr,
             "stock",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_stock(&self) -> Result<Vec<CRSlotInfo>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "stock")?;
         peripheral::decode(&data)
     }
 
     /// 在庫アイテムの詳細情報を取得する。
-    pub async fn get_stock_item_detail(
-        &self,
-        slot: u32,
-    ) -> Result<Option<CRItemDetail>, PeripheralError> {
+    pub fn book_next_get_stock_item_detail(&mut self, slot: u32) {
         let args = msgpack::array(&[msgpack::int(slot as i32)]);
-        let data =
-            peripheral::request_info(self.addr, "getStockItemDetail", &args).await?;
+        peripheral::book_request(self.addr, "getStockItemDetail", &args);
+    }
+
+    pub fn read_last_get_stock_item_detail(&self) -> Result<Option<CRItemDetail>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getStockItemDetail")?;
         peripheral::decode(&data)
     }
 
     /// フィルタ付きリクエストを送信する。
-    pub async fn request_filtered(
-        &self,
+    pub fn book_next_request_filtered(
+        &mut self,
         filters: &[CRItemFilter],
     ) -> Result<(), PeripheralError> {
         let filters_vec: Vec<_> = filters.iter().cloned().collect();
         let encoded = peripheral::encode(&filters_vec)?;
         let args = msgpack::array(&[encoded]);
-        peripheral::do_action(self.addr, "requestFiltered", &args).await?;
+        peripheral::book_action(self.addr, "requestFiltered", &args);
+        Ok(())
+    }
+
+    pub fn read_last_request_filtered(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "requestFiltered")?;
         Ok(())
     }
 
     /// インベントリ内のスロット一覧を取得する。
-    pub async fn list(&self) -> Result<Vec<CRSlotInfo>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_list(&mut self) {
+        peripheral::book_request(
             self.addr,
             "list",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_list(&self) -> Result<Vec<CRSlotInfo>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "list")?;
         peripheral::decode(&data)
     }
 
     /// 指定スロットのアイテム詳細を取得する。
-    pub async fn get_item_detail(
-        &self,
-        slot: u32,
-    ) -> Result<Option<CRItemDetail>, PeripheralError> {
+    pub fn book_next_get_item_detail(&mut self, slot: u32) {
         let args = msgpack::array(&[msgpack::int(slot as i32)]);
-        let data =
-            peripheral::request_info(self.addr, "getItemDetail", &args).await?;
+        peripheral::book_request(self.addr, "getItemDetail", &args);
+    }
+
+    pub fn read_last_get_item_detail(&self) -> Result<Option<CRItemDetail>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getItemDetail")?;
         peripheral::decode(&data)
     }
 }

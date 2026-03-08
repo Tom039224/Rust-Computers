@@ -24,20 +24,27 @@ impl Peripheral for DisplayLink {
 
 impl DisplayLink {
     /// カーソル位置を設定する。
-    pub async fn set_cursor_pos(&self, x: u32, y: u32) -> Result<(), PeripheralError> {
+    pub fn book_next_set_cursor_pos(&mut self, x: u32, y: u32) {
         let args = msgpack::array(&[msgpack::int(x as i32), msgpack::int(y as i32)]);
-        peripheral::do_action(self.addr, "setCursorPos", &args).await?;
+        peripheral::book_action(self.addr, "setCursorPos", &args);
+    }
+
+    pub fn read_last_set_cursor_pos(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setCursorPos")?;
         Ok(())
     }
 
     /// カーソル位置を取得する。
-    pub async fn get_cursor_pos(&self) -> Result<(u32, u32), PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_cursor_pos(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getCursorPos",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_cursor_pos(&self) -> Result<(u32, u32), PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getCursorPos")?;
         peripheral::decode(&data)
     }
 
@@ -52,24 +59,30 @@ impl DisplayLink {
     }
 
     /// ディスプレイのサイズを取得する (mainThread=true のため imm 非対応)。
-    pub async fn get_size(&self) -> Result<(u32, u32), PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_size(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getSize",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_size(&self) -> Result<(u32, u32), PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getSize")?;
         peripheral::decode(&data)
     }
 
     /// カラー対応かどうかを取得する。
-    pub async fn is_color(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_is_color(&mut self) {
+        peripheral::book_request(
             self.addr,
             "isColour",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_is_color(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isColour")?;
         peripheral::decode(&data)
     }
 
@@ -84,35 +97,56 @@ impl DisplayLink {
     }
 
     /// テキストを書き込む。
-    pub async fn write(&self, text: &str) -> Result<(), PeripheralError> {
+    pub fn book_next_write(&mut self, text: &str) {
         let args = msgpack::array(&[msgpack::str(text)]);
-        peripheral::do_action(self.addr, "write", &args).await?;
+        peripheral::book_action(self.addr, "write", &args);
+    }
+
+    pub fn read_last_write(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "write")?;
         Ok(())
     }
 
     /// バイト列を書き込む。
-    pub async fn write_bytes(&self, data: &[u8]) -> Result<(), PeripheralError> {
+    pub fn book_next_write_bytes(&mut self, data: &[u8]) -> Result<(), PeripheralError> {
         let encoded = peripheral::encode(&data)?;
         let args = msgpack::array(&[encoded]);
-        peripheral::do_action(self.addr, "writeBytes", &args).await?;
+        peripheral::book_action(self.addr, "writeBytes", &args);
+        Ok(())
+    }
+
+    pub fn read_last_write_bytes(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "writeBytes")?;
         Ok(())
     }
 
     /// 現在の行をクリアする。
-    pub async fn clear_line(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "clearLine", &msgpack::array(&[])).await?;
+    pub fn book_next_clear_line(&mut self) {
+        peripheral::book_action(self.addr, "clearLine", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_clear_line(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "clearLine")?;
         Ok(())
     }
 
     /// ディスプレイ全体をクリアする。
-    pub async fn clear(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "clear", &msgpack::array(&[])).await?;
+    pub fn book_next_clear(&mut self) {
+        peripheral::book_action(self.addr, "clear", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_clear(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "clear")?;
         Ok(())
     }
 
     /// ディスプレイを更新する。
-    pub async fn update(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "update", &msgpack::array(&[])).await?;
+    pub fn book_next_update(&mut self) {
+        peripheral::book_action(self.addr, "update", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_update(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "update")?;
         Ok(())
     }
 }

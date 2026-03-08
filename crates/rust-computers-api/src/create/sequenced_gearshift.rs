@@ -24,43 +24,54 @@ impl Peripheral for SequencedGearshift {
 
 impl SequencedGearshift {
     /// 指定量だけ回転させる。
-    pub async fn rotate(
-        &self,
+    pub fn book_next_rotate(
+        &mut self,
         amount: i32,
         speed_modifier: Option<i32>,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let mut args_vec = alloc::vec![msgpack::int(amount)];
         if let Some(sm) = speed_modifier {
             args_vec.push(msgpack::int(sm));
         }
         let args = msgpack::array(&args_vec);
-        peripheral::do_action(self.addr, "rotate", &args).await?;
+        peripheral::book_action(self.addr, "rotate", &args);
+    }
+
+    pub fn read_last_rotate(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "rotate")?;
         Ok(())
     }
 
     /// 指定距離だけ移動させる。
-    pub async fn move_by(
-        &self,
+    pub fn book_next_move_by(
+        &mut self,
         distance: i32,
         speed_modifier: Option<i32>,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let mut args_vec = alloc::vec![msgpack::int(distance)];
         if let Some(sm) = speed_modifier {
             args_vec.push(msgpack::int(sm));
         }
         let args = msgpack::array(&args_vec);
-        peripheral::do_action(self.addr, "moveBy", &args).await?;
+        peripheral::book_action(self.addr, "moveBy", &args);
+    }
+
+    pub fn read_last_move_by(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "moveBy")?;
         Ok(())
     }
 
     /// 現在動作中かどうかを取得する。
-    pub async fn is_running(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_is_running(&mut self) {
+        peripheral::book_request(
             self.addr,
             "isRunning",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_is_running(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isRunning")?;
         peripheral::decode(&data)
     }
 

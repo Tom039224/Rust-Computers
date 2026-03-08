@@ -24,20 +24,27 @@ impl Peripheral for CreativeMotor {
 
 impl CreativeMotor {
     /// 生成する回転速度を設定する。
-    pub async fn set_generated_speed(&self, speed: i32) -> Result<(), PeripheralError> {
+    pub fn book_next_set_generated_speed(&mut self, speed: i32) {
         let args = msgpack::array(&[msgpack::int(speed)]);
-        peripheral::do_action(self.addr, "setGeneratedSpeed", &args).await?;
+        peripheral::book_action(self.addr, "setGeneratedSpeed", &args);
+    }
+
+    pub fn read_last_set_generated_speed(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setGeneratedSpeed")?;
         Ok(())
     }
 
     /// 現在の生成回転速度を取得する。
-    pub async fn get_generated_speed(&self) -> Result<f32, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_generated_speed(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getGeneratedSpeed",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_generated_speed(&self) -> Result<f32, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getGeneratedSpeed")?;
         peripheral::decode(&data)
     }
 

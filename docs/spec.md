@@ -1,7 +1,7 @@
 # RustComputers 設計仕様書
 
-> 最終更新: 2026-03-07  
-> バージョン: 0.1.25
+> 最終更新: 2026-03-08  
+> バージョン: 0.2.0
 
 ## 概要
 
@@ -25,29 +25,76 @@ GT:N+1 [Java]  → 前 tick のリクエストに対する情報を収集し Rus
 GT:N+1 [Rust]  → 情報を受け取り、次の処理を進める
 ```
 
-### 1.2 Async / Poll モデル
+### 1.2 Book-Read パターン (v0.2.0)
 
 各コンピューターは独立した **WASM インスタンス** を持ち、1 tick に 1 回 poll されます。  
 ユーザーは `async fn main()` を単一エントリーポイントとして記述します。
 
+v0.2.0 で導入された **book-read パターン**により、1 ループ = 1 tick で動作します。
+
 ```rust
 #[entry]
 async fn main() {
+    let mut radar = find_imm::<Radar>().unwrap();
+    let mut motor = find_imm::<ElectricMotor>().unwrap();
+
+    // 初回 book（結果はまだない）
+    radar.book_next_scan_for_entities(100.0);
+    wait_for_next_tick().await;
+
     loop {
-        let info = get_something().await;  // 1tick 待つ
-        do_something(info);
+        // 前 tick の結果を読み取り
+        let entities = radar.read_last_scan_for_entities().unwrap_or_default();
+
+        // 計算
+        let control = calculate_control(&entities);
+
+        // 次 tick のリクエストを予約
+        motor.book_next_set_speed(control);
+        radar.book_next_scan_for_entities(100.0);
+
+        // tick 境界（全 book が一括 FFI 発行される）
+        wait_for_next_tick().await;
     }
 }
 ```
 
-`await` ごとに 1 tick 消費します (明示的な待機)。  
-並列取得には `parallel!` マクロ (内部的に `join!` 相当) を使用します。  
-`parallel!` は **Future を返す**ため、`.await` で結果を取得します。
+#### Book-Read フロー
+
+```
+GT N   [Rust]  → book_next_*() で予約 → wait_for_next_tick().await で FFI 一括発行
+GT N+1 [Java]  → リクエスト実行
+GT N+1 [Rust]  → read_last_*() で結果取得 → 新たに book_next_*() → wait_for_next_tick().await
+```
+
+- `book_next_*(&mut self, ...)`: リクエストを Rust 側のグローバルバッファに予約（FFI 呼び出しなし）
+- `wait_for_next_tick().await`: 全予約を FFI 経由で一括発行し、次 tick まで yield
+- `read_last_*(&self) -> Result<T, PeripheralError>`: 前 tick の結果を読み取り
+- 同じメソッドへの複数回 book は**上書き**される（最後の book のみ有効）
+
+#### イベント待機メソッド
+
+`modem.receive_wait_raw()` のようなイベント駆動メソッドは引き続き **async** で提供されます。  
+内部的に book → wait → read をループし、イベント発生まで自動的にブロックします。
 
 ```rust
-let (a, b) = parallel!(getInfoA.get(), getInfoB.get()).await;
-// どちらも同一 tick でリクエストされるため、1tick 待つだけで両方取得できる
+let msg = modem.receive_wait_raw().await?; // イベント発生まで待機
 ```
+
+`parallel!` マクロはイベント待機の並列実行に引き続き使用可能です。
+
+#### 即時メソッド (_imm)
+
+`_imm` サフィックスのメソッドは同 tick 内で即座に実行されます（book-read 不要）。
+
+```rust
+let kind = radar.get_type_imm()?; // 即座に返る
+```
+
+#### 結果バッファの配置
+
+> **注意**: 結果バッファは現在 **Rust (WASM) 側**で確保しています。  
+> パフォーマンス上の理由で将来 Java 側に移す可能性があります。
 
 ---
 
@@ -71,13 +118,16 @@ let (a, b) = parallel!(getInfoA.get(), getInfoB.get()).await;
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 返り値の扱い
+### 2.2 返り値の扱い (v0.2.0 book-read)
 
-| API 種別 | await の要否 | 結果取得タイミング |
+| API 種別 | パターン | 結果取得タイミング |
 |---|---|---|
-| 情報取得系 (read) | **必須** | 次 tick (Phase 1) |
-| ワールド干渉系 (write) | 任意 | 同 tick 実行 → 結果は次 tick |
-| 返り値を捨てる干渉 | 不要 | Fire and forget |
+| 情報取得系 (read) | `book_next_*` → `read_last_*` | 次 tick |
+| ワールド干渉系 (write) | `book_next_*` → `read_last_*` | 次 tick |
+| イベント待機 | `async` (await) | イベント発生時 |
+| 即時取得 (_imm) | 同期呼び出し | 同 tick |
+
+`PeripheralError::NotRequested` は `book_next_*` 未呼び出しで `read_last_*` を呼んだ場合に返される。
 
 ---
 
@@ -200,6 +250,20 @@ host_get_computer_id() → i32
   → このコンピューターの整数 ID
 ```
 
+#### ペリフェラル検索（即時）
+
+```
+host_find_peripherals_by_type_imm(
+    name_ptr:        i32,  // type_name UTF-8 文字列アドレス
+    name_len:        i32,  // type_name バイト長
+    result_ptr:      i32,  // 結果バッファアドレス
+    result_buf_size: i32   // 結果バッファサイズ
+) → i32 : written_bytes (>=0) | error_code (<0)
+  指定型名のペリフェラルを即時検索する（有線モデム経由を含む）。
+  結果は MessagePack array[uint32] (periph_id のリスト) として書き込まれる。
+  periph_id: 0-5 = 直接隣接 (Direction), 6+ = 有線モデム経由。
+```
+
 ### 4.3 Shared Buffer
 
 **固定サイズ: 64 KB** (案①採用)
@@ -232,12 +296,16 @@ host_get_computer_id() → i32
 ```
 rust-computers-api/
 ├── src/
-│   ├── lib.rs          # pub use 再エクスポート
+│   ├── lib.rs          # pub use 再エクスポート, wait_for_next_tick(), entry!/parallel! マクロ
 │   ├── ffi.rs          # extern "C" ホスト関数 FFI 宣言 (env モジュール)
-│   ├── peripheral.rs   # Direction 列挙, request_info, do_action, request_info_imm
-│   ├── future.rs       # RequestFuture (非同期 Poll モデル実装)
-│   ├── error.rs        # BridgeError 列挙 (9 エラーコード)
-│   └── msgpack.rs      # MessagePack シリアライズ・デシリアライズヘルパー (v0.1.24+)
+│   ├── peripheral.rs   # PeriphAddr, Peripheral trait, book_request/book_action/read_result,
+│   │                   # request_info/do_action/request_info_imm, find_imm/wrap_imm/wrap
+│   ├── book_store.rs   # book-read パターンのグローバル状態管理 (pending/in_flight/results)
+│   ├── future.rs       # WaitForNextTickFuture, RequestFuture (非同期 Poll 実装)
+│   ├── error.rs        # BridgeError (9 コード), PeripheralError (Bridge/NotFound/DecodeFailed/Unexpected/NotRequested)
+│   ├── executor.rs     # WASM async executor
+│   ├── io.rs           # read_line (stdin)
+│   └── msgpack.rs      # MessagePack シリアライズ・デシリアライズヘルパー
 ├── peripherals/
 │   └── monitor.toml    # TOML マニフェスト → build.rs が Rust コードを自動生成
 ├── build.rs            # TOML → Rust コードジェネレーター

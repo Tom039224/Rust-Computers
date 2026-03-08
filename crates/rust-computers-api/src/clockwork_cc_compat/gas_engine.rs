@@ -23,13 +23,16 @@ impl Peripheral for GasEngine {
 
 impl GasEngine {
     /// 接続エンジン数を取得する (imm 対応)。
-    pub async fn get_attached_engines(&self) -> Result<u32, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_attached_engines(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getAttachedEngines",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_attached_engines(&self) -> Result<u32, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getAttachedEngines")?;
         peripheral::decode(&data)
     }
 
@@ -43,13 +46,16 @@ impl GasEngine {
     }
 
     /// 全体効率を取得する (imm 対応)。
-    pub async fn get_total_efficiency(&self) -> Result<f64, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_total_efficiency(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getTotalEfficiency",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_total_efficiency(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getTotalEfficiency")?;
         peripheral::decode(&data)
     }
 

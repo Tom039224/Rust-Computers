@@ -30,89 +30,119 @@ impl Peripheral for RedstoneRequester {
 
 impl RedstoneRequester {
     /// リクエストを送信する。
-    pub async fn request(
-        &self,
+    pub fn book_next_request(
+        &mut self,
         items: &[CROrderItem],
     ) -> Result<(), PeripheralError> {
         let items_vec: Vec<_> = items.iter().cloned().collect();
         let encoded = peripheral::encode(&items_vec)?;
         let args = msgpack::array(&[encoded]);
-        peripheral::do_action(self.addr, "request", &args).await?;
+        peripheral::book_action(self.addr, "request", &args);
+        Ok(())
+    }
+
+    pub fn read_last_request(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "request")?;
         Ok(())
     }
 
     /// リクエストを設定する。
-    pub async fn set_request(
-        &self,
+    pub fn book_next_set_request(
+        &mut self,
         slot: u32,
         item: &CROrderItem,
     ) -> Result<(), PeripheralError> {
         let encoded = peripheral::encode(item)?;
         let args = msgpack::array(&[msgpack::int(slot as i32), encoded]);
-        peripheral::do_action(self.addr, "setRequest", &args).await?;
+        peripheral::book_action(self.addr, "setRequest", &args);
+        Ok(())
+    }
+
+    pub fn read_last_set_request(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setRequest")?;
         Ok(())
     }
 
     /// クラフティングリクエストを設定する。
-    pub async fn set_crafting_request(
-        &self,
+    pub fn book_next_set_crafting_request(
+        &mut self,
         slot: u32,
         item: &CROrderItem,
     ) -> Result<(), PeripheralError> {
         let encoded = peripheral::encode(item)?;
         let args = msgpack::array(&[msgpack::int(slot as i32), encoded]);
-        peripheral::do_action(self.addr, "setCraftingRequest", &args).await?;
+        peripheral::book_action(self.addr, "setCraftingRequest", &args);
+        Ok(())
+    }
+
+    pub fn read_last_set_crafting_request(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setCraftingRequest")?;
         Ok(())
     }
 
     /// リクエスト情報を取得する。
-    pub async fn get_request(
-        &self,
-        slot: u32,
-    ) -> Result<Option<CRItemFilter>, PeripheralError> {
+    pub fn book_next_get_request(&mut self, slot: u32) {
         let args = msgpack::array(&[msgpack::int(slot as i32)]);
-        let data =
-            peripheral::request_info(self.addr, "getRequest", &args).await?;
+        peripheral::book_request(self.addr, "getRequest", &args);
+    }
+
+    pub fn read_last_get_request(&self) -> Result<Option<CRItemFilter>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getRequest")?;
         peripheral::decode(&data)
     }
 
     /// 構成情報を取得する。
-    pub async fn get_configuration(&self) -> Result<CRPackage, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_configuration(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getConfiguration",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_configuration(&self) -> Result<CRPackage, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getConfiguration")?;
         peripheral::decode(&data)
     }
 
     /// 構成情報を設定する。
-    pub async fn set_configuration(
-        &self,
+    pub fn book_next_set_configuration(
+        &mut self,
         config: &CRPackage,
     ) -> Result<(), PeripheralError> {
         let encoded = peripheral::encode(config)?;
         let args = msgpack::array(&[encoded]);
-        peripheral::do_action(self.addr, "setConfiguration", &args).await?;
+        peripheral::book_action(self.addr, "setConfiguration", &args);
+        Ok(())
+    }
+
+    pub fn read_last_set_configuration(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setConfiguration")?;
         Ok(())
     }
 
     /// アドレスを設定する。
-    pub async fn set_address(&self, address: &str) -> Result<(), PeripheralError> {
+    pub fn book_next_set_address(&mut self, address: &str) {
         let args = msgpack::array(&[msgpack::str(address)]);
-        peripheral::do_action(self.addr, "setAddress", &args).await?;
+        peripheral::book_action(self.addr, "setAddress", &args);
+    }
+
+    pub fn read_last_set_address(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setAddress")?;
         Ok(())
     }
 
     /// アドレスを取得する。
-    pub async fn get_address(&self) -> Result<String, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_address(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getAddress",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_address(&self) -> Result<String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getAddress")?;
         peripheral::decode(&data)
     }
 }

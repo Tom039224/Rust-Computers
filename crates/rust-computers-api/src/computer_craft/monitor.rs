@@ -91,20 +91,21 @@ impl Peripheral for Monitor {
 
 impl Monitor {
     /// テキストスケールを設定する。
-    pub async fn set_text_scale(&self, scale: MonitorTextScale) -> Result<(), PeripheralError> {
+    pub fn book_next_set_text_scale(&mut self, scale: MonitorTextScale) {
         let args = msgpack::array(&[msgpack::float64(scale.0 as f64)]);
-        peripheral::do_action(self.addr, "setTextScale", &args).await?;
+        peripheral::book_action(self.addr, "setTextScale", &args);
+    }
+    pub fn read_last_set_text_scale(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setTextScale")?;
         Ok(())
     }
 
     /// テキストスケールを取得する。
-    pub async fn get_text_scale(&self) -> Result<MonitorTextScale, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getTextScale",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_text_scale(&mut self) {
+        peripheral::book_request(self.addr, "getTextScale", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_text_scale(&self) -> Result<MonitorTextScale, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getTextScale")?;
         let v: f32 = peripheral::decode(&data)?;
         Ok(MonitorTextScale(v))
     }
@@ -121,27 +122,31 @@ impl Monitor {
     }
 
     /// テキストを書き込む。
-    pub async fn write(&self, text: &str) -> Result<(), PeripheralError> {
+    pub fn book_next_write(&mut self, text: &str) {
         let args = msgpack::array(&[msgpack::str(text)]);
-        peripheral::do_action(self.addr, "write", &args).await?;
+        peripheral::book_action(self.addr, "write", &args);
+    }
+    pub fn read_last_write(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "write")?;
         Ok(())
     }
 
     /// 画面をスクロールする。
-    pub async fn scroll(&self, y: u32) -> Result<(), PeripheralError> {
+    pub fn book_next_scroll(&mut self, y: u32) {
         let args = msgpack::array(&[msgpack::int(y as i32)]);
-        peripheral::do_action(self.addr, "scroll", &args).await?;
+        peripheral::book_action(self.addr, "scroll", &args);
+    }
+    pub fn read_last_scroll(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "scroll")?;
         Ok(())
     }
 
     /// カーソル位置を取得する。
-    pub async fn get_cursor_pos(&self) -> Result<MonitorPosition, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getCursorPos",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_cursor_pos(&mut self) {
+        peripheral::book_request(self.addr, "getCursorPos", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_cursor_pos(&self) -> Result<MonitorPosition, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getCursorPos")?;
         let (x, y): (u32, u32) = peripheral::decode(&data)?;
         Ok(MonitorPosition { x, y })
     }
@@ -158,23 +163,24 @@ impl Monitor {
     }
 
     /// カーソル位置を設定する。
-    pub async fn set_cursor_pos(&self, pos: MonitorPosition) -> Result<(), PeripheralError> {
+    pub fn book_next_set_cursor_pos(&mut self, pos: MonitorPosition) {
         let args = msgpack::array(&[
             msgpack::int(pos.x as i32),
             msgpack::int(pos.y as i32),
         ]);
-        peripheral::do_action(self.addr, "setCursorPos", &args).await?;
+        peripheral::book_action(self.addr, "setCursorPos", &args);
+    }
+    pub fn read_last_set_cursor_pos(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setCursorPos")?;
         Ok(())
     }
 
     /// カーソル点滅状態を取得する。
-    pub async fn get_cursor_blink(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getCursorBlink",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_cursor_blink(&mut self) {
+        peripheral::book_request(self.addr, "getCursorBlink", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_cursor_blink(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getCursorBlink")?;
         peripheral::decode(&data)
     }
 
@@ -189,20 +195,21 @@ impl Monitor {
     }
 
     /// カーソル点滅を設定する。
-    pub async fn set_cursor_blink(&self, blink: bool) -> Result<(), PeripheralError> {
+    pub fn book_next_set_cursor_blink(&mut self, blink: bool) {
         let args = msgpack::array(&[msgpack::bool_val(blink)]);
-        peripheral::do_action(self.addr, "setCursorBlink", &args).await?;
+        peripheral::book_action(self.addr, "setCursorBlink", &args);
+    }
+    pub fn read_last_set_cursor_blink(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setCursorBlink")?;
         Ok(())
     }
 
     /// モニターサイズを取得する。
-    pub async fn get_size(&self) -> Result<MonitorSize, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getSize",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_size(&mut self) {
+        peripheral::book_request(self.addr, "getSize", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_size(&self) -> Result<MonitorSize, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getSize")?;
         let (x, y): (u32, u32) = peripheral::decode(&data)?;
         Ok(MonitorSize { x, y })
     }
@@ -219,25 +226,29 @@ impl Monitor {
     }
 
     /// 画面をクリアする。
-    pub async fn clear(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "clear", &msgpack::array(&[])).await?;
+    pub fn book_next_clear(&mut self) {
+        peripheral::book_action(self.addr, "clear", &msgpack::array(&[]));
+    }
+    pub fn read_last_clear(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "clear")?;
         Ok(())
     }
 
     /// 現在行をクリアする。
-    pub async fn clear_line(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "clearLine", &msgpack::array(&[])).await?;
+    pub fn book_next_clear_line(&mut self) {
+        peripheral::book_action(self.addr, "clearLine", &msgpack::array(&[]));
+    }
+    pub fn read_last_clear_line(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "clearLine")?;
         Ok(())
     }
 
     /// テキスト色を取得する。
-    pub async fn get_text_color(&self) -> Result<MonitorColor, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getTextColour",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_text_color(&mut self) {
+        peripheral::book_request(self.addr, "getTextColour", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_text_color(&self) -> Result<MonitorColor, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getTextColour")?;
         let v: u32 = peripheral::decode(&data)?;
         Ok(MonitorColor(v))
     }
@@ -254,20 +265,21 @@ impl Monitor {
     }
 
     /// テキスト色を設定する。
-    pub async fn set_text_color(&self, color: MonitorColor) -> Result<(), PeripheralError> {
+    pub fn book_next_set_text_color(&mut self, color: MonitorColor) {
         let args = msgpack::array(&[msgpack::int(color.0 as i32)]);
-        peripheral::do_action(self.addr, "setTextColour", &args).await?;
+        peripheral::book_action(self.addr, "setTextColour", &args);
+    }
+    pub fn read_last_set_text_color(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setTextColour")?;
         Ok(())
     }
 
     /// 背景色を取得する。
-    pub async fn get_background_color(&self) -> Result<MonitorColor, PeripheralError> {
-        let data = peripheral::request_info(
-            self.addr,
-            "getBackgroundColour",
-            &msgpack::array(&[]),
-        )
-        .await?;
+    pub fn book_next_get_background_color(&mut self) {
+        peripheral::book_request(self.addr, "getBackgroundColour", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_background_color(&self) -> Result<MonitorColor, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getBackgroundColour")?;
         let v: u32 = peripheral::decode(&data)?;
         Ok(MonitorColor(v))
     }
@@ -284,25 +296,26 @@ impl Monitor {
     }
 
     /// 背景色を設定する。
-    pub async fn set_background_color(&self, color: MonitorColor) -> Result<(), PeripheralError> {
+    pub fn book_next_set_background_color(&mut self, color: MonitorColor) {
         let args = msgpack::array(&[msgpack::int(color.0 as i32)]);
-        peripheral::do_action(self.addr, "setBackgroundColour", &args).await?;
+        peripheral::book_action(self.addr, "setBackgroundColour", &args);
+    }
+    pub fn read_last_set_background_color(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setBackgroundColour")?;
         Ok(())
     }
 
     /// blit で文字列を描画する。
-    pub async fn blit(
-        &self,
-        text: &str,
-        text_color: MonitorColor,
-        background_color: MonitorColor,
-    ) -> Result<(), PeripheralError> {
+    pub fn book_next_blit(&mut self, text: &str, text_color: MonitorColor, background_color: MonitorColor) {
         let args = msgpack::array(&[
             msgpack::str(text),
             msgpack::int(text_color.0 as i32),
             msgpack::int(background_color.0 as i32),
         ]);
-        peripheral::do_action(self.addr, "blit", &args).await?;
+        peripheral::book_action(self.addr, "blit", &args);
+    }
+    pub fn read_last_blit(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "blit")?;
         Ok(())
     }
 }

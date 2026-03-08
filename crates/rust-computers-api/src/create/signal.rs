@@ -27,13 +27,16 @@ impl Peripheral for Signal {
 
 impl Signal {
     /// シグナルの状態を取得する。
-    pub async fn get_state(&self) -> Result<String, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_state(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getState",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_state(&self) -> Result<String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getState")?;
         peripheral::decode(&data)
     }
 
@@ -48,13 +51,16 @@ impl Signal {
     }
 
     /// 強制赤信号かどうかを取得する。
-    pub async fn is_forced_red(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_is_forced_red(&mut self) {
+        peripheral::book_request(
             self.addr,
             "isForcedRed",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_is_forced_red(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isForcedRed")?;
         peripheral::decode(&data)
     }
 
@@ -69,20 +75,27 @@ impl Signal {
     }
 
     /// 強制赤信号を設定する。
-    pub async fn set_forced_red(&self, powered: bool) -> Result<(), PeripheralError> {
+    pub fn book_next_set_forced_red(&mut self, powered: bool) {
         let args = msgpack::array(&[msgpack::bool_val(powered)]);
-        peripheral::do_action(self.addr, "setForcedRed", &args).await?;
+        peripheral::book_action(self.addr, "setForcedRed", &args);
+    }
+
+    pub fn read_last_set_forced_red(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setForcedRed")?;
         Ok(())
     }
 
     /// ブロック中の列車名一覧を取得する。
-    pub async fn list_blocking_train_names(&self) -> Result<Vec<String>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_list_blocking_train_names(&mut self) {
+        peripheral::book_request(
             self.addr,
             "listBlockingTrainNames",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_list_blocking_train_names(&self) -> Result<Vec<String>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "listBlockingTrainNames")?;
         peripheral::decode(&data)
     }
 
@@ -97,13 +110,16 @@ impl Signal {
     }
 
     /// シグナルタイプを取得する。
-    pub async fn get_signal_type(&self) -> Result<String, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_signal_type(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getSignalType",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_signal_type(&self) -> Result<String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getSignalType")?;
         peripheral::decode(&data)
     }
 
@@ -118,30 +134,39 @@ impl Signal {
     }
 
     /// シグナルタイプをサイクルする。
-    pub async fn cycle_signal_type(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "cycleSignalType", &msgpack::array(&[])).await?;
+    pub fn book_next_cycle_signal_type(&mut self) {
+        peripheral::book_action(self.addr, "cycleSignalType", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_cycle_signal_type(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "cycleSignalType")?;
         Ok(())
     }
 
     // ====== イベント系 / Events ======
 
     /// シグナル状態変化イベントを 1tick 待機して取得する。来なければ None。
-    pub async fn try_pull_train_signal_state_change(
-        &self,
-    ) -> Result<Option<()>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_try_pull_train_signal_state_change(&mut self) {
+        peripheral::book_request(
             self.addr,
             "try_pull_train_signal_state_change",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_try_pull_train_signal_state_change(&self) -> Result<Option<()>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "try_pull_train_signal_state_change")?;
         peripheral::decode(&data)
     }
 
     /// シグナル状態変化イベントを受信するまで待機する。
     pub async fn pull_train_signal_state_change(&self) -> Result<(), PeripheralError> {
         loop {
-            if let Some(v) = self.try_pull_train_signal_state_change().await? {
+            peripheral::book_request(self.addr, "try_pull_train_signal_state_change", &msgpack::array(&[]));
+            crate::wait_for_next_tick().await;
+            let data = peripheral::read_result(self.addr, "try_pull_train_signal_state_change")?;
+            let result: Option<()> = peripheral::decode(&data)?;
+            if let Some(v) = result {
                 return Ok(v);
             }
         }

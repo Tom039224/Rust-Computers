@@ -26,30 +26,38 @@ impl Peripheral for NixieTube {
 
 impl NixieTube {
     /// テキストを設定する。オプションでカラーを指定可能。
-    pub async fn set_text(
-        &self,
+    pub fn book_next_set_text(
+        &mut self,
         text: &str,
         colour: Option<&str>,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let mut args_vec = alloc::vec![msgpack::str(text)];
         if let Some(c) = colour {
             args_vec.push(msgpack::str(c));
         }
         let args = msgpack::array(&args_vec);
-        peripheral::do_action(self.addr, "setText", &args).await?;
+        peripheral::book_action(self.addr, "setText", &args);
+    }
+
+    pub fn read_last_set_text(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setText")?;
         Ok(())
     }
 
     /// テキストカラーを設定する。
-    pub async fn set_text_colour(&self, colour: &str) -> Result<(), PeripheralError> {
+    pub fn book_next_set_text_colour(&mut self, colour: &str) {
         let args = msgpack::array(&[msgpack::str(colour)]);
-        peripheral::do_action(self.addr, "setTextColour", &args).await?;
+        peripheral::book_action(self.addr, "setTextColour", &args);
+    }
+
+    pub fn read_last_set_text_colour(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setTextColour")?;
         Ok(())
     }
 
     /// シグナル表示を設定する。front は必須、back はオプション。
-    pub async fn set_signal(
-        &self,
+    pub fn book_next_set_signal(
+        &mut self,
         front: &CRSignalParams,
         back: Option<&CRSignalParams>,
     ) -> Result<(), PeripheralError> {
@@ -59,7 +67,12 @@ impl NixieTube {
             args_vec.push(peripheral::encode(b)?);
         }
         let args = msgpack::array(&args_vec);
-        peripheral::do_action(self.addr, "setSignal", &args).await?;
+        peripheral::book_action(self.addr, "setSignal", &args);
+        Ok(())
+    }
+
+    pub fn read_last_set_signal(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setSignal")?;
         Ok(())
     }
 }

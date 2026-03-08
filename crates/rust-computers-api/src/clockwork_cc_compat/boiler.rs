@@ -40,10 +40,13 @@ impl Peripheral for Boiler {
 }
 
 macro_rules! imm_getter {
-    ($fn_async:ident, $fn_imm:ident, $method:literal, $ret:ty) => {
-        pub async fn $fn_async(&self) -> Result<$ret, PeripheralError> {
-            let data =
-                peripheral::request_info(self.addr, $method, &msgpack::array(&[])).await?;
+    ($fn_book:ident, $fn_read:ident, $fn_imm:ident, $method:literal, $ret:ty) => {
+        pub fn $fn_book(&mut self) {
+            peripheral::book_request(self.addr, $method, &msgpack::array(&[]));
+        }
+
+        pub fn $fn_read(&self) -> Result<$ret, PeripheralError> {
+            let data = peripheral::read_result(self.addr, $method)?;
             peripheral::decode(&data)
         }
 
@@ -56,20 +59,20 @@ macro_rules! imm_getter {
 }
 
 impl Boiler {
-    imm_getter!(is_active, is_active_imm, "isActive", bool);
-    imm_getter!(get_heat_level, get_heat_level_imm, "getHeatLevel", f64);
-    imm_getter!(get_active_heat, get_active_heat_imm, "getActiveHeat", f64);
-    imm_getter!(is_passive_heat, is_passive_heat_imm, "isPassiveHeat", bool);
-    imm_getter!(get_water_supply, get_water_supply_imm, "getWaterSupply", f64);
-    imm_getter!(get_attached_engines, get_attached_engines_imm, "getAttachedEngines", u32);
-    imm_getter!(get_attached_whistles, get_attached_whistles_imm, "getAttachedWhistles", u32);
-    imm_getter!(get_engine_efficiency, get_engine_efficiency_imm, "getEngineEfficiency", f64);
-    imm_getter!(get_boiler_size, get_boiler_size_imm, "getBoilerSize", f64);
-    imm_getter!(get_width, get_width_imm, "getWidth", u32);
-    imm_getter!(get_height, get_height_imm, "getHeight", u32);
-    imm_getter!(get_max_heat_for_size, get_max_heat_for_size_imm, "getMaxHeatForSize", f64);
-    imm_getter!(get_max_heat_for_water, get_max_heat_for_water_imm, "getMaxHeatForWater", f64);
-    imm_getter!(get_fill_state, get_fill_state_imm, "getFillState", f64);
-    imm_getter!(get_fluid_contents, get_fluid_contents_imm, "getFluidContents", CLFluidInfo);
-    imm_getter!(get_controller_pos, get_controller_pos_imm, "getControllerPos", CLPosition);
+    imm_getter!(book_next_is_active, read_last_is_active, is_active_imm, "isActive", bool);
+    imm_getter!(book_next_get_heat_level, read_last_get_heat_level, get_heat_level_imm, "getHeatLevel", f64);
+    imm_getter!(book_next_get_active_heat, read_last_get_active_heat, get_active_heat_imm, "getActiveHeat", f64);
+    imm_getter!(book_next_is_passive_heat, read_last_is_passive_heat, is_passive_heat_imm, "isPassiveHeat", bool);
+    imm_getter!(book_next_get_water_supply, read_last_get_water_supply, get_water_supply_imm, "getWaterSupply", f64);
+    imm_getter!(book_next_get_attached_engines, read_last_get_attached_engines, get_attached_engines_imm, "getAttachedEngines", u32);
+    imm_getter!(book_next_get_attached_whistles, read_last_get_attached_whistles, get_attached_whistles_imm, "getAttachedWhistles", u32);
+    imm_getter!(book_next_get_engine_efficiency, read_last_get_engine_efficiency, get_engine_efficiency_imm, "getEngineEfficiency", f64);
+    imm_getter!(book_next_get_boiler_size, read_last_get_boiler_size, get_boiler_size_imm, "getBoilerSize", f64);
+    imm_getter!(book_next_get_width, read_last_get_width, get_width_imm, "getWidth", u32);
+    imm_getter!(book_next_get_height, read_last_get_height, get_height_imm, "getHeight", u32);
+    imm_getter!(book_next_get_max_heat_for_size, read_last_get_max_heat_for_size, get_max_heat_for_size_imm, "getMaxHeatForSize", f64);
+    imm_getter!(book_next_get_max_heat_for_water, read_last_get_max_heat_for_water, get_max_heat_for_water_imm, "getMaxHeatForWater", f64);
+    imm_getter!(book_next_get_fill_state, read_last_get_fill_state, get_fill_state_imm, "getFillState", f64);
+    imm_getter!(book_next_get_fluid_contents, read_last_get_fluid_contents, get_fluid_contents_imm, "getFluidContents", CLFluidInfo);
+    imm_getter!(book_next_get_controller_pos, read_last_get_controller_pos, get_controller_pos_imm, "getControllerPos", CLPosition);
 }

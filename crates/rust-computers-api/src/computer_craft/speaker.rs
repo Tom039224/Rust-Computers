@@ -73,12 +73,12 @@ impl Peripheral for Speaker {
 impl Speaker {
     /// ノート音を再生する。
     /// Play a note.
-    pub async fn play_note(
-        &self,
+    pub fn book_next_play_note(
+        &mut self,
         instrument: SpeakerInstrument,
         volume: Option<f32>,
         pitch: Option<f32>,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let mut args = alloc::vec![msgpack::str(instrument.as_str())];
         if let Some(v) = volume {
             args.push(msgpack::float64(v as f64));
@@ -89,18 +89,21 @@ impl Speaker {
             args.push(msgpack::nil());
             args.push(msgpack::float64(p as f64));
         }
-        peripheral::do_action(self.addr, "playNote", &msgpack::array(&args)).await?;
+        peripheral::book_action(self.addr, "playNote", &msgpack::array(&args));
+    }
+    pub fn read_last_play_note(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "playNote")?;
         Ok(())
     }
 
     /// サウンドを再生する。
     /// Play a sound.
-    pub async fn play_sound(
-        &self,
+    pub fn book_next_play_sound(
+        &mut self,
         name: &str,
         volume: Option<f32>,
         pitch: Option<f32>,
-    ) -> Result<(), PeripheralError> {
+    ) {
         let mut args = alloc::vec![msgpack::str(name)];
         if let Some(v) = volume {
             args.push(msgpack::float64(v as f64));
@@ -111,14 +114,20 @@ impl Speaker {
             args.push(msgpack::nil());
             args.push(msgpack::float64(p as f64));
         }
-        peripheral::do_action(self.addr, "playSound", &msgpack::array(&args)).await?;
+        peripheral::book_action(self.addr, "playSound", &msgpack::array(&args));
+    }
+    pub fn read_last_play_sound(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "playSound")?;
         Ok(())
     }
 
     /// 再生を停止する。
     /// Stop playback.
-    pub async fn stop(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "stop", &msgpack::array(&[])).await?;
+    pub fn book_next_stop(&mut self) {
+        peripheral::book_action(self.addr, "stop", &msgpack::array(&[]));
+    }
+    pub fn read_last_stop(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "stop")?;
         Ok(())
     }
 }

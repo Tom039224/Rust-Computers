@@ -27,85 +27,116 @@ impl Peripheral for TableclothShop {
 
 impl TableclothShop {
     /// ショップとして機能しているかどうかを取得する。
-    pub async fn is_shop(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_is_shop(&mut self) {
+        peripheral::book_request(
             self.addr,
             "isShop",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_is_shop(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isShop")?;
         peripheral::decode(&data)
     }
 
     /// アドレスを取得する。
-    pub async fn get_address(&self) -> Result<String, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_address(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getAddress",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_address(&self) -> Result<String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getAddress")?;
         peripheral::decode(&data)
     }
 
     /// アドレスを設定する。
-    pub async fn set_address(&self, address: &str) -> Result<(), PeripheralError> {
+    pub fn book_next_set_address(&mut self, address: &str) {
         let args = msgpack::array(&[msgpack::str(address)]);
-        peripheral::do_action(self.addr, "setAddress", &args).await?;
+        peripheral::book_action(self.addr, "setAddress", &args);
+    }
+
+    pub fn read_last_set_address(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setAddress")?;
         Ok(())
     }
 
     /// 価格タグアイテムを取得する。
-    pub async fn get_price_tag_item(&self) -> Result<Option<CRItemDetail>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_price_tag_item(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getPriceTagItem",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_price_tag_item(&self) -> Result<Option<CRItemDetail>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getPriceTagItem")?;
         peripheral::decode(&data)
     }
 
     /// 価格タグアイテムを設定する。
-    pub async fn set_price_tag_item(&self, item_name: &str) -> Result<(), PeripheralError> {
+    pub fn book_next_set_price_tag_item(&mut self, item_name: &str) {
         let args = msgpack::array(&[msgpack::str(item_name)]);
-        peripheral::do_action(self.addr, "setPriceTagItem", &args).await?;
+        peripheral::book_action(self.addr, "setPriceTagItem", &args);
+    }
+
+    pub fn read_last_set_price_tag_item(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setPriceTagItem")?;
         Ok(())
     }
 
     /// 価格タグの数量を取得する。
-    pub async fn get_price_tag_count(&self) -> Result<u32, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_price_tag_count(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getPriceTagCount",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_price_tag_count(&self) -> Result<u32, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getPriceTagCount")?;
         peripheral::decode(&data)
     }
 
     /// 価格タグの数量を設定する。
-    pub async fn set_price_tag_count(&self, count: u32) -> Result<(), PeripheralError> {
+    pub fn book_next_set_price_tag_count(&mut self, count: u32) {
         let args = msgpack::array(&[msgpack::int(count as i32)]);
-        peripheral::do_action(self.addr, "setPriceTagCount", &args).await?;
+        peripheral::book_action(self.addr, "setPriceTagCount", &args);
+    }
+
+    pub fn read_last_set_price_tag_count(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setPriceTagCount")?;
         Ok(())
     }
 
     /// 商品情報を取得する。
-    pub async fn get_wares(&self) -> Result<Option<CRItemDetail>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_wares(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getWares",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_wares(&self) -> Result<Option<CRItemDetail>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getWares")?;
         peripheral::decode(&data)
     }
 
     /// 商品情報を設定する。
-    pub async fn set_wares(&self, item_name: &str) -> Result<(), PeripheralError> {
+    pub fn book_next_set_wares(&mut self, item_name: &str) {
         let args = msgpack::array(&[msgpack::str(item_name)]);
-        peripheral::do_action(self.addr, "setWares", &args).await?;
+        peripheral::book_action(self.addr, "setWares", &args);
+    }
+
+    pub fn read_last_set_wares(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setWares")?;
         Ok(())
     }
 }

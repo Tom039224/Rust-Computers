@@ -26,13 +26,16 @@ impl Peripheral for TrackObserver {
 
 impl TrackObserver {
     /// 列車が通過中かどうかを取得する。
-    pub async fn is_train_passing(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_is_train_passing(&mut self) {
+        peripheral::book_request(
             self.addr,
             "isTrainPassing",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_is_train_passing(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isTrainPassing")?;
         peripheral::decode(&data)
     }
 
@@ -47,13 +50,16 @@ impl TrackObserver {
     }
 
     /// 通過中の列車名を取得する。列車がない場合は None。
-    pub async fn get_passing_train_name(&self) -> Result<Option<String>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_passing_train_name(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getPassingTrainName",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_passing_train_name(&self) -> Result<Option<String>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getPassingTrainName")?;
         peripheral::decode(&data)
     }
 
@@ -70,40 +76,54 @@ impl TrackObserver {
     // ====== イベント系 / Events ======
 
     /// 列車通過開始イベントを 1tick 待機して取得する。来なければ None。
-    pub async fn try_pull_train_passing(&self) -> Result<Option<()>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_try_pull_train_passing(&mut self) {
+        peripheral::book_request(
             self.addr,
             "try_pull_train_passing",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_try_pull_train_passing(&self) -> Result<Option<()>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "try_pull_train_passing")?;
         peripheral::decode(&data)
     }
 
     /// 列車通過開始イベントを受信するまで待機する。
     pub async fn pull_train_passing(&self) -> Result<(), PeripheralError> {
         loop {
-            if let Some(v) = self.try_pull_train_passing().await? {
+            peripheral::book_request(self.addr, "try_pull_train_passing", &msgpack::array(&[]));
+            crate::wait_for_next_tick().await;
+            let data = peripheral::read_result(self.addr, "try_pull_train_passing")?;
+            let result: Option<()> = peripheral::decode(&data)?;
+            if let Some(v) = result {
                 return Ok(v);
             }
         }
     }
 
     /// 列車通過完了イベントを 1tick 待機して取得する。来なければ None。
-    pub async fn try_pull_train_passed(&self) -> Result<Option<()>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_try_pull_train_passed(&mut self) {
+        peripheral::book_request(
             self.addr,
             "try_pull_train_passed",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_try_pull_train_passed(&self) -> Result<Option<()>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "try_pull_train_passed")?;
         peripheral::decode(&data)
     }
 
     /// 列車通過完了イベントを受信するまで待機する。
     pub async fn pull_train_passed(&self) -> Result<(), PeripheralError> {
         loop {
-            if let Some(v) = self.try_pull_train_passed().await? {
+            peripheral::book_request(self.addr, "try_pull_train_passed", &msgpack::array(&[]));
+            crate::wait_for_next_tick().await;
+            let data = peripheral::read_result(self.addr, "try_pull_train_passed")?;
+            let result: Option<()> = peripheral::decode(&data)?;
+            if let Some(v) = result {
                 return Ok(v);
             }
         }

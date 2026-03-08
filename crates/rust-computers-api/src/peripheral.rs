@@ -249,6 +249,60 @@ fn issue_request(
 }
 
 // ==================================================================
+// book-read ヘルパー / book-read helpers
+// ==================================================================
+
+/// 情報リクエストを予約する（book-read パターン）。
+/// Book an information request (book-read pattern).
+///
+/// `book_next_*()` メソッドから使用される。
+/// Used from `book_next_*()` methods.
+///
+/// # 引数 / Arguments
+/// - `addr`: ペリフェラルアドレス / peripheral address
+/// - `method_name`: メソッド名 / method name
+/// - `args`: MessagePack 引数バイト列 / MessagePack argument bytes
+pub fn book_request(addr: impl Into<PeriphAddr>, method_name: &str, args: &[u8]) {
+    let addr = addr.into();
+    let mid = method_id(method_name);
+    crate::book_store::book(addr.raw(), mid, args.into(), false);
+}
+
+/// アクションリクエストを予約する（book-read パターン）。
+/// Book an action request (book-read pattern).
+///
+/// `book_next_*()` メソッドから使用される。
+/// Used from `book_next_*()` methods.
+pub fn book_action(addr: impl Into<PeriphAddr>, method_name: &str, args: &[u8]) {
+    let addr = addr.into();
+    let mid = method_id(method_name);
+    crate::book_store::book(addr.raw(), mid, args.into(), true);
+}
+
+/// 前回の結果を読み取る（book-read パターン）。
+/// Read the last result (book-read pattern).
+///
+/// `read_last_*()` メソッドから使用される。
+/// Used from `read_last_*()` methods.
+///
+/// # 戻り値 / Returns
+/// - `Ok(bytes)`: 結果バイト列 / result bytes
+/// - `Err(NotRequested)`: `book_next_*` が未呼び出し / `book_next_*` was not called
+/// - `Err(Bridge(..))`: ブリッジエラー / bridge error
+pub fn read_result(
+    addr: impl Into<PeriphAddr>,
+    method_name: &str,
+) -> Result<Vec<u8>, crate::error::PeripheralError> {
+    let addr = addr.into();
+    let mid = method_id(method_name);
+    match crate::book_store::read_result(addr.raw(), mid) {
+        Some(Ok(data)) => Ok(data),
+        Some(Err(bridge_err)) => Err(crate::error::PeripheralError::Bridge(bridge_err)),
+        None => Err(crate::error::PeripheralError::NotRequested),
+    }
+}
+
+// ==================================================================
 // 即時リクエスト / Immediate requests
 // ==================================================================
 
@@ -326,8 +380,12 @@ use crate::error::PeripheralError;
 pub trait Peripheral: Sized {
     /// CC:Tweaked 上のペリフェラル型名 (例: `"create:creative_motor"`)
     const NAME: &'static str;
-    /// 指定アドレスに新しいインスタンスを作成する。
-    /// Create a new instance at the specified address.
+    /// 指定アドレスに新しいインスタンスを作成する（内部用）。
+    /// Create a new instance at the specified address (internal use).
+    ///
+    /// ユーザーは [`find_imm`] / [`wrap_imm`] / [`wrap`] を使用すること。
+    /// Users should use [`find_imm`] / [`wrap_imm`] / [`wrap`] instead.
+    #[doc(hidden)]
     fn new(addr: PeriphAddr) -> Self;
     /// このインスタンスが参照するアドレスを返す。
     /// Return the address this instance refers to.

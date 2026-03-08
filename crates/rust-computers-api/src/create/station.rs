@@ -27,32 +27,47 @@ impl Peripheral for Station {
 
 impl Station {
     /// 列車を組み立てる。
-    pub async fn assemble(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "assemble", &msgpack::array(&[])).await?;
+    pub fn book_next_assemble(&mut self) {
+        peripheral::book_action(self.addr, "assemble", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_assemble(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "assemble")?;
         Ok(())
     }
 
     /// 列車を分解する。
-    pub async fn disassemble(&self) -> Result<(), PeripheralError> {
-        peripheral::do_action(self.addr, "disassemble", &msgpack::array(&[])).await?;
+    pub fn book_next_disassemble(&mut self) {
+        peripheral::book_action(self.addr, "disassemble", &msgpack::array(&[]));
+    }
+
+    pub fn read_last_disassemble(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "disassemble")?;
         Ok(())
     }
 
     /// 組み立てモードを設定する。
-    pub async fn set_assembly_mode(&self, mode: bool) -> Result<(), PeripheralError> {
+    pub fn book_next_set_assembly_mode(&mut self, mode: bool) {
         let args = msgpack::array(&[msgpack::bool_val(mode)]);
-        peripheral::do_action(self.addr, "setAssemblyMode", &args).await?;
+        peripheral::book_action(self.addr, "setAssemblyMode", &args);
+    }
+
+    pub fn read_last_set_assembly_mode(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setAssemblyMode")?;
         Ok(())
     }
 
     /// 組み立てモードかどうかを取得する。
-    pub async fn is_in_assembly_mode(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_is_in_assembly_mode(&mut self) {
+        peripheral::book_request(
             self.addr,
             "isInAssemblyMode",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_is_in_assembly_mode(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isInAssemblyMode")?;
         peripheral::decode(&data)
     }
 
@@ -67,13 +82,16 @@ impl Station {
     }
 
     /// ステーション名を取得する。
-    pub async fn get_station_name(&self) -> Result<String, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_station_name(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getStationName",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_station_name(&self) -> Result<String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getStationName")?;
         peripheral::decode(&data)
     }
 
@@ -88,20 +106,27 @@ impl Station {
     }
 
     /// ステーション名を設定する。
-    pub async fn set_station_name(&self, name: &str) -> Result<(), PeripheralError> {
+    pub fn book_next_set_station_name(&mut self, name: &str) {
         let args = msgpack::array(&[msgpack::str(name)]);
-        peripheral::do_action(self.addr, "setStationName", &args).await?;
+        peripheral::book_action(self.addr, "setStationName", &args);
+    }
+
+    pub fn read_last_set_station_name(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setStationName")?;
         Ok(())
     }
 
     /// 列車が存在するかどうかを取得する。
-    pub async fn is_train_present(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_is_train_present(&mut self) {
+        peripheral::book_request(
             self.addr,
             "isTrainPresent",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_is_train_present(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isTrainPresent")?;
         peripheral::decode(&data)
     }
 
@@ -116,13 +141,16 @@ impl Station {
     }
 
     /// 列車が間もなく到着するかどうかを取得する。
-    pub async fn is_train_imminent(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_is_train_imminent(&mut self) {
+        peripheral::book_request(
             self.addr,
             "isTrainImminent",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_is_train_imminent(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isTrainImminent")?;
         peripheral::decode(&data)
     }
 
@@ -137,13 +165,16 @@ impl Station {
     }
 
     /// 列車が経路上にあるかどうかを取得する。
-    pub async fn is_train_enroute(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_is_train_enroute(&mut self) {
+        peripheral::book_request(
             self.addr,
             "isTrainEnroute",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_is_train_enroute(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isTrainEnroute")?;
         peripheral::decode(&data)
     }
 
@@ -158,13 +189,16 @@ impl Station {
     }
 
     /// 列車名を取得する。
-    pub async fn get_train_name(&self) -> Result<String, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_train_name(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getTrainName",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_train_name(&self) -> Result<String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getTrainName")?;
         peripheral::decode(&data)
     }
 
@@ -179,20 +213,27 @@ impl Station {
     }
 
     /// 列車名を設定する。
-    pub async fn set_train_name(&self, name: &str) -> Result<(), PeripheralError> {
+    pub fn book_next_set_train_name(&mut self, name: &str) {
         let args = msgpack::array(&[msgpack::str(name)]);
-        peripheral::do_action(self.addr, "setTrainName", &args).await?;
+        peripheral::book_action(self.addr, "setTrainName", &args);
+    }
+
+    pub fn read_last_set_train_name(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setTrainName")?;
         Ok(())
     }
 
     /// スケジュールが存在するかどうかを取得する。
-    pub async fn has_schedule(&self) -> Result<bool, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_has_schedule(&mut self) {
+        peripheral::book_request(
             self.addr,
             "hasSchedule",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_has_schedule(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "hasSchedule")?;
         peripheral::decode(&data)
     }
 
@@ -207,15 +248,18 @@ impl Station {
     }
 
     /// スケジュールを取得する。
-    pub async fn get_schedule(
-        &self,
-    ) -> Result<BTreeMap<String, Value>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_schedule(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getSchedule",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_schedule(
+        &self,
+    ) -> Result<BTreeMap<String, Value>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getSchedule")?;
         peripheral::decode(&data)
     }
 
@@ -232,25 +276,30 @@ impl Station {
     }
 
     /// スケジュールを設定する。
-    pub async fn set_schedule(
-        &self,
+    pub fn book_next_set_schedule(
+        &mut self,
         schedule: &BTreeMap<String, Value>,
     ) -> Result<(), PeripheralError> {
         let encoded = peripheral::encode(schedule)?;
         let args = msgpack::array(&[encoded]);
-        peripheral::do_action(self.addr, "setSchedule", &args).await?;
+        peripheral::book_action(self.addr, "setSchedule", &args);
+        Ok(())
+    }
+
+    pub fn read_last_set_schedule(&self) -> Result<(), PeripheralError> {
+        let _ = peripheral::read_result(self.addr, "setSchedule")?;
         Ok(())
     }
 
     /// 列車が指定駅に到達可能かどうかを取得する。
     /// 戻り値は (reachable, reason) のタプル。
-    pub async fn can_train_reach(
-        &self,
-        dest: &str,
-    ) -> Result<(bool, Option<String>), PeripheralError> {
+    pub fn book_next_can_train_reach(&mut self, dest: &str) {
         let args = msgpack::array(&[msgpack::str(dest)]);
-        let data =
-            peripheral::request_info(self.addr, "canTrainReach", &args).await?;
+        peripheral::book_request(self.addr, "canTrainReach", &args);
+    }
+
+    pub fn read_last_can_train_reach(&self) -> Result<(bool, Option<String>), PeripheralError> {
+        let data = peripheral::read_result(self.addr, "canTrainReach")?;
         peripheral::decode(&data)
     }
 
@@ -267,13 +316,13 @@ impl Station {
 
     /// 指定駅までの距離を取得する。
     /// 戻り値は (distance, reason) のタプル。
-    pub async fn distance_to(
-        &self,
-        dest: &str,
-    ) -> Result<(Option<f64>, Option<String>), PeripheralError> {
+    pub fn book_next_distance_to(&mut self, dest: &str) {
         let args = msgpack::array(&[msgpack::str(dest)]);
-        let data =
-            peripheral::request_info(self.addr, "distanceTo", &args).await?;
+        peripheral::book_request(self.addr, "distanceTo", &args);
+    }
+
+    pub fn read_last_distance_to(&self) -> Result<(Option<f64>, Option<String>), PeripheralError> {
+        let data = peripheral::read_result(self.addr, "distanceTo")?;
         peripheral::decode(&data)
     }
 
@@ -291,40 +340,54 @@ impl Station {
     // ====== イベント系 / Events ======
 
     /// 列車到着イベントを 1tick 待機して取得する。来なければ None。
-    pub async fn try_pull_train_arrive(&self) -> Result<Option<()>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_try_pull_train_arrive(&mut self) {
+        peripheral::book_request(
             self.addr,
             "try_pull_train_arrive",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_try_pull_train_arrive(&self) -> Result<Option<()>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "try_pull_train_arrive")?;
         peripheral::decode(&data)
     }
 
     /// 列車到着イベントを受信するまで待機する。
     pub async fn pull_train_arrive(&self) -> Result<(), PeripheralError> {
         loop {
-            if let Some(v) = self.try_pull_train_arrive().await? {
+            peripheral::book_request(self.addr, "try_pull_train_arrive", &msgpack::array(&[]));
+            crate::wait_for_next_tick().await;
+            let data = peripheral::read_result(self.addr, "try_pull_train_arrive")?;
+            let result: Option<()> = peripheral::decode(&data)?;
+            if let Some(v) = result {
                 return Ok(v);
             }
         }
     }
 
     /// 列車出発イベントを 1tick 待機して取得する。来なければ None。
-    pub async fn try_pull_train_depart(&self) -> Result<Option<()>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_try_pull_train_depart(&mut self) {
+        peripheral::book_request(
             self.addr,
             "try_pull_train_depart",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_try_pull_train_depart(&self) -> Result<Option<()>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "try_pull_train_depart")?;
         peripheral::decode(&data)
     }
 
     /// 列車出発イベントを受信するまで待機する。
     pub async fn pull_train_depart(&self) -> Result<(), PeripheralError> {
         loop {
-            if let Some(v) = self.try_pull_train_depart().await? {
+            peripheral::book_request(self.addr, "try_pull_train_depart", &msgpack::array(&[]));
+            crate::wait_for_next_tick().await;
+            let data = peripheral::read_result(self.addr, "try_pull_train_depart")?;
+            let result: Option<()> = peripheral::decode(&data)?;
+            if let Some(v) = result {
                 return Ok(v);
             }
         }

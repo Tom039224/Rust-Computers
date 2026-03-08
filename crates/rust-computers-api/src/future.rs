@@ -16,6 +16,57 @@ use core::task::{Context, Poll};
 use crate::error::BridgeError;
 use crate::ffi;
 
+// ==================================================================
+// WaitForNextTickFuture — book-read パターンの tick 境界
+// WaitForNextTickFuture — tick boundary for the book-read pattern
+// ==================================================================
+
+/// 次の Game Tick まで待機する Future。
+/// A future that waits until the next game tick.
+///
+/// ## 動作 / Behavior
+///
+/// 1. 初回 poll: 全予約リクエストを FFI 経由で発行 → `Poll::Pending`
+/// 2. 以降の poll: 全 in-flight をポーリング → 全完了なら `Poll::Ready(())`
+///
+/// 1. First poll: flush all booked requests via FFI → `Poll::Pending`
+/// 2. Subsequent polls: poll all in-flight → `Poll::Ready(())` when all done
+pub struct WaitForNextTickFuture {
+    first_poll: bool,
+}
+
+impl WaitForNextTickFuture {
+    /// 新しい WaitForNextTickFuture を生成する。
+    /// Create a new WaitForNextTickFuture.
+    pub fn new() -> Self {
+        Self { first_poll: true }
+    }
+}
+
+impl Future for WaitForNextTickFuture {
+    type Output = ();
+
+    fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<()> {
+        let this = unsafe { self.get_unchecked_mut() };
+
+        if this.first_poll {
+            this.first_poll = false;
+            // 全予約リクエストを FFI 経由で発行
+            // Flush all booked requests via FFI
+            crate::book_store::flush();
+            return Poll::Pending;
+        }
+
+        // 全 in-flight リクエストをポーリング
+        // Poll all in-flight requests
+        if crate::book_store::poll_all() {
+            Poll::Ready(())
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
 /// ホスト関数の非同期結果を表す Future。
 /// A future representing an asynchronous host function result.
 ///

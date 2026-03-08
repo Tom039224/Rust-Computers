@@ -36,6 +36,7 @@ extern crate alloc;
 
 // モジュール宣言 / Module declarations
 pub mod allocator;
+pub mod book_store;
 pub mod error;
 pub mod executor;
 pub mod ffi;
@@ -72,9 +73,31 @@ pub mod advanced_peripherals;
 pub use error::BridgeError;
 pub use error::PeripheralError;
 pub use future::RequestFuture;
+pub use future::WaitForNextTickFuture;
 pub use io::read_line;
 pub use msgpack::Value;
 pub use peripheral::Direction;
+
+/// 次の Game Tick まで待機する Future を返す。
+/// Returns a future that waits until the next game tick.
+///
+/// `book_next_*()` で予約した全リクエストが FFI 経由で一括発行され、
+/// 結果が揃うまで yield する。
+///
+/// All requests booked via `book_next_*()` are flushed via FFI in batch,
+/// and execution yields until all results are ready.
+///
+/// # 使い方 / Usage
+/// ```rust,no_run
+/// loop {
+///     let data = sensor.read_last_get_data();
+///     sensor.book_next_get_data();
+///     wait_for_next_tick().await;
+/// }
+/// ```
+pub fn wait_for_next_tick() -> WaitForNextTickFuture {
+    WaitForNextTickFuture::new()
+}
 
 /// エントリーポイントマクロ。
 /// Entry-point macro that generates `wasm_init()` and `wasm_tick()` exports.

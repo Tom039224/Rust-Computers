@@ -24,13 +24,16 @@ impl Peripheral for Stressometer {
 
 impl Stressometer {
     /// 現在のストレス値を取得する。
-    pub async fn get_stress(&self) -> Result<f32, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_stress(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getStress",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_stress(&self) -> Result<f32, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getStress")?;
         peripheral::decode(&data)
     }
 
@@ -45,13 +48,16 @@ impl Stressometer {
     }
 
     /// ストレス容量を取得する。
-    pub async fn get_stress_capacity(&self) -> Result<f32, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_get_stress_capacity(&mut self) {
+        peripheral::book_request(
             self.addr,
             "getStressCapacity",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_get_stress_capacity(&self) -> Result<f32, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getStressCapacity")?;
         peripheral::decode(&data)
     }
 
@@ -66,20 +72,27 @@ impl Stressometer {
     }
 
     /// 過負荷イベントを 1tick 待機して取得する。来なければ None。
-    pub async fn try_pull_overstressed(&self) -> Result<Option<()>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_try_pull_overstressed(&mut self) {
+        peripheral::book_request(
             self.addr,
             "try_pull_overstressed",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_try_pull_overstressed(&self) -> Result<Option<()>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "try_pull_overstressed")?;
         peripheral::decode(&data)
     }
 
     /// 過負荷イベントを受信するまで待機する。
     pub async fn pull_overstressed(&self) -> Result<(), PeripheralError> {
         loop {
-            if let Some(v) = self.try_pull_overstressed().await? {
+            peripheral::book_request(self.addr, "try_pull_overstressed", &msgpack::array(&[]));
+            crate::wait_for_next_tick().await;
+            let data = peripheral::read_result(self.addr, "try_pull_overstressed")?;
+            let result: Option<()> = peripheral::decode(&data)?;
+            if let Some(v) = result {
                 return Ok(v);
             }
         }
@@ -87,15 +100,16 @@ impl Stressometer {
 
     /// ストレス変化イベントを 1tick 待機して取得する。来なければ None。
     /// 戻り値は (stress, capacity) のタプル。
-    pub async fn try_pull_stress_change(
-        &self,
-    ) -> Result<Option<(f32, f32)>, PeripheralError> {
-        let data = peripheral::request_info(
+    pub fn book_next_try_pull_stress_change(&mut self) {
+        peripheral::book_request(
             self.addr,
             "try_pull_stress_change",
             &msgpack::array(&[]),
-        )
-        .await?;
+        );
+    }
+
+    pub fn read_last_try_pull_stress_change(&self) -> Result<Option<(f32, f32)>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "try_pull_stress_change")?;
         peripheral::decode(&data)
     }
 
@@ -103,7 +117,11 @@ impl Stressometer {
     /// 戻り値は (stress, capacity) のタプル。
     pub async fn pull_stress_change(&self) -> Result<(f32, f32), PeripheralError> {
         loop {
-            if let Some(v) = self.try_pull_stress_change().await? {
+            peripheral::book_request(self.addr, "try_pull_stress_change", &msgpack::array(&[]));
+            crate::wait_for_next_tick().await;
+            let data = peripheral::read_result(self.addr, "try_pull_stress_change")?;
+            let result: Option<(f32, f32)> = peripheral::decode(&data)?;
+            if let Some(v) = result {
                 return Ok(v);
             }
         }
