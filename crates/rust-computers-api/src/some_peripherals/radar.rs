@@ -31,6 +31,14 @@ use super::ballistic_accelerator::SPCoordinate;
 //   nickname: String               (players when config enabled)
 // -----------------------------------------------------------------------
 
+/// 3次元座標 / 3D position.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct SPPosition {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
 /// msgpack デコード用の生構造体。
 /// Raw helper struct for msgpack deserialization.
 #[derive(Deserialize)]
@@ -56,15 +64,10 @@ struct SPEntityInfoRaw {
 
 /// エンティティ情報。
 /// `name` にはプレイヤーなら `nickname`、それ以外なら `entity_type` が入る。
-/// `x`/`y`/`z` は Lua の `pos` リストから展開される。
 #[derive(Debug, Clone, Serialize)]
 pub struct SPEntityInfo {
-    /// X 座標 (pos[0])
-    pub x: f64,
-    /// Y 座標 (pos[1])
-    pub y: f64,
-    /// Z 座標 (pos[2])
-    pub z: f64,
+    /// 3次元座標
+    pub pos: SPPosition,
     /// エンティティ表示名: プレイヤーは nickname、それ以外は entity_type
     /// Display name: nickname for players, entity_type for others
     pub name: String,
@@ -87,6 +90,7 @@ impl<'de> Deserialize<'de> for SPEntityInfo {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let raw = SPEntityInfoRaw::deserialize(deserializer)?;
         let [x, y, z] = raw.pos.unwrap_or([0.0, 0.0, 0.0]);
+        let pos = SPPosition { x, y, z };
         let entity_type = raw.entity_type.unwrap_or_default();
         let is_player = raw.is_player.unwrap_or(false);
         let name = if is_player {
@@ -95,9 +99,7 @@ impl<'de> Deserialize<'de> for SPEntityInfo {
             entity_type.clone()
         };
         Ok(SPEntityInfo {
-            x,
-            y,
-            z,
+            pos,
             name,
             entity_type,
             is_entity: raw.is_entity,
