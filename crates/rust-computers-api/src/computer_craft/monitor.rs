@@ -73,6 +73,16 @@ pub struct MonitorSize {
     pub y: u32,
 }
 
+/// タッチイベントのキャラクター座標（1-indexed）。
+/// Touch event character cell coordinate (1-indexed).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TouchEvent {
+    /// 列 (1 ≤ x ≤ width) / Column (1-indexed)
+    pub x: i32,
+    /// 行 (1 ≤ y ≤ height) / Row (1-indexed)
+    pub y: i32,
+}
+
 /// モニターペリフェラル（通常 / アドバンスド共通）。
 /// Monitor peripheral (unified for normal and advanced).
 pub struct Monitor {
@@ -339,5 +349,58 @@ impl Monitor {
             .into_iter()
             .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
             .collect()
+    }
+
+    // ====== アドバンスドモニター判定 / Advanced monitor check ======
+
+    /// アドバンスドモニター（colored）かどうかを即時返す。
+    /// Returns whether this is an advanced (colored) monitor.
+    pub fn is_advanced_imm(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::request_info_imm(
+            self.addr,
+            "isAdvanced",
+            &msgpack::array(&[]),
+        )?;
+        peripheral::decode(&data)
+    }
+
+    // ====== タッチイベント / Touch events ======
+
+    /// 1tick 分のタッチイベントをポーリングする（非ブロッキング）。
+    /// Poll for one pending touch event without blocking (non-blocking variant).
+    ///
+    /// タッチイベントが無ければ `Ok(None)`、あれば `Ok(Some(TouchEvent))` を返す。
+    /// Returns `Ok(None)` if no touch is queued, `Ok(Some(TouchEvent))` otherwise.
+    pub fn book_next_try_poll_touch(&mut self) {
+        peripheral::book_request(self.addr, "pollTouch", &msgpack::array(&[]));
+    }
+    pub fn read_last_try_poll_touch(&self) -> Result<Option<TouchEvent>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "pollTouch")?;
+        let result: Option<(i32, i32)> = peripheral::decode(&data)?;
+        Ok(result.map(|(x, y)| TouchEvent { x, y }))
+    }
+
+    /// タッチイベントが来るまで待機する Future。
+    /// Async: wait until a touch event arrives.
+    ///
+    /// # 使い方 / Usage
+    /// ```rust,no_run
+    /// let event = monitor.poll_touch().await?;
+    /// rc::println!("touched at ({}, {})", event.x, event.y);
+    /// ```
+    pub async fn poll_touch(&self) -> Result<TouchEvent, PeripheralError> {
+        loop {
+            peripheral::book_request(
+                self.addr,
+                "pollTouch",
+                &crate::msgpack::array(&[]),
+            );
+            crate::wait_for_next_tick().await;
+            let data = peripheral::read_result(self.addr, "pollTouch")?;
+            let result: Option<(i32, i32)> = peripheral::decode(&data)?;
+            if let Some((x, y)) = result {
+                return Ok(TouchEvent { x, y });
+            }
+        }
     }
 }

@@ -8,5 +8,5 @@ pub mod speaker;
 
 pub use inventory::{Inventory, ItemDetail, SlotInfo};
 pub use modem::{Modem, ReceiveData};
-pub use monitor::{Monitor, MonitorColor, MonitorPosition, MonitorSize, MonitorTextScale};
+pub use monitor::{Monitor, MonitorColor, MonitorPosition, MonitorSize, MonitorTextScale, TouchEvent};
 pub use speaker::{Speaker, SpeakerInstrument};
