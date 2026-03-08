@@ -1,4 +1,4 @@
-//! CC:Tweaked Monitor書き込みテスト / Monitor write test.
+//! CC:Tweaked Monitor 書き込みテスト / Monitor write test.
 //!
 //! ## Build
 //! ```sh
@@ -10,11 +10,35 @@
 //! `/rc load test_monitor` in game.
 //!
 //! ## What is tested
-//! - `is_mod_available("computercraft")` — CC availability check
-//! - Auto-detect monitor in 6 directions (uses `Monitor::new(dir).clear()`)
-//! - `parallel!` macro: fetch size + is_advanced + text_scale in 1 tick
-//! - All drawing APIs via the auto-generated `Monitor` struct
-//!   (written by build.rs from `peripherals/computer_craft/monitor.toml`)
+//! - `peripheral::is_mod_available("computercraft")` — CC availability check
+//! - Auto-detect monitor via `peripheral::find_imm::<Monitor>()` (v0.2.0+ API)
+//! - Immediate queries: `get_size_imm()` / `get_text_scale_imm()`
+//! - Drawing via `book_next_*()` + `rc::wait_for_next_tick().await` + `read_last_*()`
+//! - Color, scroll, and cursor tests
+//!
+//! ## v0.2.0+ API の基本パターン / Basic pattern of v0.2.0+ API
+//!
+//! v0.1.x とは違い、Monitor のメソッドは `async fn` ではありません。
+//! Unlike v0.1.x, Monitor methods are NOT async functions.
+//! 代わりに以下のパターンを使いましょう:
+//! Instead, use this pattern:
+//!
+//! ```ignore
+//! // 1. 1つ以上のアクションをキューに入れる / Book one or more actions
+//! mon.book_next_write("text");
+//! mon.book_next_set_cursor_pos(MonitorPosition { x: 1, y: 2 });
+//!
+//! // 2. 1ティックで全部フラッシュ / Flush all in ONE tick
+//! rc::wait_for_next_tick().await;
+//!
+//! // 3. 結果を読む / Read the results
+//! for r in mon.read_last_write() { r.unwrap(); }
+//! ```
+//!
+//! `wait_for_next_tick().await` を1回呼ぶだけで、その前の全 `book_next_*()` 呼び出しが
+//! まとめて送信されます（何回呼んでも1ティック分の遅延のみ）。
+//! One `wait_for_next_tick().await` flushes ALL preceding `book_next_*()` calls
+//! together (only one game-tick of latency regardless of how many were booked).
 
 #![no_std]
 #![no_main]
@@ -24,45 +48,21 @@ extern crate alloc;
 use alloc::format;
 
 use rust_computers_api as rc;
-use rc::computer_craft::monitor::Monitor;
-use rc::peripheral::{Direction, is_mod_available};
+use rc::computer_craft::monitor::{Monitor, MonitorColor, MonitorPosition, MonitorTextScale};
+use rc::peripheral;
 
 rc::entry!(main);
-
-// CC:Tweaked color constants (bitmask form, same as colors.* in Lua)
-const COLOR_WHITE:      i32 = 1;
-const COLOR_ORANGE:     i32 = 2;
-const COLOR_MAGENTA:    i32 = 4;
-const COLOR_LIGHT_BLUE: i32 = 8;
-const COLOR_YELLOW:     i32 = 16;
-const COLOR_LIME:       i32 = 32;
-const COLOR_PINK:       i32 = 64;
-#[allow(dead_code)]
-const COLOR_GRAY:       i32 = 128;
-#[allow(dead_code)]
-const COLOR_LIGHT_GRAY: i32 = 256;
-const COLOR_CYAN:       i32 = 512;
-#[allow(dead_code)]
-const COLOR_PURPLE:     i32 = 1024;
-#[allow(dead_code)]
-const COLOR_BLUE:       i32 = 2048;
-#[allow(dead_code)]
-const COLOR_BROWN:      i32 = 4096;
-#[allow(dead_code)]
-const COLOR_GREEN:      i32 = 8192;
-#[allow(dead_code)]
-const COLOR_RED:        i32 = 16384;
-const COLOR_BLACK:      i32 = 32768;
 
 async fn main() {
     rc::println!("╔══════════════════════════════════════════╗");
     rc::println!("║   CC:Tweaked Monitor Write Test          ║");
+    rc::println!("║   (v0.2.0+ API)                          ║");
     rc::println!("╚══════════════════════════════════════════╝");
 
     // ---------------------------------------------------------------
     // Step 1: CC:Tweaked availability
     // ---------------------------------------------------------------
-    let cc_ok = is_mod_available("computercraft");
+    let cc_ok = peripheral::is_mod_available("computercraft");
     rc::println!("[1] CC:Tweaked available: {}", cc_ok);
     if !cc_ok {
         rc::println!("ERROR: CC:Tweaked is not loaded. Aborting.");
@@ -70,153 +70,180 @@ async fn main() {
     }
 
     // ---------------------------------------------------------------
-    // Step 2: Scan 6 directions for a monitor.
+    // Step 2: Find a monitor.
     //
-    // `clear()` is a do_action call (world-modifying) so it enforces
-    // the 1-tick delay principle: if the peripheral isn't present the
-    // result comes back as an error on the next tick.
+    // `peripheral::find_imm::<Monitor>()` scans all 6 adjacent directions
+    // synchronously (no async, no tick needed) and returns a Vec of all
+    // found Monitor peripherals.
+    //
+    // v0.1.x の `Monitor::new(dir)` は v0.2.0+ では廃止されました。
+    // `Monitor::new(dir)` from v0.1.x is removed in v0.2.0+.
     // ---------------------------------------------------------------
-    rc::println!("[2] Scanning 6 directions for a CC Monitor...");
-    let dirs: [(Direction, &str); 6] = [
-        (Direction::Down,  "Down"),
-        (Direction::Up,    "Up"),
-        (Direction::North, "North"),
-        (Direction::South, "South"),
-        (Direction::West,  "West"),
-        (Direction::East,  "East"),
-    ];
-    let mut monitor_dir: Option<Direction> = None;
-    for (dir, name) in dirs.iter() {
-        rc::println!("  Trying {}...", name);
-        match Monitor::new(*dir).clear().await {
-            Ok(_) => {
-                rc::println!("  -> Monitor found at {}!", name);
-                monitor_dir = Some(*dir);
-                break;
-            }
-            Err(e) => {
-                rc::println!("  -> No monitor (err: {:?})", e);
-            }
-        }
+    rc::println!("[2] Searching for a CC Monitor (peripheral::find_imm)...");
+    let monitors = peripheral::find_imm::<Monitor>();
+    if monitors.is_empty() {
+        rc::println!("ERROR: No CC:Tweaked Monitor found adjacent to this computer.");
+        rc::println!("  -> Place a monitor next to the computer and try again.");
+        return;
     }
-    let dir = match monitor_dir {
-        Some(d) => d,
-        None => {
-            rc::println!("ERROR: No CC:Tweaked Monitor found in any direction.");
-            return;
+    let mut mon = monitors.into_iter().next().unwrap();
+    rc::println!("  Monitor found.");
+
+    // ---------------------------------------------------------------
+    // Step 3: Immediate queries (no tick needed).
+    //
+    // `_imm()` variants execute synchronously via `host_request_info_imm`.
+    // Use these for read-only "getXxx" calls that don't modify the world.
+    // ---------------------------------------------------------------
+    rc::println!("[3] Immediate queries (get_size_imm, get_text_scale_imm)...");
+    let (width, height) = match mon.get_size_imm() {
+        Ok(sz) => {
+            rc::println!("  Size: {}x{}", sz.x, sz.y);
+            (sz.x, sz.y)
+        }
+        Err(e) => {
+            rc::println!("  get_size_imm() failed: {:?}", e);
+            (26, 10) // fallback
         }
     };
-
-    // All subsequent operations share this wrapper.
-    let mon = Monitor::new(dir);
-
-    // ---------------------------------------------------------------
-    // Step 3: parallel! — fetch multiple info values in a single tick.
-    //
-    // All three Futures are dispatched at GT:N.
-    // Results arrive at GT:N+1 — one tick total regardless of count.
-    //
-    // Syntax: rc::parallel!(future_a, future_b, future_c).await
-    //         returns (Result<A, _>, Result<B, _>, Result<C, _>)
-    // ---------------------------------------------------------------
-    rc::println!("[3] Parallel fetch: size + is_advanced + text_scale (1 tick)...");
-    let (size_res, advanced_res, scale_res) = rc::parallel!(
-        mon.get_size(),
-        mon.is_advanced(),
-        mon.get_text_scale(),
-    ).await;
-    let (width, height) = size_res.unwrap_or((26, 10));
-    let is_advanced      = advanced_res.unwrap_or(false);
-    let _scale           = scale_res.unwrap_or(10);
-    rc::println!("    size={}x{}  advanced={}  scale={}", width, height, is_advanced, _scale);
-
-    // ---------------------------------------------------------------
-    // Step 4: set text scale to 1.0 (internal unit: x10 = 10)
-    // ---------------------------------------------------------------
-    rc::println!("[4] Setting text scale to 1.0...");
-    if let Err(e) = mon.set_text_scale(10).await {
-        rc::println!("    setTextScale() warning: {:?}", e);
+    match mon.get_text_scale_imm() {
+        Ok(s)  => rc::println!("  Text scale: {}", s.0),
+        Err(e) => rc::println!("  get_text_scale_imm() failed: {:?}", e),
     }
 
     // ---------------------------------------------------------------
-    // Step 5: basic write test
+    // Step 4: Set text scale to 1.0.
+    //
+    // Action methods MUST be followed by wait_for_next_tick().await.
+    // Before that call, the action is only "booked" (queued), not sent.
     // ---------------------------------------------------------------
-    rc::println!("[5] Basic write test...");
-    let _ = mon.set_background_color(COLOR_BLACK).await;
-    let _ = mon.clear().await;
-
-    // Header row — green
-    let _ = mon.set_text_color(COLOR_LIME).await;
-    let _ = mon.set_cursor_pos(1, 1).await;
-    let _ = mon.write("=== RustComputers Monitor Test ===").await;
-
-    // Info row — cyan
-    let _ = mon.set_text_color(COLOR_LIGHT_BLUE).await;
-    let _ = mon.set_cursor_pos(1, 2).await;
-    let _ = mon.write(&format!("Size: {}x{}  Advanced: {}", width, height, is_advanced)).await;
-
-    let _ = mon.set_cursor_pos(1, 3).await;
-    let _ = mon.write("Hello from Rust!").await;
-
-    // Computer ID row — white
-    let _ = mon.set_text_color(COLOR_WHITE).await;
-    let _ = mon.set_cursor_pos(1, 4).await;
-    let _ = mon.write(&format!("Computer ID: {}", rc::io::computer_id())).await;
-
-    rc::println!("    Basic write OK");
+    rc::println!("[4] Setting text scale to 1.0 (book + tick + read)...");
+    mon.book_next_set_text_scale(MonitorTextScale::SIZE_1_0);
+    rc::wait_for_next_tick().await;
+    for r in mon.read_last_set_text_scale() {
+        if let Err(e) = r {
+            rc::println!("  set_text_scale warning: {:?}", e);
+        }
+    }
 
     // ---------------------------------------------------------------
-    // Step 6: color bar test
+    // Step 5: Basic write test — batch multiple ops in ONE tick.
+    //
+    // 全部の book_next_*() を1回の wait_for_next_tick().await でフラッシュ。
+    // All book_next_*() calls are flushed together in a single tick.
+    // ---------------------------------------------------------------
+    rc::println!("[5] Basic write test (batch in 1 tick)...");
+
+    // 背景を黒にして画面クリア / Set background black and clear screen
+    mon.book_next_set_background_color(MonitorColor::BLACK);
+    mon.book_next_clear();
+
+    // ヘッダー行 (lime) / Header row (lime)
+    mon.book_next_set_text_color(MonitorColor::LIME);
+    mon.book_next_set_cursor_pos(MonitorPosition { x: 1, y: 1 });
+    mon.book_next_write("=== RustComputers Monitor Test ===");
+
+    // 情報行 (light blue) / Info row (light blue)
+    mon.book_next_set_text_color(MonitorColor::LIGHT_BLUE);
+    mon.book_next_set_cursor_pos(MonitorPosition { x: 1, y: 2 });
+    mon.book_next_write(&format!("Size: {}x{}", width, height));
+
+    // Hello 行 (white) / Hello row (white)
+    mon.book_next_set_text_color(MonitorColor::WHITE);
+    mon.book_next_set_cursor_pos(MonitorPosition { x: 1, y: 3 });
+    mon.book_next_write("Hello from Rust! (v0.2.0+ API)");
+
+    // フラッシュ (1ティック) / Flush (1 tick)
+    rc::wait_for_next_tick().await;
+
+    // 結果確認 / Check results
+    let write_results = mon.read_last_write();
+    let ok_count  = write_results.iter().filter(|r| r.is_ok()).count();
+    let err_count = write_results.iter().filter(|r| r.is_err()).count();
+    rc::println!("  write() results: {} ok, {} errors", ok_count, err_count);
+    if err_count > 0 {
+        rc::println!("  FAIL: write calls returned errors!");
+        for r in write_results.into_iter().filter(|r| r.is_err()) {
+            rc::println!("    {:?}", r.unwrap_err());
+        }
+    } else {
+        rc::println!("  PASS: all writes succeeded.");
+    }
+
+    // ---------------------------------------------------------------
+    // Step 6: Color bar test
     // ---------------------------------------------------------------
     rc::println!("[6] Color bar test...");
-    let colors: &[(i32, &str)] = &[
-        (COLOR_WHITE,      "WH"),
-        (COLOR_ORANGE,     "OR"),
-        (COLOR_MAGENTA,    "MG"),
-        (COLOR_LIGHT_BLUE, "LB"),
-        (COLOR_YELLOW,     "YL"),
-        (COLOR_LIME,       "LM"),
-        (COLOR_PINK,       "PK"),
-        (COLOR_CYAN,       "CY"),
+
+    // MonitorColor 定数は CC bitmask 値 (1, 2, 4, ..., 32768)。
+    // MonitorColor constants are CC bitmask values (1, 2, 4, ..., 32768).
+    let colors: &[(MonitorColor, &str)] = &[
+        (MonitorColor::WHITE,      "WH"),
+        (MonitorColor::ORANGE,     "OR"),
+        (MonitorColor::MAGENTA,    "MG"),
+        (MonitorColor::LIGHT_BLUE, "LB"),
+        (MonitorColor::YELLOW,     "YL"),
+        (MonitorColor::LIME,       "LM"),
+        (MonitorColor::PINK,       "PK"),
+        (MonitorColor::CYAN,       "CY"),
     ];
-    let row = 6i32;
-    let _ = mon.set_text_color(COLOR_WHITE).await;
-    let _ = mon.set_cursor_pos(1, row).await;
-    let _ = mon.write("Colors: ").await;
+    mon.book_next_set_background_color(MonitorColor::BLACK);
+    mon.book_next_set_text_color(MonitorColor::WHITE);
+    mon.book_next_set_cursor_pos(MonitorPosition { x: 1, y: 5 });
+    mon.book_next_write("Colors:");
     for (i, (color, label)) in colors.iter().enumerate() {
-        let _ = mon.set_text_color(*color).await;
-        let _ = mon.set_background_color(COLOR_BLACK).await;
-        let _ = mon.set_cursor_pos(9 + (i as i32) * 3, row).await;
-        let _ = mon.write(label).await;
+        mon.book_next_set_text_color(*color);
+        mon.book_next_set_cursor_pos(MonitorPosition { x: 9 + (i as u32) * 3, y: 5 });
+        mon.book_next_write(label);
     }
-    let _ = mon.set_background_color(COLOR_BLACK).await;
-    let _ = mon.set_text_color(COLOR_WHITE).await;
-    rc::println!("    Color test OK");
+    mon.book_next_set_text_color(MonitorColor::WHITE);
+    rc::wait_for_next_tick().await;
+    rc::println!("  Color bar draw done.");
 
     // ---------------------------------------------------------------
-    // Step 7: scroll test — write 5 lines then scroll up 3
+    // Step 7: Scroll test
     // ---------------------------------------------------------------
-    rc::println!("[7] Scroll test (3 lines up)...");
-    for i in 0..5i32 {
-        let _ = mon.set_cursor_pos(1, height - i).await;
-        let color = if i % 2 == 0 { COLOR_YELLOW } else { COLOR_CYAN };
-        let _ = mon.set_text_color(color).await;
-        let _ = mon.write(&format!("--- scroll line {} ---", i)).await;
+    rc::println!("[7] Scroll test (write 5 lines, then scroll up 3)...");
+    for i in 0u32..5 {
+        mon.book_next_set_text_color(if i % 2 == 0 { MonitorColor::YELLOW } else { MonitorColor::CYAN });
+        mon.book_next_set_cursor_pos(MonitorPosition { x: 1, y: 7 + i });
+        mon.book_next_write(&format!("--- scroll line {} ---", i + 1));
     }
-    let _ = mon.scroll(3).await;
-    rc::println!("    Scroll test OK");
+    rc::wait_for_next_tick().await;
+
+    mon.book_next_scroll(3);
+    rc::wait_for_next_tick().await;
+    rc::println!("  Scroll done.");
 
     // ---------------------------------------------------------------
-    // Step 8: completion line
+    // Step 8: getCursorPos via book / tick / read
     // ---------------------------------------------------------------
-    let _ = mon.set_text_color(COLOR_LIME).await;
-    let _ = mon.set_cursor_pos(1, height).await;
-    let _ = mon.write("TEST COMPLETE").await;
-    let _ = mon.set_text_color(COLOR_WHITE).await;
+    rc::println!("[8] getCursorPos via book/tick/read...");
+    mon.book_next_get_cursor_pos();
+    rc::wait_for_next_tick().await;
+    match mon.read_last_get_cursor_pos() {
+        Ok(pos) => rc::println!("  Cursor pos after scroll: ({}, {})", pos.x, pos.y),
+        Err(e)  => rc::println!("  getCursorPos failed: {:?}", e),
+    }
+
+    // ---------------------------------------------------------------
+    // Step 9: Completion line
+    // ---------------------------------------------------------------
+    mon.book_next_set_text_color(MonitorColor::LIME);
+    mon.book_next_set_cursor_pos(MonitorPosition { x: 1, y: height });
+    mon.book_next_write("TEST COMPLETE");
+    mon.book_next_set_text_color(MonitorColor::WHITE);
+    rc::wait_for_next_tick().await;
 
     rc::println!("");
     rc::println!("╔══════════════════════════════════════════╗");
     rc::println!("║   Monitor test COMPLETE                  ║");
     rc::println!("╚══════════════════════════════════════════╝");
     rc::println!("Check the in-game monitor for results.");
+    rc::println!("(Looping — Ctrl+C or /rc stop to halt)");
+
+    loop {
+        rc::wait_for_next_tick().await;
+    }
+
 }

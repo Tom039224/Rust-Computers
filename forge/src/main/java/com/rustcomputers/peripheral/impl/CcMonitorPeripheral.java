@@ -396,10 +396,11 @@ public class CcMonitorPeripheral implements PeripheralType {
                 if (mBESetTextScale == null) {
                     return MsgPack.nil(); // unsupported, silently ignore
                 }
-                // scaleX10 を受け取り → scale*2 (CC 内部形式) に変換
-                // Accept scaleX10 → convert to scale*2 (CC internal format)
-                int scaleX10 = getIntArg(args, 0, "scale");
-                double scale = scaleX10 / 10.0;
+                // Rust は float64 でスケール値 (0.5〜5.0) を送る → CC内部形式 scale*2 に変換
+                // Rust sends float64 scale value (0.5–5.0) → convert to CC internal format scale*2
+                int offset = MsgPack.argOffset(args, 0);
+                if (offset < 0) throw new PeripheralException("Missing argument: scale");
+                double scale = MsgPack.decodeF64(args, offset);
                 int ccScale = (int) Math.round(scale * 2);
                 ccScale = Math.max(1, Math.min(10, ccScale)); // clamp: 0.5x〜5.0x
                 mBESetTextScale.invoke(be, ccScale);

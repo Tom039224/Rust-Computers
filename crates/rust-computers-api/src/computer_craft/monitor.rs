@@ -14,28 +14,29 @@ use crate::peripheral::{self, PeriphAddr, Peripheral};
 pub struct MonitorColor(pub u32);
 
 impl MonitorColor {
-    pub const WHITE: Self = Self(0xF0F0F0);
-    pub const ORANGE: Self = Self(0xF2B233);
-    pub const MAGENTA: Self = Self(0xE57FD8);
-    pub const LIGHT_BLUE: Self = Self(0x99B2F2);
-    pub const YELLOW: Self = Self(0xDEDE6C);
-    pub const LIME: Self = Self(0x7FCC19);
-    pub const PINK: Self = Self(0xF2B2CC);
-    pub const GRAY: Self = Self(0x4C4C4C);
-    pub const LIGHT_GRAY: Self = Self(0x999999);
-    pub const CYAN: Self = Self(0x4C99B2);
-    pub const PURPLE: Self = Self(0xB266E5);
-    pub const BLUE: Self = Self(0x3366CC);
-    pub const BROWN: Self = Self(0x7F664C);
-    pub const GREEN: Self = Self(0x57A64E);
-    pub const RED: Self = Self(0xCC4C4C);
-    pub const BLACK: Self = Self(0x111111);
-
-    /// RGB 値からモニター色を作成する。
-    /// Create a monitor color from RGB values.
-    pub fn rgb(r: u8, g: u8, b: u8) -> Self {
-        Self(((r as u32) << 16) | ((g as u32) << 8) | (b as u32))
-    }
+    // CC:Tweaked カラービットマスク定数 (colors.* Lua 値と同じ)。
+    // CC:Tweaked color bitmask constants (same as `colors.*` in Lua).
+    //
+    // 各値は `1 << カラーインデックス(0-15)` であり、Java 側の
+    // `colourFromBitmask()` が期待する形式です。
+    // Each value is `1 << colorIndex(0-15)`, which is what Java's
+    // `colourFromBitmask()` expects.
+    pub const WHITE:      Self = Self(1);        // colors.white      (index  0)
+    pub const ORANGE:     Self = Self(2);        // colors.orange     (index  1)
+    pub const MAGENTA:    Self = Self(4);        // colors.magenta    (index  2)
+    pub const LIGHT_BLUE: Self = Self(8);        // colors.lightBlue  (index  3)
+    pub const YELLOW:     Self = Self(16);       // colors.yellow     (index  4)
+    pub const LIME:       Self = Self(32);       // colors.lime       (index  5)
+    pub const PINK:       Self = Self(64);       // colors.pink       (index  6)
+    pub const GRAY:       Self = Self(128);      // colors.gray       (index  7)
+    pub const LIGHT_GRAY: Self = Self(256);      // colors.lightGray  (index  8)
+    pub const CYAN:       Self = Self(512);      // colors.cyan       (index  9)
+    pub const PURPLE:     Self = Self(1024);     // colors.purple     (index 10)
+    pub const BLUE:       Self = Self(2048);     // colors.blue       (index 11)
+    pub const BROWN:      Self = Self(4096);     // colors.brown      (index 12)
+    pub const GREEN:      Self = Self(8192);     // colors.green      (index 13)
+    pub const RED:        Self = Self(16384);    // colors.red        (index 14)
+    pub const BLACK:      Self = Self(32768);    // colors.black      (index 15)
 }
 
 /// モニターテキストスケール (0.5–5.0, 0.5 刻み)。
