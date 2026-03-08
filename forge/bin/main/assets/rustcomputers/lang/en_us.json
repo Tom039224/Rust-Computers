@@ -1,0 +1,16 @@
+{
+  "block.rustcomputers.computer": "Rust Computer",
+  "item.rustcomputers.computer": "Rust Computer",
+  "itemGroup.rustcomputers": "RustComputers",
+  "gui.rustcomputers.computer.title": "Computer #%d",
+  "gui.rustcomputers.computer.status.stopped": "STOPPED",
+  "gui.rustcomputers.computer.status.running": "RUNNING",
+  "gui.rustcomputers.computer.status.crashed": "CRASHED",
+  "gui.rustcomputers.computer.input_placeholder": "Type here and press Enter...",
+  "gui.rustcomputers.computer.no_program": "(no program selected)",
+  "gui.rustcomputers.computer.drag_drop": "Drag & drop .wasm files here",
+  "message.rustcomputers.upload_success": "Uploaded %s successfully.",
+  "message.rustcomputers.upload_failed": "Upload failed: %s",
+  "message.rustcomputers.invalid_wasm": "Invalid WASM binary.",
+  "message.rustcomputers.file_too_large": "File too large (max %s)."
+}

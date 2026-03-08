@@ -6,11 +6,6 @@ import com.rustcomputers.network.NetworkHandler;
 import com.rustcomputers.peripheral.PeripheralProvider;
 import com.rustcomputers.peripheral.impl.CcMonitorPeripheral;
 import com.rustcomputers.peripheral.impl.PeripheralRegistrations;
-import com.rustcomputers.peripheral.impl.SomePeripheralsBallisticAcceleratorPeripheral;
-import com.rustcomputers.peripheral.impl.SomePeripheralsDigitizerPeripheral;
-import com.rustcomputers.peripheral.impl.SomePeripheralsRadarPeripheral;
-import com.rustcomputers.peripheral.impl.SomePeripheralsRaycasterPeripheral;
-import com.rustcomputers.peripheral.impl.SomePeripheralsWorldScannerPeripheral;
 import com.rustcomputers.peripheral.impl.VanillaInventoryPeripheral;
 import com.rustcomputers.peripheral.impl.VanillaRedstonePeripheral;
 import net.minecraft.core.Direction;
@@ -166,13 +161,6 @@ public class RustComputers {
                 registerCcMonitors();
             }
 
-            // --- Some Peripherals (オプション / optional) ---
-            // Some Peripherals がロードされている場合のみ登録する。
-            // Register only when Some Peripherals is loaded.
-            if (ModList.get().isLoaded("some_peripherals")) {
-                registerSomePeripherals();
-            }
-
             // --- CcGenericPeripheral を使った汎用ペリフェラル登録 ---
             // Generic peripheral registrations using CcGenericPeripheral bridge.
             // 各 Mod がロードされている場合のみ登録する。
@@ -233,34 +221,6 @@ public class RustComputers {
             LOGGER.info("  Registered CC peripheral: {}:{}", namespace, path);
         } else {
             LOGGER.warn("  CC block not found: {}:{}", namespace, path);
-        }
-    }
-
-    /**
-     * Some Peripherals ブロックをペリフェラルとして登録する。
-     * Register Some Peripherals blocks as peripherals.
-     *
-     * <p>{@code some_peripherals} Mod がロードされている場合にのみ呼び出す。</p>
-     * <p>Only called when the {@code some_peripherals} mod is loaded.</p>
-     */
-    private void registerSomePeripherals() {
-        registerSpBlock("some_peripherals", "radar",                   SomePeripheralsRadarPeripheral::new);
-        registerSpBlock("some_peripherals", "world_scanner",           SomePeripheralsWorldScannerPeripheral::new);
-        registerSpBlock("some_peripherals", "ballistic_accelerator",   SomePeripheralsBallisticAcceleratorPeripheral::new);
-        registerSpBlock("some_peripherals", "raycaster",               SomePeripheralsRaycasterPeripheral::new);
-        registerSpBlock("some_peripherals", "digitizer",               SomePeripheralsDigitizerPeripheral::new);
-        LOGGER.info("RustComputers: Some Peripherals peripherals registered");
-    }
-
-    @SuppressWarnings("deprecation")
-    private void registerSpBlock(String namespace, String path,
-                                 java.util.function.Supplier<com.rustcomputers.peripheral.PeripheralType> supplier) {
-        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(namespace, path));
-        if (block != null && block != Blocks.AIR) {
-            PeripheralProvider.register(block, supplier);
-            LOGGER.info("  Registered SP peripheral: {}:{}", namespace, path);
-        } else {
-            LOGGER.warn("  SP block not found: {}:{}", namespace, path);
         }
     }
 
