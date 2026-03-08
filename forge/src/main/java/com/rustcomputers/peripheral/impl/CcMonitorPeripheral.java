@@ -110,32 +110,6 @@ public class CcMonitorPeripheral implements PeripheralType {
      */
     @Nullable private static Method mCreateServerTerminal;
 
-    /**
-     * ServerMonitor.origin フィールド（final / package-private）。
-     * 書き込み後に MonitorWatcher.enqueue() へ渡す origin MonitorBlockEntity を取得するため使用する。
-     * ServerMonitor.origin field (final / package-private).
-     * Used to obtain the origin MonitorBlockEntity passed to MonitorWatcher.enqueue() after writes.
-     */
-    @Nullable private static java.lang.reflect.Field fServerMonitorOrigin;
-
-    /**
-     * MonitorWatcher.enqueue(MonitorBlockEntity) — パッケージプライベートの静的メソッド。
-     * ターミナル変更を今 tick 末のクライアント送信キューに直接追加する。
-     * TickScheduler → scheduleTick → blockTick の2tick 遅延経路をバイパスして確実に送信する。
-     * MonitorWatcher.enqueue(MonitorBlockEntity) — package-private static method.
-     * Directly enqueues terminal change for client dispatch at end of this tick,
-     * bypassing the TickScheduler → scheduleTick → blockTick 2-tick delay path.
-     */
-    @Nullable private static Method mMonitorWatcherEnqueue;
-
-    /**
-     * ServerMonitor.rebuild() — synchronized。
-     * terminal が null の場合（serverMonitor.reset() 後など）にターミナルを再構築する。
-     * ServerMonitor.rebuild() — synchronized.
-     * Rebuilds the terminal when it is null (e.g., after serverMonitor.reset()).
-     */
-    @Nullable private static Method mServerMonitorRebuild;
-
     private static boolean reflectionInitialized = false;
     private static boolean reflectionOk = false;
 
@@ -226,35 +200,6 @@ public class CcMonitorPeripheral implements PeripheralType {
                 mCreateServerTerminal.setAccessible(true);
             } catch (NoSuchMethodException ex) {
                 LOGGER.warn("CcMonitorPeripheral: createServerTerminal() not found — monitor init will fail");
-            }
-
-            // ServerMonitor.origin — final package-private field, accessible via reflection
-            try {
-                fServerMonitorOrigin = serverMonitorClass.getDeclaredField("origin");
-                fServerMonitorOrigin.setAccessible(true);
-            } catch (NoSuchFieldException ex) {
-                LOGGER.warn("CcMonitorPeripheral: ServerMonitor.origin field not found");
-            }
-
-            // MonitorWatcher.enqueue() — package-private static method
-            // MonitorWatcher.enqueue() — パッケージプライベートの静的メソッド
-            // Bypasses TickScheduler in favor of direct end-of-tick dispatch
-            try {
-                Class<?> monitorWatcherClass = Class.forName(
-                        "dan200.computercraft.shared.peripheral.monitor.MonitorWatcher");
-                mMonitorWatcherEnqueue = monitorWatcherClass.getDeclaredMethod("enqueue", monitorBeClass);
-                mMonitorWatcherEnqueue.setAccessible(true);
-                LOGGER.info("CcMonitorPeripheral: MonitorWatcher.enqueue() acquired via reflection");
-            } catch (Exception ex) {
-                LOGGER.warn("CcMonitorPeripheral: MonitorWatcher.enqueue() not found: {}", ex.getMessage());
-            }
-
-            // ServerMonitor.rebuild() — synchronized method for terminal reconstruction
-            try {
-                mServerMonitorRebuild = serverMonitorClass.getDeclaredMethod("rebuild");
-                mServerMonitorRebuild.setAccessible(true);
-            } catch (NoSuchMethodException ex) {
-                LOGGER.warn("CcMonitorPeripheral: ServerMonitor.rebuild() not found");
             }
 
             reflectionOk = true;
@@ -356,36 +301,10 @@ public class CcMonitorPeripheral implements PeripheralType {
             }
             Object terminal = mGetTerminal.invoke(serverMonitor);
             if (terminal == null) {
-                // terminal が null の場合（serverMonitor.reset() 後など）は rebuild() で再生成する。
-                // If terminal is null (e.g., after serverMonitor.reset()), rebuild it.
-                if (mServerMonitorRebuild != null) {
-                    LOGGER.debug("CcMonitorPeripheral: terminal null — calling rebuild() to reinitialize");
-                    mServerMonitorRebuild.invoke(serverMonitor);
-                    terminal = mGetTerminal.invoke(serverMonitor);
-                }
-                if (terminal == null) {
-                    throw new PeripheralException("Monitor terminal is null even after rebuild()");
-                }
+                throw new PeripheralException("Monitor terminal is null");
             }
 
-            byte[] result = dispatch(methodName, args, be, terminal);
-
-            // 書き込み後に MonitorWatcher.enqueue() を直接呼び、今 tick 末に確実にクライアントへ送信する。
-            // TickScheduler → scheduleTick → blockTick という2tick遅延経路をバイパスする。
-            // After a write, directly call MonitorWatcher.enqueue() to send the update at the end of
-            // this tick. This bypasses the TickScheduler → scheduleTick → blockTick 2-tick delay path.
-            if (mMonitorWatcherEnqueue != null && isWriteMethod(methodName)) {
-                try {
-                    Object originBe = (fServerMonitorOrigin != null)
-                            ? fServerMonitorOrigin.get(serverMonitor)
-                            : be;
-                    mMonitorWatcherEnqueue.invoke(null, originBe);
-                } catch (Exception ex) {
-                    LOGGER.debug("CcMonitorPeripheral: MonitorWatcher.enqueue() call failed: {}", ex.getMessage());
-                }
-            }
-
-            return result;
+            return dispatch(methodName, args, be, terminal);
 
         } catch (PeripheralException e) {
             throw e;
@@ -564,30 +483,5 @@ public class CcMonitorPeripheral implements PeripheralType {
             throw new PeripheralException("String argument '" + argName + "' truncated");
         }
         return new String(args, dataOffset, strLen, java.nio.charset.StandardCharsets.UTF_8);
-    }
-
-    /**
-     * 書き込み系メソッドかどうかを返す。
-     * MonitorWatcher.enqueue() はこれらのメソッドの後にのみ呼び出す（読み取り系は不要）。
-     * Returns true if this method name modifies the terminal and requires a
-     * MonitorWatcher.enqueue() call to flush the change to clients.
-     */
-    private static boolean isWriteMethod(String name) {
-        switch (name) {
-            case "clear":
-            case "clearLine":
-            case "setCursorPos":
-            case "write":
-            case "blit":
-            case "setTextColor":
-            case "setTextColour":
-            case "setBackgroundColor":
-            case "setBackgroundColour":
-            case "scroll":
-            case "setTextScale":
-                return true;
-            default:
-                return false;
-        }
     }
 }
