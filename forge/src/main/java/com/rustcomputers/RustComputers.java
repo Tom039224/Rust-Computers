@@ -316,8 +316,8 @@ public class RustComputers {
     }
 
     /**
-     * クライアント専用イベント。
-     * Client-side event handlers.
+     * クライアント専用イベント（MOD バス）。
+     * Client-side event handlers (MOD bus).
      */
     @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientEvents {
@@ -328,5 +328,27 @@ public class RustComputers {
         }
 
         private static final Logger LOGGER = LoggerFactory.getLogger(ClientEvents.class);
+    }
+
+    /**
+     * クライアント FORGE バスイベント — ワールド切替時のクリーンアップ。
+     * Client FORGE bus events — cleanup on world disconnect.
+     */
+    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+    public static class ClientForgeEvents {
+        /**
+         * ワールドからのログアウト時にクライアント側ログキャッシュをクリアする。
+         * これにより前ワールドのログが新ワールドの UI に表示される問題を防ぐ。
+         *
+         * Clear client-side log cache when logging out of a world.
+         * This prevents logs from a previous world leaking into the new world's UI.
+         */
+        @SubscribeEvent
+        public static void onClientDisconnect(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
+            com.rustcomputers.gui.ComputerScreen.clearLogCache();
+            LOGGER.info("RustComputers: cleared client log cache (world disconnect)");
+        }
+
+        private static final Logger LOGGER = LoggerFactory.getLogger(ClientForgeEvents.class);
     }
 }

@@ -55,7 +55,7 @@ public final class ModRegistries {
 
     /** コンピューターブロックアイテム / Computer block item */
     public static final RegistryObject<Item> COMPUTER_ITEM =
-            ITEMS.register("computer", () -> new BlockItem(
+            ITEMS.register("computer", () -> new com.rustcomputers.computer.ComputerItem(
                     COMPUTER_BLOCK.get(), new Item.Properties()));
 
     // ------------------------------------------------------------------

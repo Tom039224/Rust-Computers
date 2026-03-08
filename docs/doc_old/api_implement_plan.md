@@ -1300,6 +1300,11 @@ RPM設定（符号で方向制御）
 
 - `async fn get_max_extract() -> f64`
 
+## DigitalAdapter (v0.2.2で追加)
+## ModularAccumulator (v0.2.2で追加)
+## PortableEnergyInterface (v0.2.2で追加)
+## RedstoneRelay (v0.2.2で追加)
+
 # 8: Control-Craft
 ディレクトリ名：`control_craft`
 
@@ -1378,6 +1383,20 @@ imm対応
 
 - `async fn get_camera_position_imm() -> (f64, f64, f64)`  
 imm対応
+
+## CannonMount (v0.2.2で追加)
+## CompactFlap (v0.2.2で追加)
+## DynamicMotor (v0.2.2で追加)
+## FlapBearing (v0.2.2で追加)
+## Jet (v0.2.2で追加)
+## KinematicMotor (v0.2.2で追加)
+## KineticResistor (v0.2.2で追加)
+## LinkBridge (v0.2.2で追加)
+## PropellerController (v0.2.2で追加)
+## Slider (v0.2.2で追加)
+## SpatialAnchor (v0.2.2で追加)
+## Spinalyzer (v0.2.2で追加)
+## Transmitter (v0.2.2で追加)
 
 - `async fn get_abs_view_forward_imm() -> (f64, f64, f64)`  
 imm対応
@@ -1482,4 +1501,15 @@ imm対応
 - `async fn get_player_pos(player: &str, decimals: Option<u32>) -> Result<ADPlayerInfo, String>`
 
 - `async fn get_player(player: &str, decimals: Option<u32>) -> Result<ADPlayerInfo, String>`
+
+## BlockReader (v0.2.2で追加)
+## ChatBox (v0.2.2で追加)
+## ColonyIntegrator (v0.2.2で追加)
+## Compass (v0.2.2で追加)
+## EnergyDetector (v0.2.2で追加)
+## EnvironmentDetector (v0.2.2で追加)
+## GeoScanner (v0.2.2で追加)
+## MEBridge (v0.2.2で追加)
+## NBTStorage (v0.2.2で追加)
+## RSBridge (v0.2.2で追加)
 

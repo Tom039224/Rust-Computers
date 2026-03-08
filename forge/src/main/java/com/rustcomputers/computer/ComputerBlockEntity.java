@@ -252,6 +252,17 @@ public class ComputerBlockEntity extends BlockEntity implements MenuProvider {
 
     public int getComputerId() { return computerId; }
 
+    /**
+     * コンピューター ID を設定する（アイテムからの復元時に使用）。
+     * Set the computer ID (used when restoring from item NBT).
+     *
+     * @param id 設定する ID / the ID to set
+     */
+    public void setComputerId(int id) {
+        this.computerId = id;
+        setChanged();
+    }
+
     @Nullable
     public String getProgramName() { return programName; }
 

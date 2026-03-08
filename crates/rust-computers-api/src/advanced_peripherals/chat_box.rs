@@ -1,0 +1,208 @@
+//! AdvancedPeripherals ChatBox。
+
+use crate::error::PeripheralError;
+use crate::msgpack;
+use crate::peripheral::{self, PeriphAddr, Peripheral};
+
+/// ChatBox ペリフェラル。
+pub struct ChatBox {
+    addr: PeriphAddr,
+}
+
+impl Peripheral for ChatBox {
+    const NAME: &'static str = "advancedPeripherals:chat_box";
+
+    fn new(addr: PeriphAddr) -> Self {
+        Self { addr }
+    }
+
+    fn periph_addr(&self) -> PeriphAddr {
+        self.addr
+    }
+}
+
+impl ChatBox {
+    // ─── sendMessage ─────────────────────────────────────────
+
+    /// 全プレイヤーにメッセージを送信する。
+    pub fn book_next_send_message(
+        &mut self,
+        message: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) {
+        let mut args = alloc::vec![msgpack::str(message)];
+        if let Some(p) = prefix {
+            args.push(msgpack::str(p));
+        }
+        if let Some(b) = brackets {
+            args.push(msgpack::str(b));
+        }
+        if let Some(c) = color {
+            args.push(msgpack::str(c));
+        }
+        peripheral::book_action(self.addr, "sendMessage", &msgpack::array(&args));
+    }
+    pub fn read_last_send_message(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "sendMessage")?;
+        peripheral::decode(&data)
+    }
+
+    // ─── sendFormattedMessage ────────────────────────────────
+
+    /// JSON フォーマットのメッセージを全プレイヤーに送信する。
+    pub fn book_next_send_formatted_message(
+        &mut self,
+        json: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) {
+        let mut args = alloc::vec![msgpack::str(json)];
+        if let Some(p) = prefix {
+            args.push(msgpack::str(p));
+        }
+        if let Some(b) = brackets {
+            args.push(msgpack::str(b));
+        }
+        if let Some(c) = color {
+            args.push(msgpack::str(c));
+        }
+        peripheral::book_action(self.addr, "sendFormattedMessage", &msgpack::array(&args));
+    }
+    pub fn read_last_send_formatted_message(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "sendFormattedMessage")?;
+        peripheral::decode(&data)
+    }
+
+    // ─── sendMessageToPlayer ─────────────────────────────────
+
+    /// 指定プレイヤーにメッセージを送信する。
+    pub fn book_next_send_message_to_player(
+        &mut self,
+        message: &str,
+        player: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) {
+        let mut args = alloc::vec![msgpack::str(message), msgpack::str(player)];
+        if let Some(p) = prefix {
+            args.push(msgpack::str(p));
+        }
+        if let Some(b) = brackets {
+            args.push(msgpack::str(b));
+        }
+        if let Some(c) = color {
+            args.push(msgpack::str(c));
+        }
+        peripheral::book_action(self.addr, "sendMessageToPlayer", &msgpack::array(&args));
+    }
+    pub fn read_last_send_message_to_player(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "sendMessageToPlayer")?;
+        peripheral::decode(&data)
+    }
+
+    // ─── sendFormattedMessageToPlayer ────────────────────────
+
+    /// JSON フォーマットのメッセージを指定プレイヤーに送信する。
+    pub fn book_next_send_formatted_message_to_player(
+        &mut self,
+        json: &str,
+        player: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) {
+        let mut args = alloc::vec![msgpack::str(json), msgpack::str(player)];
+        if let Some(p) = prefix {
+            args.push(msgpack::str(p));
+        }
+        if let Some(b) = brackets {
+            args.push(msgpack::str(b));
+        }
+        if let Some(c) = color {
+            args.push(msgpack::str(c));
+        }
+        peripheral::book_action(
+            self.addr,
+            "sendFormattedMessageToPlayer",
+            &msgpack::array(&args),
+        );
+    }
+    pub fn read_last_send_formatted_message_to_player(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "sendFormattedMessageToPlayer")?;
+        peripheral::decode(&data)
+    }
+
+    // ─── sendToastToPlayer ───────────────────────────────────
+
+    /// 指定プレイヤーにトースト通知を送信する。
+    pub fn book_next_send_toast_to_player(
+        &mut self,
+        title: &str,
+        subtitle: &str,
+        player: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) {
+        let mut args = alloc::vec![
+            msgpack::str(title),
+            msgpack::str(subtitle),
+            msgpack::str(player),
+        ];
+        if let Some(p) = prefix {
+            args.push(msgpack::str(p));
+        }
+        if let Some(b) = brackets {
+            args.push(msgpack::str(b));
+        }
+        if let Some(c) = color {
+            args.push(msgpack::str(c));
+        }
+        peripheral::book_action(self.addr, "sendToastToPlayer", &msgpack::array(&args));
+    }
+    pub fn read_last_send_toast_to_player(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "sendToastToPlayer")?;
+        peripheral::decode(&data)
+    }
+
+    // ─── sendFormattedToastToPlayer ──────────────────────────
+
+    /// JSON フォーマットのトースト通知を指定プレイヤーに送信する。
+    pub fn book_next_send_formatted_toast_to_player(
+        &mut self,
+        json_title: &str,
+        json_subtitle: &str,
+        player: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) {
+        let mut args = alloc::vec![
+            msgpack::str(json_title),
+            msgpack::str(json_subtitle),
+            msgpack::str(player),
+        ];
+        if let Some(p) = prefix {
+            args.push(msgpack::str(p));
+        }
+        if let Some(b) = brackets {
+            args.push(msgpack::str(b));
+        }
+        if let Some(c) = color {
+            args.push(msgpack::str(c));
+        }
+        peripheral::book_action(
+            self.addr,
+            "sendFormattedToastToPlayer",
+            &msgpack::array(&args),
+        );
+    }
+    pub fn read_last_send_formatted_toast_to_player(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "sendFormattedToastToPlayer")?;
+        peripheral::decode(&data)
+    }
+}

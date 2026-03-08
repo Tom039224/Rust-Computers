@@ -294,6 +294,7 @@ public final class DevEnvCommand {
 
                 use alloc::format;
                 use rust_computers_api as rc;
+                use rc::wait_for_next_tick;
 
                 /// エントリーポイント / Entry point
                 rc::entry!(main);
@@ -305,20 +306,46 @@ public final class DevEnvCommand {
                     // ここにプログラムを書いてください。
                     // Write your program here.
                     //
-                    // 例: 南側に CC:Tweaked Monitor を置いた場合のモニター書き込み:
-                    // Example: writing to a CC:Tweaked Monitor placed to the south:
+                    // v0.2.0+ では book-read パターンを使用します:
+                    // v0.2.0+ uses the book-read pattern:
+                    //
+                    //   1. book_next_*() — 次 tick のリクエストを予約
+                    //                      Schedule a request for the next tick
+                    //   2. wait_for_next_tick().await — tick 境界まで待機
+                    //                                   Wait until the next tick
+                    //   3. read_last_*() — 結果を取得
+                    //                      Read the result
+                    //
+                    // 例: 南側に CC:Tweaked Monitor を置いた場合:
+                    // Example: with a CC:Tweaked Monitor placed to the south:
                     // -------------------------------------------------------------------
 
                     // use rc::computer_craft::monitor::Monitor;
                     // use rc::peripheral::Direction;
                     //
-                    // let mon = Monitor::new(Direction::South);
+                    // let mut mon = Monitor::from_direction(Direction::South);
                     //
-                    // if let Ok((w, h)) = mon.get_size() {
-                    //     mon.clear().await.ok();
-                    //     mon.set_cursor_pos(1, 1).await.ok();
-                    //     mon.write(&format!("Hello from Computer #%d!")).await.ok();
-                    //     mon.write(&format!("Size: {}x{}", w, h)).await.ok();
+                    // // 初期化: サイズを取得（_imm は同 tick 内で即座に返る）
+                    // // Init: get size (_imm returns immediately within the same tick)
+                    // if let Ok(size) = mon.get_size_imm() {
+                    //     rc::println!("Monitor size: {}x{}", size.width, size.height);
+                    // }
+                    //
+                    // // メインループ / Main loop
+                    // loop {
+                    //     // 書き込みリクエストを予約 / Schedule write requests
+                    //     mon.book_next_clear();
+                    //     wait_for_next_tick().await;
+                    //     let _ = mon.read_last_clear();
+                    //
+                    //     mon.book_next_set_cursor_pos(1, 1);
+                    //     mon.book_next_write(&format!("Hello from Computer #%d!"));
+                    //     wait_for_next_tick().await;
+                    //     let _ = mon.read_last_set_cursor_pos();
+                    //     let _ = mon.read_last_write();
+                    //
+                    //     // 次のループまで待機 / Wait for next iteration
+                    //     wait_for_next_tick().await;
                     // }
                 }
                 """.formatted(id, id, id, id, id, id);

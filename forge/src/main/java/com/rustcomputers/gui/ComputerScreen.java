@@ -379,4 +379,15 @@ public class ComputerScreen extends AbstractContainerScreen<ComputerMenu> {
         net.minecraft.client.gui.screens.MenuScreens.register(
                 ModRegistries.COMPUTER_MENU.get(), ComputerScreen::new);
     }
+
+    /**
+     * クライアント側のログキャッシュを全消去する。
+     * ワールド切替時に呼び出して前ワールドのログが残らないようにする。
+     * Clear the client-side log cache.
+     * Called on world disconnect to prevent logs from leaking across worlds.
+     */
+    public static void clearLogCache() {
+        LOG_CACHE.clear();
+        activeScreen = null;
+    }
 }

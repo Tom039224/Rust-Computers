@@ -2,10 +2,15 @@ package com.rustcomputers.computer;
 
 import com.rustcomputers.ModRegistries;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -109,5 +114,75 @@ public class ComputerBlock extends Block implements EntityBlock {
             }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    // ------------------------------------------------------------------
+    // ID 保持 / ID preservation (item ↔ block entity)
+    // ------------------------------------------------------------------
+
+    /**
+     * 設置時にアイテムから ComputerId を復元する。
+     * Restore ComputerId from the item when placed.
+     */
+    @Override
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state,
+                            @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(world, pos, state, placer, stack);
+        if (!world.isClientSide()) {
+            BlockEntity be = world.getBlockEntity(pos);
+            if (be instanceof ComputerBlockEntity computer) {
+                int id = ComputerItem.getComputerId(stack);
+                if (id >= 0) computer.setComputerId(id);
+            }
+        }
+    }
+
+    /**
+     * ホイールクリック（クリエイティブコピー）で ComputerId 付きアイテムを返す。
+     * Return an item with ComputerId on middle-click (creative pick).
+     */
+    @Override
+    @SuppressWarnings("deprecation")
+    public ItemStack getCloneItemStack(BlockGetter world, BlockPos pos, BlockState state) {
+        BlockEntity be = world.getBlockEntity(pos);
+        if (be instanceof ComputerBlockEntity computer && computer.getComputerId() >= 0) {
+            return ComputerItem.withComputerId(
+                    (ComputerItem) asItem(), computer.getComputerId());
+        }
+        return super.getCloneItemStack(world, pos, state);
+    }
+
+    /**
+     * ブロック破壊時にドロップを発行する（クリエイティブプレイヤーにも対応）。
+     * Drop resources on block destroy — works for creative players too.
+     *
+     * <p>CC:Tweaked パターン: {@code playerWillDestroy} でドロップし、
+     * {@code playerDestroy} ではドロップしない（二重ドロップ防止）。</p>
+     */
+    @Override
+    public void playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
+        super.playerWillDestroy(world, pos, state, player);
+        if (world instanceof ServerLevel serverLevel) {
+            BlockEntity be = world.getBlockEntity(pos);
+            if (be instanceof ComputerBlockEntity computer && computer.getComputerId() >= 0) {
+                // ComputerId 付きアイテムをドロップ
+                ItemStack drop = ComputerItem.withComputerId(
+                        (ComputerItem) asItem(), computer.getComputerId());
+                Block.popResource(world, pos, drop);
+            } else {
+                Block.dropResources(state, serverLevel, pos, be);
+            }
+        }
+    }
+
+    /**
+     * 通常の playerDestroy ではドロップしない（playerWillDestroy で処理済み）。
+     * Suppress normal drops in playerDestroy — already handled in playerWillDestroy.
+     */
+    @Override
+    public void playerDestroy(Level world, Player player, BlockPos pos,
+                              BlockState state, @Nullable BlockEntity be, ItemStack tool) {
+        player.awardStat(Stats.BLOCK_MINED.get(this));
+        player.causeFoodExhaustion(0.005F);
     }
 }
