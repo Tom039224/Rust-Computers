@@ -1,9 +1,0 @@
-# AdvancedPeripherals — Powah EnergyCell integration peripheral
-
-[[method]]
-lua = "getStoredEnergy"
-ret = "f64"
-
-[[method]]
-lua = "getMaxEnergy"
-ret = "f64"

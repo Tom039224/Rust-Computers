@@ -1,5 +1,0 @@
-# Create — SpeedGauge peripheral
-
-[[method]]
-lua = "getSpeed"
-ret = "f64"

@@ -1,9 +1,0 @@
-# Create — StressGauge peripheral
-
-[[method]]
-lua = "getStress"
-ret = "f64"
-
-[[method]]
-lua = "getStressCapacity"
-ret = "f64"

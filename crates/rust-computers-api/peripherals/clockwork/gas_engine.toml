@@ -1,9 +1,0 @@
-# Clockwork CC Compat — GasEngine peripheral
-
-[[method]]
-lua = "getAttachedEngines"
-ret = "i32"
-
-[[method]]
-lua = "getTotalEfficiency"
-ret = "f64"

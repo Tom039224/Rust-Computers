@@ -1,5 +1,0 @@
-# Clockwork CC Compat — Exhaust peripheral
-
-[[method]]
-lua = "getFacing"
-ret = "str"
