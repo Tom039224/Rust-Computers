@@ -5,6 +5,7 @@ import com.rustcomputers.computer.ComputerManager;
 import com.rustcomputers.network.NetworkHandler;
 import com.rustcomputers.peripheral.PeripheralProvider;
 import com.rustcomputers.peripheral.impl.CcMonitorPeripheral;
+import com.rustcomputers.peripheral.impl.PeripheralRegistrations;
 import com.rustcomputers.peripheral.impl.SomePeripheralsBallisticAcceleratorPeripheral;
 import com.rustcomputers.peripheral.impl.SomePeripheralsDigitizerPeripheral;
 import com.rustcomputers.peripheral.impl.SomePeripheralsRadarPeripheral;
@@ -170,6 +171,41 @@ public class RustComputers {
             // Register only when Some Peripherals is loaded.
             if (ModList.get().isLoaded("some_peripherals")) {
                 registerSomePeripherals();
+            }
+
+            // --- CcGenericPeripheral を使った汎用ペリフェラル登録 ---
+            // Generic peripheral registrations using CcGenericPeripheral bridge.
+            // 各 Mod がロードされている場合のみ登録する。
+            // Only register when each mod is loaded.
+            if (ModList.get().isLoaded("computercraft")) {
+                PeripheralRegistrations.registerCcTweaked();
+            }
+            if (ModList.get().isLoaded("some_peripherals")) {
+                PeripheralRegistrations.registerSomePeripheralsExtras();
+            }
+            if (ModList.get().isLoaded("cc_vs")) {
+                PeripheralRegistrations.registerCcVs();
+            }
+            if (ModList.get().isLoaded("toms_peripherals")) {
+                PeripheralRegistrations.registerTomsPeripherals();
+            }
+            if (ModList.get().isLoaded("clockwork_cc_compat")) {
+                PeripheralRegistrations.registerClockworkCcCompat();
+            }
+            if (ModList.get().isLoaded("create")) {
+                PeripheralRegistrations.registerCreate();
+            }
+            if (ModList.get().isLoaded("createaddition")) {
+                PeripheralRegistrations.registerCreateAddition();
+            }
+            if (ModList.get().isLoaded("controlcraft")) {
+                PeripheralRegistrations.registerControlCraft();
+            }
+            if (ModList.get().isLoaded("advancedperipherals")) {
+                PeripheralRegistrations.registerAdvancedPeripherals();
+            }
+            if (ModList.get().isLoaded("cbc_cc_control")) {
+                PeripheralRegistrations.registerCbcCcControl();
             }
 
             LOGGER.info("RustComputers: registered {} peripherals", PeripheralProvider.registeredCount());

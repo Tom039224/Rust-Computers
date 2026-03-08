@@ -41,6 +41,10 @@ public final class KnownMod {
     public static final String CREATE_ADDITION    = "createaddition";
     /** Clockwork CC Compat */
     public static final String CLOCKWORK_CC_COMPAT = "clockwork_cc_compat";
+    /** Control-Craft */
+    public static final String CONTROL_CRAFT       = "controlcraft";
+    /** CBC CC Control */
+    public static final String CBC_CC_CONTROL      = "cbc_cc_control";
 
     /** u16 key → Forge mod ID */
     private static final Map<Integer, String> BY_KEY = new HashMap<>();
@@ -58,6 +62,8 @@ public final class KnownMod {
                 TOMS_PERIPHERALS,
                 CREATE_ADDITION,
                 CLOCKWORK_CC_COMPAT,
+                CONTROL_CRAFT,
+                CBC_CC_CONTROL,
         }) {
             BY_KEY.put(crc32u16(modId), modId);
         }
