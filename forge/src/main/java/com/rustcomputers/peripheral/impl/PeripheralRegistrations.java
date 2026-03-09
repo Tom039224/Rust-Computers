@@ -100,8 +100,35 @@ public final class PeripheralRegistrations {
     // ==================================================================
 
     public static void registerSomePeripheralsExtras() {
-        LOGGER.info("Registering Some Peripherals extras (goggle_link_port)");
+        LOGGER.info("Registering Some Peripherals extras (radar, ballistic_accelerator, digitizer, raycaster, world_scanner, goggle_link_port)");
 
+        // Radar — scan/scanForEntities/scanForShips/scanForPlayers は mainThread
+        //         getConfigInfo は非 mainThread (IMM)
+        regWithImm("some_peripherals", "radar", "sp_radar",
+            new String[]{"scan", "scanForEntities", "scanForShips", "scanForPlayers", "getConfigInfo"},
+            new HashSet<>(Collections.singletonList("getConfigInfo")));
+
+        // BallisticAccelerator — 全メソッド非 mainThread (全 IMM)
+        regWithImm("some_peripherals", "ballistic_accelerator", "ballistic_accelerator",
+            new String[]{"timeInAir", "tryPitch", "calculatePitch", "batchCalculatePitches", "getDrag"},
+            new HashSet<>(Arrays.asList("timeInAir", "tryPitch", "calculatePitch", "batchCalculatePitches", "getDrag")));
+
+        // Digitizer — 全メソッド mainThread (全て callMethod ルート)
+        reg("some_peripherals", "digitizer", "digitizer",
+            new String[]{"digitizeAmount", "rematerializeAmount", "mergeDigitalItems", "separateDigitalItem",
+                         "checkID", "getItemInSlot", "getItemLimitInSlot"});
+
+        // Raycaster — 全メソッド非 mainThread (全 IMM)
+        regWithImm("some_peripherals", "raycaster", "raycaster",
+            new String[]{"raycast", "addStickers", "getConfigInfo", "getFacingDirection"},
+            new HashSet<>(Arrays.asList("raycast", "addStickers", "getConfigInfo", "getFacingDirection")));
+
+        // WorldScanner — 非 mainThread (全 IMM)
+        regWithImm("some_peripherals", "world_scanner", "world_scanner",
+            new String[]{"getBlockAt"},
+            new HashSet<>(Collections.singletonList("getBlockAt")));
+
+        // GoggleLinkPort
         reg("some_peripherals", "goggle_link_port", "sp:goggle_link_port",
             new String[]{"getConnected"});
     }
