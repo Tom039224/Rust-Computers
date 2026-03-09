@@ -165,4 +165,15 @@ extern "C" {
         result_ptr: i32,
         result_buf_size: i32,
     ) -> i32;
-}
+
+    /// UTC時刻をミリ秒単位で取得する。
+    /// Get UTC time in milliseconds.
+    ///
+    /// - 戻り値: UTC time (milliseconds since Unix epoch) / return: UTC time
+    pub fn host_get_time_utc_millis() -> i64;
+
+    /// ゲーム内時刻をticks単位で取得する。
+    /// Get in-game time in ticks.
+    ///
+    /// - 戻り値: in-game time (ticks since level creation) / return: in-game time
+    pub fn host_get_time_ingame_ticks() -> i64;}

@@ -646,6 +646,14 @@ public final class WasmEngine {
     public Path getComputerDir()         { return computerDir; }
 
     /**
+     * ゲーム内時刻を ticks で返す。serverLevel が利用不可の場合は 0。
+     * Return in-game time in ticks. Returns 0 if serverLevel is unavailable.
+     */
+    public long getGameTicks() {
+        return serverLevel != null ? serverLevel.getGameTime() : 0L;
+    }
+
+    /**
      * コンピューターディレクトリ内の .wasm ファイル一覧を返す。
      * List .wasm files in the computer directory.
      *

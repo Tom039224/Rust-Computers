@@ -6,8 +6,6 @@ import com.rustcomputers.network.NetworkHandler;
 import com.rustcomputers.peripheral.PeripheralProvider;
 import com.rustcomputers.peripheral.impl.CcMonitorPeripheral;
 import com.rustcomputers.peripheral.impl.PeripheralRegistrations;
-import com.rustcomputers.peripheral.impl.VanillaInventoryPeripheral;
-import com.rustcomputers.peripheral.impl.VanillaRedstonePeripheral;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -81,79 +79,6 @@ public class RustComputers {
         // ペリフェラル登録（enqueueWork でレジストリアクセスをメインスレッドに
         // 安全に委譲する / Register peripherals safely on the main thread)
         event.enqueueWork(() -> {
-            // --- Redstone ペリフェラル / Redstone peripherals ---
-            PeripheralProvider.register(Blocks.LEVER,               VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.REDSTONE_BLOCK,      VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.REDSTONE_TORCH,      VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.REDSTONE_WALL_TORCH, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.REDSTONE_WIRE,       VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.REDSTONE_LAMP,       VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.COMPARATOR,          VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.REPEATER,            VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.OBSERVER,            VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.STONE_BUTTON,        VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.OAK_BUTTON,          VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.SPRUCE_BUTTON,       VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.BIRCH_BUTTON,        VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.JUNGLE_BUTTON,       VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.ACACIA_BUTTON,       VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.DARK_OAK_BUTTON,     VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.CRIMSON_BUTTON,      VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.WARPED_BUTTON,       VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.MANGROVE_BUTTON,     VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.BAMBOO_BUTTON,       VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.CHERRY_BUTTON,       VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.POLISHED_BLACKSTONE_BUTTON, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.STONE_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.OAK_PRESSURE_PLATE,  VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.SPRUCE_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.BIRCH_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.JUNGLE_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.ACACIA_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.DARK_OAK_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.CRIMSON_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.WARPED_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.MANGROVE_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.BAMBOO_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.CHERRY_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.HEAVY_WEIGHTED_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.LIGHT_WEIGHTED_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.POLISHED_BLACKSTONE_PRESSURE_PLATE, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.SCULK_SENSOR,        VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.CALIBRATED_SCULK_SENSOR, VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.DAYLIGHT_DETECTOR,   VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.LIGHTNING_ROD,       VanillaRedstonePeripheral::new);
-            PeripheralProvider.register(Blocks.TRIPWIRE_HOOK,       VanillaRedstonePeripheral::new);
-
-            // --- インベントリ ペリフェラル / Inventory peripherals ---
-            PeripheralProvider.register(Blocks.CHEST,               VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.TRAPPED_CHEST,       VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.BARREL,              VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.HOPPER,              VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.FURNACE,             VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.BLAST_FURNACE,       VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.SMOKER,              VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.DROPPER,             VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.DISPENSER,           VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.BREWING_STAND,       VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.WHITE_SHULKER_BOX,        VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.ORANGE_SHULKER_BOX,       VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.MAGENTA_SHULKER_BOX,      VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.LIGHT_BLUE_SHULKER_BOX,   VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.YELLOW_SHULKER_BOX,       VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.LIME_SHULKER_BOX,         VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.PINK_SHULKER_BOX,         VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.GRAY_SHULKER_BOX,         VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.LIGHT_GRAY_SHULKER_BOX,   VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.CYAN_SHULKER_BOX,         VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.PURPLE_SHULKER_BOX,       VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.BLUE_SHULKER_BOX,         VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.BROWN_SHULKER_BOX,        VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.GREEN_SHULKER_BOX,        VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.RED_SHULKER_BOX,          VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.BLACK_SHULKER_BOX,        VanillaInventoryPeripheral::new);
-            PeripheralProvider.register(Blocks.SHULKER_BOX,              VanillaInventoryPeripheral::new);
-
             // --- CC:Tweaked Monitor (オプション / optional) ---
             // CC:Tweaked がロードされている場合のみ登録する。
             // Register only when CC:Tweaked is loaded.

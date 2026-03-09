@@ -55,6 +55,8 @@ public final class HostFunctions {
             hostIsModAvailable(),
             hostGetComputerId(),
             hostFindPeripheralsByTypeImm(),
+            hostGetTimeUtcMillis(),
+            hostGetTimeIngameTicks(),
         };
     }
 
@@ -407,6 +409,48 @@ public final class HostFunctions {
                         "type='{}', found={}, written={}",
                         engine.getComputerId(), typeName, ids.size(), payload.length);
                 return new long[]{ payload.length };
+            }
+        );
+    }
+
+    // ==================================================================
+    // host_get_time_utc_millis() → i64
+    // ==================================================================
+
+    /**
+     * UTC時刻をミリ秒単位で返す。
+     * Return UTC time in milliseconds.
+     *
+     * @return UTC time (millis since Unix epoch)
+     */
+    private HostFunction hostGetTimeUtcMillis() {
+        return new HostFunction(
+            MODULE, "host_get_time_utc_millis",
+            FunctionType.of(List.of(), List.of(ValType.I64)),
+            (Instance inst, long... args) -> {
+                long timeMillis = System.currentTimeMillis();
+                return new long[]{ timeMillis };
+            }
+        );
+    }
+
+    // ==================================================================
+    // host_get_time_ingame_ticks() → i64
+    // ==================================================================
+
+    /**
+     * ゲーム内時刻をticks単位で返す。
+     * Return in-game time in ticks.
+     *
+     * @return in-game time (ticks since level creation)
+     */
+    private HostFunction hostGetTimeIngameTicks() {
+        return new HostFunction(
+            MODULE, "host_get_time_ingame_ticks",
+            FunctionType.of(List.of(), List.of(ValType.I64)),
+            (Instance inst, long... args) -> {
+                long timeTicks = engine.getGameTicks();
+                return new long[]{ timeTicks };
             }
         );
     }

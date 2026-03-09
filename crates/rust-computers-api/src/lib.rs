@@ -45,6 +45,7 @@ pub mod io;
 pub mod msgpack;
 pub mod panic;
 pub mod peripheral;
+pub mod sys;
 
 // 自動生成ペリフェラルラッパー → 手書きモジュールに変更
 // Auto-generated peripheral wrappers → hand-written modules
@@ -79,6 +80,7 @@ pub use future::WaitForNextTickFuture;
 pub use io::read_line;
 pub use msgpack::Value;
 pub use peripheral::Direction;
+pub use sys::{GameTime, Instant};
 
 /// 次の Game Tick まで待機する Future を返す。
 /// Returns a future that waits until the next game tick.
