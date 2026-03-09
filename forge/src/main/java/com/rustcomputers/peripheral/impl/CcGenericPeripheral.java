@@ -15,6 +15,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
 
 /**
  * CC:Tweaked の IPeripheral を通じて他 Mod のペリフェラルメソッドを呼び出す汎用ブリッジ。
@@ -173,6 +175,48 @@ public class CcGenericPeripheral implements PeripheralType {
         return orElse.invoke(lazyOpt, (Object) null);
     }
 
+    /**
+     * CC:Tweaked の IPeripheralProvider チェーンを反復して IPeripheral を取得する。
+     * BlockEntity を持たないペリフェラル (Some Peripherals の Radar 等) に使用。
+     *
+     * Get IPeripheral by iterating CC:Tweaked's IPeripheralProvider chain.
+     * Used for non-BlockEntity peripherals (e.g. Some Peripherals Radar).
+     */
+    @Nullable
+    private static Object getPeripheralViaProviders(Level level, BlockPos pos) {
+        try {
+            Class<?> peripheralsClass = Class.forName("dan200.computercraft.impl.Peripherals");
+            Field providersField = peripheralsClass.getDeclaredField("providers");
+            providersField.setAccessible(true);
+            java.util.Collection<?> providers = (java.util.Collection<?>) providersField.get(null);
+
+            for (Object provider : providers) {
+                // getPeripheral(Level, BlockPos, Direction) を探す
+                Method getPeripheralMethod = null;
+                for (Method m : provider.getClass().getMethods()) {
+                    if (m.getName().equals("getPeripheral") && m.getParameterCount() == 3) {
+                        getPeripheralMethod = m;
+                        break;
+                    }
+                }
+                if (getPeripheralMethod == null) continue;
+
+                Object lazyOpt = getPeripheralMethod.invoke(provider, level, pos, Direction.NORTH);
+                // LazyOptional.isPresent()
+                Method isPresent = lazyOpt.getClass().getMethod("isPresent");
+                if ((boolean) isPresent.invoke(lazyOpt)) {
+                    Method orElse = lazyOpt.getClass().getMethod("orElse", Object.class);
+                    Object result = orElse.invoke(lazyOpt, (Object) null);
+                    LOGGER.debug("getPeripheralViaProviders: found IPeripheral at {} via {}", pos, provider.getClass().getSimpleName());
+                    return result;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("getPeripheralViaProviders failed at {}: {}", pos, e.getMessage());
+        }
+        return null;
+    }
+
     // ------------------------------------------------------------------
     // @LuaFunction メソッド検索 / Find @LuaFunction methods
     // ------------------------------------------------------------------
@@ -216,33 +260,54 @@ public class CcGenericPeripheral implements PeripheralType {
     private byte[] invokeViaPeripheral(String methodName, byte[] args,
                                        ServerLevel level, BlockPos peripheralPos)
             throws PeripheralException {
-        // event polling メソッドは即座に nil を返す（イベントキュー未実装）
-        // Event polling methods return nil immediately (event queues not yet implemented)
-        if (methodName.startsWith("try_pull_")) {
-            return MsgPack.nil();
-        }
-
         ensureCapability();
 
+        // BlockEntity は持たないペリフェラル (RadarPeripheral 等) の場合 null になり得る
+        // BlockEntity may be null for non-BE peripherals (e.g. RadarPeripheral)
         BlockEntity be = level.getBlockEntity(peripheralPos);
-        if (be == null) {
-            throw new PeripheralException("No block entity at " + peripheralPos);
-        }
 
         try {
             // CC:T IPeripheral を取得 / Get CC:T IPeripheral
-            Object peripheral = getPeripheral(be);
+            // まず BE から capability で取得、なければ IPeripheralProvider チェーンを試みる
+            // First try BE capability, then fall back to IPeripheralProvider chain
+            Object peripheral = null;
+            if (be != null) {
+                peripheral = getPeripheral(be);
+            }
+            if (peripheral == null) {
+                peripheral = getPeripheralViaProviders(level, peripheralPos);
+            }
 
-            // IPeripheral が取得できない場合は BlockEntity 自体から @LuaFunction を探す
-            // If IPeripheral is not available, look for @LuaFunction on BE itself
+            // ペリフェラルが一切見つからない場合はエラー
+            // Error if no peripheral found by any means
+            if (peripheral == null && be == null) {
+                CCEventReceiver.detach(null, peripheralPos);
+                throw new PeripheralException("No peripheral at " + peripheralPos);
+            }
+
+            // IComputerAccess モックをアタッチして events を受信できるようにする (初回のみ)
+            // Attach mock IComputerAccess so events can be received (idempotent)
+            if (peripheral != null) {
+                CCEventReceiver.ensureAttached(peripheral, peripheralPos);
+            }
+
+            // try_pull_* はイベントキューから返す (@LuaFunction として存在しないため)
+            // try_pull_* methods return from event queue (they don't exist as @LuaFunction)
+            if (methodName.startsWith("try_pull_")) {
+                return CCEventReceiver.tryPull(methodName, peripheralPos);
+            }
+
+            // ターゲット: IPeripheral → BE → null (後で nil を返す)
+            // Target: IPeripheral → BE → null (returns nil later)
             Object target = peripheral != null ? peripheral : be;
 
             Map<String, Method> luaMethods = findLuaMethods(target.getClass());
             Method method = luaMethods.get(methodName);
 
             if (method == null) {
-                // @LuaFunction が見つからない場合、BE 上のメソッドも検索
-                if (peripheral != null) {
+                // @LuaFunction が見つからない場合、BE 上のメソッドも検索 (BE が存在する場合のみ)
+                // Also search BE for @LuaFunction (only when BE exists)
+                if (peripheral != null && be != null) {
                     luaMethods = findLuaMethods(be.getClass());
                     method = luaMethods.get(methodName);
                     if (method != null) {
