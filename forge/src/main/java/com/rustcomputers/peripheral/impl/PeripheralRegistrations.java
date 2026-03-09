@@ -615,7 +615,7 @@ public final class PeripheralRegistrations {
         LOGGER.info("Registering CBC CC Control peripherals (cannon mount)");
 
         String[] cannonMethods = {"isRunning", "getYaw", "getPitch", "assemble", "disassemble", "setYaw", "setPitch", "fire"};
-        regWithImm("cbc_cc_control", "compact_cannon_mount", "cbc_cannon_mount",
+        regWithImm("createbigcannons", "cannon_mount", "cbc_cannon_mount",
                 cannonMethods, new HashSet<>(Arrays.asList("isRunning", "getYaw", "getPitch")));
     }
 }
