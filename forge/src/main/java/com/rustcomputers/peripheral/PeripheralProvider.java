@@ -4,12 +4,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -171,9 +171,13 @@ public final class PeripheralProvider {
      * CC:Tweaked API を使用した有線モデムネットワーク走査の内部実装。
      * Internal implementation of wired modem network scanning using CC:Tweaked API.
      *
-     * <p>ForgeComputerCraftAPI.getWiredElementAt() で隣接の WiredElement を取得し、
-     * ネットワーク上の全ノードをリフレクション経由で走査する
-     * （WiredNetwork のパブリックAPI には全ノード列挙がないため）。</p>
+     * <p>隣接有線モデムの WiredElement から remote peripheral 一覧を取得し、
+     * 各 IPeripheral の getTarget() が指す BlockEntity を RustComputers の
+     * PeripheralType レジストリに照合して periph_id 6+ として追加する。</p>
+     *
+     * <p>Get remote peripherals from adjacent wired modem elements and resolve each
+     * peripheral target BlockEntity. Matching blocks in RustComputers registry are
+     * added as periph_id 6+.</p>
      */
     private static void scanWiredNetworkImpl(
             ServerLevel level, BlockPos computerPos, Map<Integer, AttachedPeripheral> result) throws Exception {
@@ -198,36 +202,41 @@ public final class PeripheralProvider {
             if (optElement.isPresent()) {
                 var element = optElement.orElse(null);
                 if (element == null) continue;
-                var node = element.getNode();
-                var network = node.getNetwork();
+                // WiredElement (interface) には getRemotePeripherals がないため、
+                // 実装クラス (WiredModemElement) のメソッドをリフレクションで呼ぶ。
+                Method getRemotePeripherals = element.getClass().getMethod("getRemotePeripherals");
+                Object remoteObj = getRemotePeripherals.invoke(element);
+                if (!(remoteObj instanceof Map<?, ?> remotePeripherals)) {
+                    continue;
+                }
 
-                // リフレクションで WiredNetworkImpl.nodes (Set<WiredNodeImpl>) を取得
-                // WiredNetwork public API には全ノード列挙がないため
-                Field nodesField = network.getClass().getDeclaredField("nodes");
-                nodesField.setAccessible(true);
-                @SuppressWarnings("unchecked")
-                Set<?> nodes = (Set<?>) nodesField.get(network);
+                for (Map.Entry<?, ?> entry : remotePeripherals.entrySet()) {
+                    Object remotePeripheral = entry.getValue();
+                    if (remotePeripheral == null) continue;
 
-                for (Object n : nodes) {
-                    // WiredNodeImpl は WiredNode を implements しているが、
-                    // getElement() は interface WiredNode 上にある
-                    if (n instanceof dan200.computercraft.api.network.wired.WiredNode wn) {
-                        var elem = wn.getElement();
-                        Vec3 posVec = elem.getPosition();
-                        BlockPos bp = BlockPos.containing(posVec);
+                    // IPeripheral#getTarget() をリフレクションで取得
+                    Method getTarget = remotePeripheral.getClass().getMethod("getTarget");
+                    Object target = getTarget.invoke(remotePeripheral);
+                    if (!(target instanceof BlockEntity be)) {
+                        // コンピュータ等、BlockEntity 以外のターゲットは RustComputers 側では対象外
+                        continue;
+                    }
 
-                        // 既知の位置はスキップ（自分 + 直接接続 + 重複排除）
-                        if (knownPositions.contains(bp)) continue;
-                        knownPositions.add(bp);
+                    BlockPos bp = be.getBlockPos();
 
-                        Block block = level.getBlockState(bp).getBlock();
-                        PeripheralType pt = getForBlock(block);
-                        if (pt != null) {
-                            result.put(nextPeriphId, new AttachedPeripheral(pt, null, bp));
-                            LOGGER.debug("Found wired peripheral '{}' at {} (periph_id={})",
-                                    pt.getTypeName(), bp, nextPeriphId);
-                            nextPeriphId++;
-                        }
+                    // 既知の位置はスキップ（自分 + 直接接続 + 重複排除）
+                    if (knownPositions.contains(bp)) continue;
+                    knownPositions.add(bp);
+
+                    if (!level.isLoaded(bp)) continue;
+
+                    Block block = level.getBlockState(bp).getBlock();
+                    PeripheralType pt = getForBlock(block);
+                    if (pt != null) {
+                        result.put(nextPeriphId, new AttachedPeripheral(pt, null, bp));
+                        LOGGER.debug("Found wired peripheral '{}' at {} (periph_id={})",
+                                pt.getTypeName(), bp, nextPeriphId);
+                        nextPeriphId++;
                     }
                 }
 
