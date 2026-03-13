@@ -586,7 +586,9 @@ public final class WasmEngine {
      */
     public java.util.List<Integer> findPeripheralsByType(String typeName) {
         rescanPeripherals();
-        return PeripheralProvider.findByTypeName(peripherals, typeName);
+        java.util.List<Integer> ids = PeripheralProvider.findByTypeName(peripherals, typeName);
+        LOGGER.info("Computer #{}: findPeripheralsByType('{}') -> {} match(es)", computerId, typeName, ids.size());
+        return ids;
     }
 
     /**

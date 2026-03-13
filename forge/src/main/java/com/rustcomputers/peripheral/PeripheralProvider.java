@@ -191,69 +191,84 @@ public final class PeripheralProvider {
         }
 
         int nextPeriphId = 6;
-
-        outer:
+        // 探索候補: 自ブロック + 隣接6面
+        // Probe candidates: this block + 6 adjacent blocks.
+        List<BlockPos> probePositions = new ArrayList<>(7);
+        probePositions.add(computerPos);
         for (Direction dir : Direction.values()) {
-            BlockPos adjPos = computerPos.relative(dir);
-            if (!level.isLoaded(adjPos)) continue;
+            probePositions.add(computerPos.relative(dir));
+        }
 
-            // 取り付け面や接続面の向きに依存しないよう、全方向で WiredElement を探索する
-            // Probe all faces so detection does not depend on modem orientation.
+        // 重複除去しつつ WiredElement を収集（同一要素を複数面で拾うため）
+        // Collect unique wired elements (the same element may appear on multiple faces).
+        java.util.Set<Object> wiredElements = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+
+        for (BlockPos probePos : probePositions) {
+            if (!level.isLoaded(probePos)) continue;
+
             for (Direction probeSide : Direction.values()) {
                 var optElement = dan200.computercraft.api.ForgeComputerCraftAPI
-                        .getWiredElementAt(level, adjPos, probeSide);
-
+                        .getWiredElementAt(level, probePos, probeSide);
                 if (!optElement.isPresent()) continue;
 
                 var element = optElement.orElse(null);
-                if (element == null) continue;
+                if (element != null) {
+                    wiredElements.add(element);
+                }
+            }
+        }
 
-                // WiredElement (interface) には getRemotePeripherals がないため、
-                // 実装クラス (WiredModemElement) のメソッドをリフレクションで呼ぶ。
-                Method getRemotePeripherals = element.getClass().getMethod("getRemotePeripherals");
-                Object remoteObj = getRemotePeripherals.invoke(element);
-                if (!(remoteObj instanceof Map<?, ?> remotePeripherals)) {
+        if (wiredElements.isEmpty()) {
+            LOGGER.debug("No wired element found around computer at {}", computerPos);
+            return;
+        }
+
+        LOGGER.debug("Found {} wired element(s) around computer at {}", wiredElements.size(), computerPos);
+
+        for (Object element : wiredElements) {
+            // WiredElement (interface) には getRemotePeripherals がないため、
+            // 実装クラス (WiredModemElement) のメソッドをリフレクションで呼ぶ。
+            Method getRemotePeripherals = element.getClass().getMethod("getRemotePeripherals");
+            Object remoteObj = getRemotePeripherals.invoke(element);
+            if (!(remoteObj instanceof Map<?, ?> remotePeripherals)) {
+                continue;
+            }
+
+            LOGGER.debug("Wired element {} has {} remote peripheral(s)",
+                    element.getClass().getSimpleName(), remotePeripherals.size());
+
+            for (Map.Entry<?, ?> entry : remotePeripherals.entrySet()) {
+                Object remotePeripheral = entry.getValue();
+                if (remotePeripheral == null) continue;
+
+                // IPeripheral#getTarget() を直接呼び出す。
+                if (!(remotePeripheral instanceof IPeripheral peripheral)) {
+                    continue;
+                }
+                Object target = peripheral.getTarget();
+                if (!(target instanceof BlockEntity be)) {
+                    // コンピュータ等、BlockEntity 以外のターゲットは RustComputers 側では対象外
                     continue;
                 }
 
-                for (Map.Entry<?, ?> entry : remotePeripherals.entrySet()) {
-                    Object remotePeripheral = entry.getValue();
-                    if (remotePeripheral == null) continue;
+                BlockPos bp = be.getBlockPos();
 
-                    // IPeripheral#getTarget() を直接呼び出す。
-                    // 以前はリフレクション呼び出しで private ネストクラスに対して
-                    // IllegalAccessException が発生するケースがあった。
-                    // Call IPeripheral#getTarget() directly to avoid reflective access issues
-                    // on non-public implementation classes.
-                    if (!(remotePeripheral instanceof IPeripheral peripheral)) {
-                        continue;
-                    }
-                    Object target = peripheral.getTarget();
-                    if (!(target instanceof BlockEntity be)) {
-                        // コンピュータ等、BlockEntity 以外のターゲットは RustComputers 側では対象外
-                        continue;
-                    }
+                // 既知の位置はスキップ（自分 + 直接接続 + 重複排除）
+                if (knownPositions.contains(bp)) continue;
+                knownPositions.add(bp);
 
-                    BlockPos bp = be.getBlockPos();
+                if (!level.isLoaded(bp)) continue;
 
-                    // 既知の位置はスキップ（自分 + 直接接続 + 重複排除）
-                    if (knownPositions.contains(bp)) continue;
-                    knownPositions.add(bp);
-
-                    if (!level.isLoaded(bp)) continue;
-
-                    Block block = level.getBlockState(bp).getBlock();
-                    PeripheralType pt = getForBlock(block);
-                    if (pt != null) {
-                        result.put(nextPeriphId, new AttachedPeripheral(pt, null, bp));
-                        LOGGER.debug("Found wired peripheral '{}' at {} (periph_id={})",
-                                pt.getTypeName(), bp, nextPeriphId);
-                        nextPeriphId++;
-                    }
+                Block block = level.getBlockState(bp).getBlock();
+                PeripheralType pt = getForBlock(block);
+                if (pt != null) {
+                    result.put(nextPeriphId, new AttachedPeripheral(pt, null, bp));
+                    LOGGER.debug("Found wired peripheral '{}' at {} (periph_id={})",
+                            pt.getTypeName(), bp, nextPeriphId);
+                    nextPeriphId++;
+                } else {
+                    LOGGER.debug("Remote peripheral target at {} is not registered in RustComputers registry", bp);
                 }
-
-                // 同一ネットワークなので最初に見つけた WiredElement だけ処理すれば十分
-                break outer;
             }
         }
     }
