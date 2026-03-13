@@ -1,5 +1,6 @@
 package com.rustcomputers.peripheral;
 
+import com.rustcomputers.peripheral.impl.CcRustComputerPeripheralProvider;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -191,6 +192,16 @@ public final class PeripheralProvider {
         }
 
         int nextPeriphId = 6;
+
+        // 1) まず CC の attach(IComputerAccess) 経由で取得できる到達可能ペリフェラルを使う。
+        //    RustComputers コンピューターが有線モデムに右クリック接続されていれば、
+        //    こちらが最も正確。
+        Map<String, IPeripheral> attachedVisible = CcRustComputerPeripheralProvider.getAvailablePeripherals(computerPos);
+        if (!attachedVisible.isEmpty()) {
+            LOGGER.debug("Attach bridge found {} available peripheral(s) for computer at {}",
+                attachedVisible.size(), computerPos);
+            nextPeriphId = appendRemotePeripherals(level, attachedVisible.values(), knownPositions, result, nextPeriphId);
+        }
         // 探索候補: 自ブロック + 隣接6面
         // Probe candidates: this block + 6 adjacent blocks.
         List<BlockPos> probePositions = new ArrayList<>(7);
@@ -237,40 +248,51 @@ public final class PeripheralProvider {
             LOGGER.debug("Wired element {} has {} remote peripheral(s)",
                     element.getClass().getSimpleName(), remotePeripherals.size());
 
-            for (Map.Entry<?, ?> entry : remotePeripherals.entrySet()) {
-                Object remotePeripheral = entry.getValue();
-                if (remotePeripheral == null) continue;
+            nextPeriphId = appendRemotePeripherals(level, remotePeripherals.values(), knownPositions, result, nextPeriphId);
+        }
+    }
 
-                // IPeripheral#getTarget() を直接呼び出す。
-                if (!(remotePeripheral instanceof IPeripheral peripheral)) {
-                    continue;
-                }
-                Object target = peripheral.getTarget();
-                if (!(target instanceof BlockEntity be)) {
-                    // コンピュータ等、BlockEntity 以外のターゲットは RustComputers 側では対象外
-                    continue;
-                }
+    /**
+     * remote IPeripheral 群を走査して result に追記する共通処理。
+     */
+    private static int appendRemotePeripherals(
+            ServerLevel level,
+            java.util.Collection<?> remotePeripherals,
+            Set<BlockPos> knownPositions,
+            Map<Integer, AttachedPeripheral> result,
+            int nextPeriphId
+    ) {
+        int id = nextPeriphId;
 
-                BlockPos bp = be.getBlockPos();
+        for (Object remotePeripheral : remotePeripherals) {
+            if (!(remotePeripheral instanceof IPeripheral peripheral)) {
+                continue;
+            }
 
-                // 既知の位置はスキップ（自分 + 直接接続 + 重複排除）
-                if (knownPositions.contains(bp)) continue;
-                knownPositions.add(bp);
+            Object target = peripheral.getTarget();
+            if (!(target instanceof BlockEntity be)) {
+                continue;
+            }
 
-                if (!level.isLoaded(bp)) continue;
+            BlockPos bp = be.getBlockPos();
+            if (knownPositions.contains(bp)) continue;
+            knownPositions.add(bp);
 
-                Block block = level.getBlockState(bp).getBlock();
-                PeripheralType pt = getForBlock(block);
-                if (pt != null) {
-                    result.put(nextPeriphId, new AttachedPeripheral(pt, null, bp));
-                    LOGGER.debug("Found wired peripheral '{}' at {} (periph_id={})",
-                            pt.getTypeName(), bp, nextPeriphId);
-                    nextPeriphId++;
-                } else {
-                    LOGGER.debug("Remote peripheral target at {} is not registered in RustComputers registry", bp);
-                }
+            if (!level.isLoaded(bp)) continue;
+
+            Block block = level.getBlockState(bp).getBlock();
+            PeripheralType pt = getForBlock(block);
+            if (pt != null) {
+                result.put(id, new AttachedPeripheral(pt, null, bp));
+                LOGGER.debug("Found wired peripheral '{}' at {} (periph_id={})",
+                        pt.getTypeName(), bp, id);
+                id++;
+            } else {
+                LOGGER.debug("Remote peripheral target at {} is not registered in RustComputers registry", bp);
             }
         }
+
+        return id;
     }
 
     // ==================================================================
