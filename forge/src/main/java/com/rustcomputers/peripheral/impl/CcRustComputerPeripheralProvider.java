@@ -56,7 +56,7 @@ public final class CcRustComputerPeripheralProvider {
      * RustComputers コンピューターを表す最小 IPeripheral 実装。
      * Minimal IPeripheral implementation representing a RustComputers computer.
      */
-    private static final class RustComputerPeripheral implements IPeripheral {
+    public static final class RustComputerPeripheral implements IPeripheral {
         private final ComputerBlockEntity computer;
 
         private RustComputerPeripheral(ComputerBlockEntity computer) {

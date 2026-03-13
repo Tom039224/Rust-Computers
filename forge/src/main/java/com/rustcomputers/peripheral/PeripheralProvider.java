@@ -1,5 +1,6 @@
 package com.rustcomputers.peripheral;
 
+import dan200.computercraft.api.peripheral.IPeripheral;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -219,9 +220,15 @@ public final class PeripheralProvider {
                     Object remotePeripheral = entry.getValue();
                     if (remotePeripheral == null) continue;
 
-                    // IPeripheral#getTarget() をリフレクションで取得
-                    Method getTarget = remotePeripheral.getClass().getMethod("getTarget");
-                    Object target = getTarget.invoke(remotePeripheral);
+                    // IPeripheral#getTarget() を直接呼び出す。
+                    // 以前はリフレクション呼び出しで private ネストクラスに対して
+                    // IllegalAccessException が発生するケースがあった。
+                    // Call IPeripheral#getTarget() directly to avoid reflective access issues
+                    // on non-public implementation classes.
+                    if (!(remotePeripheral instanceof IPeripheral peripheral)) {
+                        continue;
+                    }
+                    Object target = peripheral.getTarget();
                     if (!(target instanceof BlockEntity be)) {
                         // コンピュータ等、BlockEntity 以外のターゲットは RustComputers 側では対象外
                         continue;
