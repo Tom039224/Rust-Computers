@@ -5,6 +5,7 @@ import com.rustcomputers.computer.ComputerManager;
 import com.rustcomputers.network.NetworkHandler;
 import com.rustcomputers.peripheral.PeripheralProvider;
 import com.rustcomputers.peripheral.impl.CcMonitorPeripheral;
+import com.rustcomputers.peripheral.impl.CcRustComputerPeripheralProvider;
 import com.rustcomputers.peripheral.impl.PeripheralRegistrations;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -83,6 +84,9 @@ public class RustComputers {
             // CC:Tweaked がロードされている場合のみ登録する。
             // Register only when CC:Tweaked is loaded.
             if (ModList.get().isLoaded("computercraft")) {
+                // RustComputers コンピューターを CC の有線モデムから認識可能にする
+                // Make RustComputers computers discoverable by CC wired modems
+                CcRustComputerPeripheralProvider.register();
                 registerCcMonitors();
             }
 
