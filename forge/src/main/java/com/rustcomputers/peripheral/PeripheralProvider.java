@@ -326,13 +326,26 @@ public final class PeripheralProvider {
         IComputerAccess fake = (IComputerAccess) Proxy.newProxyInstance(
                 PeripheralProvider.class.getClassLoader(),
                 new Class<?>[]{ IComputerAccess.class },
-                (proxy, method, args) -> switch (method.getName()) {
-                    case "getID" -> 0;
-                    case "getAttachmentName" -> "rust_scan";
-                    case "getAvailablePeripherals" -> Map.of();
-                    case "getAvailablePeripheral" -> null;
-                    case "mount", "mountWritable" -> null;
-                    default -> null;
+                (proxy, method, args) -> {
+                    String name = method.getName();
+                    if ("equals".equals(name)) {
+                        return proxy == args[0];
+                    }
+                    if ("hashCode".equals(name)) {
+                        return System.identityHashCode(proxy);
+                    }
+                    if ("toString".equals(name)) {
+                        return "RustComputersFakeComputerAccess";
+                    }
+                    switch (name) {
+                        case "getID": return 0;
+                        case "getAttachmentName": return "rust_scan";
+                        case "getAvailablePeripherals": return Map.of();
+                        case "getAvailablePeripheral": return null;
+                        case "mount": return null;
+                        case "mountWritable": return null;
+                        default: return null;
+                    }
                 }
         );
 
