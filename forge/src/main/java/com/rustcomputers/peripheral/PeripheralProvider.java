@@ -191,17 +191,22 @@ public final class PeripheralProvider {
 
         int nextPeriphId = 6;
 
+        outer:
         for (Direction dir : Direction.values()) {
             BlockPos adjPos = computerPos.relative(dir);
             if (!level.isLoaded(adjPos)) continue;
 
-            // CC:Tweaked API: 隣接ブロックから WiredElement を取得
-            var optElement = dan200.computercraft.api.ForgeComputerCraftAPI
-                    .getWiredElementAt(level, adjPos, dir.getOpposite());
+            // 取り付け面や接続面の向きに依存しないよう、全方向で WiredElement を探索する
+            // Probe all faces so detection does not depend on modem orientation.
+            for (Direction probeSide : Direction.values()) {
+                var optElement = dan200.computercraft.api.ForgeComputerCraftAPI
+                        .getWiredElementAt(level, adjPos, probeSide);
 
-            if (optElement.isPresent()) {
+                if (!optElement.isPresent()) continue;
+
                 var element = optElement.orElse(null);
                 if (element == null) continue;
+
                 // WiredElement (interface) には getRemotePeripherals がないため、
                 // 実装クラス (WiredModemElement) のメソッドをリフレクションで呼ぶ。
                 Method getRemotePeripherals = element.getClass().getMethod("getRemotePeripherals");
@@ -241,7 +246,7 @@ public final class PeripheralProvider {
                 }
 
                 // 同一ネットワークなので最初に見つけた WiredElement だけ処理すれば十分
-                break;
+                break outer;
             }
         }
     }
