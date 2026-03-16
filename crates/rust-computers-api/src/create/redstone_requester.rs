@@ -17,7 +17,7 @@ pub struct RedstoneRequester {
 }
 
 impl Peripheral for RedstoneRequester {
-    const NAME: &'static str = "create:redstone_requester";
+    const NAME: &'static str = "Create_RedstoneRequester";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

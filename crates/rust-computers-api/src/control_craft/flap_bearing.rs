@@ -11,7 +11,7 @@ pub struct FlapBearing {
 }
 
 impl Peripheral for FlapBearing {
-    const NAME: &'static str = "controlcraft:flap_bearing_peripheral";
+    const NAME: &'static str = "WingController";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

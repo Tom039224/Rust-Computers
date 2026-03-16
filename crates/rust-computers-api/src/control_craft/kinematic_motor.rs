@@ -13,7 +13,7 @@ pub struct KinematicMotor {
 }
 
 impl Peripheral for KinematicMotor {
-    const NAME: &'static str = "controlcraft:kinematic_motor_peripheral";
+    const NAME: &'static str = "servo";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

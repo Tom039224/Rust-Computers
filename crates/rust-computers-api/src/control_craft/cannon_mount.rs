@@ -11,7 +11,7 @@ pub struct CannonMount {
 }
 
 impl Peripheral for CannonMount {
-    const NAME: &'static str = "controlcraft:cannon_mount_peripheral";
+    const NAME: &'static str = "controlcraft$cannon_mount";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

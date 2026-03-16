@@ -11,7 +11,7 @@ pub struct DynamicMotor {
 }
 
 impl Peripheral for DynamicMotor {
-    const NAME: &'static str = "controlcraft:dynamic_motor_peripheral";
+    const NAME: &'static str = "servo";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

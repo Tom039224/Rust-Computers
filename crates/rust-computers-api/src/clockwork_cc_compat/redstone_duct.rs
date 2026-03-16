@@ -23,7 +23,7 @@ pub struct RedstoneDuct {
 }
 
 impl Peripheral for RedstoneDuct {
-    const NAME: &'static str = "clockwork:redstone_duct";
+    const NAME: &'static str = "cw_redstone_duct";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

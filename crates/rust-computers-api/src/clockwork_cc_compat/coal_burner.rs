@@ -10,7 +10,7 @@ pub struct CoalBurner {
 }
 
 impl Peripheral for CoalBurner {
-    const NAME: &'static str = "clockwork:coal_burner";
+    const NAME: &'static str = "cw_coal_burner";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

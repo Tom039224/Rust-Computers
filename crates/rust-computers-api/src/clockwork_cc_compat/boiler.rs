@@ -28,7 +28,7 @@ pub struct Boiler {
 }
 
 impl Peripheral for Boiler {
-    const NAME: &'static str = "clockwork:boiler";
+    const NAME: &'static str = "Create_Boiler";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

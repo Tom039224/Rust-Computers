@@ -19,7 +19,7 @@ pub struct Frogport {
 }
 
 impl Peripheral for Frogport {
-    const NAME: &'static str = "create:frogport";
+    const NAME: &'static str = "Create_Frogport";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

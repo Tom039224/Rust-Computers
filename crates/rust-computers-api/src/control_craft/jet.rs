@@ -11,7 +11,7 @@ pub struct Jet {
 }
 
 impl Peripheral for Jet {
-    const NAME: &'static str = "controlcraft:jet_peripheral";
+    const NAME: &'static str = "attacker";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

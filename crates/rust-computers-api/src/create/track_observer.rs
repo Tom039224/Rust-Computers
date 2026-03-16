@@ -13,7 +13,7 @@ pub struct TrackObserver {
 }
 
 impl Peripheral for TrackObserver {
-    const NAME: &'static str = "create:track_observer";
+    const NAME: &'static str = "Create_TrainObserver";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

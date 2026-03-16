@@ -11,7 +11,7 @@ pub struct Speedometer {
 }
 
 impl Peripheral for Speedometer {
-    const NAME: &'static str = "create:speedometer";
+    const NAME: &'static str = "Create_Speedometer";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

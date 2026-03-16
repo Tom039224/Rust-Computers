@@ -11,7 +11,7 @@ pub struct WatchDogTimer {
 }
 
 impl Peripheral for WatchDogTimer {
-    const NAME: &'static str = "tm:watchdog_timer";
+    const NAME: &'static str = "tm_wdt";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

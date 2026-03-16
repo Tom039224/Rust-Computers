@@ -10,7 +10,7 @@ pub struct PortableEnergyInterface {
 }
 
 impl Peripheral for PortableEnergyInterface {
-    const NAME: &'static str = "createaddition:portable_energy_interface";
+    const NAME: &'static str = "portable_energy_interface";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

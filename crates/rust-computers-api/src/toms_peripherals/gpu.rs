@@ -31,7 +31,7 @@ pub struct GPU {
 }
 
 impl Peripheral for GPU {
-    const NAME: &'static str = "tm:gpu";
+    const NAME: &'static str = "tm_gpu";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

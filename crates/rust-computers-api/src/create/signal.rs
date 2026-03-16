@@ -14,7 +14,7 @@ pub struct Signal {
 }
 
 impl Peripheral for Signal {
-    const NAME: &'static str = "create:signal";
+    const NAME: &'static str = "Create_Signal";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

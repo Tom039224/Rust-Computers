@@ -10,7 +10,7 @@ pub struct AirCompressor {
 }
 
 impl Peripheral for AirCompressor {
-    const NAME: &'static str = "clockwork:air_compressor";
+    const NAME: &'static str = "cw_air_compressor";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

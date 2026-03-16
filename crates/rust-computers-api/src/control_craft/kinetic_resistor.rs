@@ -11,7 +11,7 @@ pub struct KineticResistor {
 }
 
 impl Peripheral for KineticResistor {
-    const NAME: &'static str = "controlcraft:kinetic_resistor_peripheral";
+    const NAME: &'static str = "resistor";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

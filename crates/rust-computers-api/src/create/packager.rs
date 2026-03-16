@@ -16,7 +16,7 @@ pub struct Packager {
 }
 
 impl Peripheral for Packager {
-    const NAME: &'static str = "create:packager";
+    const NAME: &'static str = "Create_Packager";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

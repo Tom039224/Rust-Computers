@@ -11,7 +11,7 @@ pub struct Keyboard {
 }
 
 impl Peripheral for Keyboard {
-    const NAME: &'static str = "tm:keyboard";
+    const NAME: &'static str = "tm_keyboard";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

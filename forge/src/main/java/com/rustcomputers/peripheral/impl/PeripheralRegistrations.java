@@ -129,7 +129,7 @@ public final class PeripheralRegistrations {
             new HashSet<>(Collections.singletonList("getBlockAt")));
 
         // GoggleLinkPort
-        reg("some_peripherals", "goggle_link_port", "sp:goggle_link_port",
+        reg("some_peripherals", "goggle_link_port", "goggle_link_port",
             new String[]{"getConnected"});
     }
 
@@ -188,11 +188,11 @@ public final class PeripheralRegistrations {
             "getTextLength", "setFont", "clearChars", "addNewChar",
             "createWindow", "decodeImage", "newImage"
         };
-        regWithImm("toms_peripherals", "gpu_p", "tm:gpu", gpuMethods,
+        regWithImm("toms_peripherals", "gpu", "tm_gpu", gpuMethods,
                 new HashSet<>(Arrays.asList("getSize", "getTextLength", "createWindow", "newImage")));
 
         // Keyboard
-        reg("toms_peripherals", "keyboard_p", "tm:keyboard",
+        reg("toms_peripherals", "keyboard", "tm_keyboard",
             new String[]{"setFireNativeEvents"});
 
         // Redstone Port
@@ -201,12 +201,12 @@ public final class PeripheralRegistrations {
             "getOutput", "getAnalogOutput", "getBundledOutput",
             "setOutput", "setAnalogOutput", "setBundledOutput", "testBundledInput"
         };
-        regWithImm("toms_peripherals", "redstone_port", "tm:redstone_port", rsPortMethods,
+        regWithImm("toms_peripherals", "redstone_port", "tm_rsPort", rsPortMethods,
                 new HashSet<>(Arrays.asList("getInput", "getOutput", "getAnalogOutput", "getBundledOutput")));
 
         // Watchdog Timer
         String[] wdtMethods = {"isEnabled", "getTimeout", "setEnabled", "setTimeout", "reset"};
-        regWithImm("toms_peripherals", "watchdog_timer", "tm:watchdog_timer", wdtMethods,
+        regWithImm("toms_peripherals", "wdt", "tm_wdt", wdtMethods,
                 new HashSet<>(Arrays.asList("isEnabled", "getTimeout")));
     }
 
@@ -219,7 +219,7 @@ public final class PeripheralRegistrations {
 
         // Air Compressor (gas_network + unique)
         String[] airCompMethods = gasNetworkPlus("getFacing", "getStatus", "getSpeed");
-        regWithImm("clockwork_cc_compat", "air_compressor", "clockwork:air_compressor",
+        regWithImm("clockwork_cc_compat", "air_compressor", "cw_air_compressor",
                 airCompMethods, gasNetworkImmPlus("getFacing", "getStatus", "getSpeed"));
 
         // Boiler (NO gas_network!)
@@ -230,27 +230,27 @@ public final class PeripheralRegistrations {
             "getMaxHeatForSize", "getMaxHeatForWater", "getFillState",
             "getFluidContents", "getControllerPos"
         };
-        regWithImm("clockwork_cc_compat", "boiler", "clockwork:boiler",
+        regWithImm("clockwork_cc_compat", "boiler", "Create_Boiler",
                 boilerMethods, new HashSet<>(Arrays.asList(boilerMethods)));
 
         // Coal Burner (gas_network + unique)
         String[] coalBurnerMethods = gasNetworkPlus("getFuelTicks", "getMaxBurnTime", "isBurning");
-        regWithImm("clockwork_cc_compat", "coal_burner", "clockwork:coal_burner",
+        regWithImm("clockwork_cc_compat", "coal_burner", "cw_coal_burner",
                 coalBurnerMethods, gasNetworkImmPlus("getFuelTicks", "getMaxBurnTime", "isBurning"));
 
         // Duct Tank (gas_network + unique)
         String[] ductTankMethods = gasNetworkPlus("getHeight", "getWidth");
-        regWithImm("clockwork_cc_compat", "duct_tank", "clockwork:duct_tank",
+        regWithImm("clockwork_cc_compat", "duct_tank", "cw_duct_tank",
                 ductTankMethods, gasNetworkImmPlus("getHeight", "getWidth"));
 
         // Exhaust (gas_network + unique)
         String[] exhaustMethods = gasNetworkPlus("getFacing");
-        regWithImm("clockwork_cc_compat", "exhaust", "clockwork:exhaust",
+        regWithImm("clockwork_cc_compat", "exhaust", "cw_exhaust",
                 exhaustMethods, gasNetworkImmPlus("getFacing"));
 
         // Gas Engine (NO gas_network!)
         String[] gasEngineMethods = {"getAttachedEngines", "getTotalEfficiency"};
-        regWithImm("clockwork_cc_compat", "gas_engine", "clockwork:gas_engine",
+        regWithImm("clockwork_cc_compat", "gas_engine", "cw_gas_engine",
                 gasEngineMethods, new HashSet<>(Arrays.asList(gasEngineMethods)));
 
         // Gas Nozzle (gas_network + many unique)
@@ -262,24 +262,24 @@ public final class PeripheralRegistrations {
             "getInflowRate", "getMissingPositions", "getTotalGasMass", "getLeakIntegrity",
             "getMaxLeaks", "getInternalDensity"
         );
-        regWithImm("clockwork_cc_compat", "gas_nozzle", "clockwork:gas_nozzle",
+        regWithImm("clockwork_cc_compat", "gas_nozzle", "cw_gas_nozzle",
                 gasNozzleMethods, gasNetworkImmPlus(
                     "getPointer", "getPointerSpeed", "getPocketTemperature", "getDuctTemperature",
                     "getTargetTemperature", "getBalloonVolume", "getLeaks", "getTemperatureDelta", "hasBalloon"));
 
         // Gas Pump (gas_network + unique)
         String[] gasPumpMethods = gasNetworkPlus("getPumpPressure", "getSpeed", "getFacing");
-        regWithImm("clockwork_cc_compat", "gas_pump", "clockwork:gas_pump",
+        regWithImm("clockwork_cc_compat", "gas_pump", "cw_gas_pump",
                 gasPumpMethods, gasNetworkImmPlus("getPumpPressure", "getSpeed", "getFacing"));
 
         // Gas Thruster (gas_network + unique)
         String[] gasThrusterMethods = gasNetworkPlus("getThrust", "getFlowRate", "getGasMassFlow", "getFacing");
-        regWithImm("clockwork_cc_compat", "gas_thruster", "clockwork:gas_thruster",
+        regWithImm("clockwork_cc_compat", "gas_thruster", "cw_gas_thruster",
                 gasThrusterMethods, gasNetworkImmPlus("getThrust", "getFlowRate", "getGasMassFlow", "getFacing"));
 
         // Gas Valve (gas_network + unique)
         String[] gasValveMethods = gasNetworkPlus("getAperture", "getFacing");
-        regWithImm("clockwork_cc_compat", "gas_valve", "clockwork:gas_valve",
+        regWithImm("clockwork_cc_compat", "gas_valve", "cw_gas_valve",
                 gasValveMethods, gasNetworkImmPlus("getAperture", "getFacing"));
 
         // Radiator (gas_network + many unique)
@@ -290,7 +290,7 @@ public final class PeripheralRegistrations {
             "getAtmosphericPressure", "getPressureScale", "getThermalPower",
             "getStatus", "getConversionRate", "getConversions"
         );
-        regWithImm("clockwork_cc_compat", "radiator", "clockwork:radiator",
+        regWithImm("clockwork_cc_compat", "radiator", "cw_radiator",
                 radiatorMethods, gasNetworkImmPlus(
                     "getFanType", "getFanRPM", "getFanCount", "getFans",
                     "isActive", "isCooling", "isHeating", "getTargetTemp",
@@ -300,7 +300,7 @@ public final class PeripheralRegistrations {
 
         // Redstone Duct (gas_network + unique)
         String[] redstoneDuctMethods = gasNetworkPlus("getPower", "getConditional");
-        regWithImm("clockwork_cc_compat", "redstone_duct", "clockwork:redstone_duct",
+        regWithImm("clockwork_cc_compat", "redstone_duct", "cw_redstone_duct",
                 redstoneDuctMethods, gasNetworkImmPlus("getPower", "getConditional"));
     }
 
@@ -311,45 +311,45 @@ public final class PeripheralRegistrations {
     public static void registerCreate() {
         LOGGER.info("Registering Create peripherals (18 types)");
 
-        reg("create", "creative_motor", "create:creative_motor",
+        reg("create", "creative_motor", "Create_CreativeMotor",
             new String[]{"setGeneratedSpeed"});
 
-        reg("create", "display_link", "create:display_link",
+        reg("create", "display_link", "Create_DisplayLink",
             new String[]{"setCursorPos", "write", "writeBytes", "clearLine", "clear", "update"});
 
-        reg("create", "frogport", "create:frogport",
+        reg("create", "frogport", "Create_Frogport",
             new String[]{"setAddress", "setConfiguration", "getItemDetail",
                 "try_pull_package_received", "try_pull_package_sent"});
 
-        reg("create", "nixie_tube", "create:nixie_tube",
+        reg("create", "nixie_tube", "Create_NixieTube",
             new String[]{"setText", "setTextColour", "setSignal"});
 
-        reg("create", "packager", "create:packager",
+        reg("create", "packager", "Create_Packager",
             new String[]{"makePackage", "getItemDetail", "setAddress",
                 "try_pull_package_received", "try_pull_package_sent"});
 
-        reg("create", "postbox", "create:postbox",
+        reg("create", "postbox", "Create_Postbox",
             new String[]{"setAddress", "getItemDetail", "setConfiguration",
                 "try_pull_package_received", "try_pull_package_sent"});
 
-        reg("create", "redstone_requester", "create:redstone_requester",
+        reg("create", "redstone_requester", "Create_RedstoneRequester",
             new String[]{"request", "setRequest", "setCraftingRequest", "getRequest",
                 "setConfiguration", "setAddress"});
 
-        reg("create", "repackager", "create:repackager",
+        reg("create", "repackager", "Create_Repackager",
             new String[]{"makePackage", "getItemDetail", "setAddress",
                 "try_pull_package_repackaged", "try_pull_package_received", "try_pull_package_sent"});
 
-        reg("create", "rotation_speed_controller", "create:rotation_speed_controller",
+        reg("create", "rotation_speed_controller", "Create_RotationSpeedController",
             new String[]{"setTargetSpeed"});
 
-        reg("create", "sequenced_gearshift", "create:sequenced_gearshift",
+        reg("create", "sequenced_gearshift", "Create_SequencedGearshift",
             new String[]{"rotate", "moveBy"});
 
-        reg("create", "signal", "create:signal",
+        reg("create", "signal", "Create_Signal",
             new String[]{"setForcedRed", "cycleSignalType", "try_pull_train_signal_state_change"});
 
-        reg("create", "speedometer", "create:speedometer",
+        reg("create", "speedometer", "Create_Speedometer",
             new String[]{"try_pull_speed_change"});
 
         // Station
@@ -361,19 +361,19 @@ public final class PeripheralRegistrations {
         regWithImm("create", "station", "create:station", stationMethods,
                 new HashSet<>(Arrays.asList("canTrainReach", "distanceTo")));
 
-        reg("create", "sticker", "create:sticker",
+        reg("create", "sticker", "Create_Sticker",
             new String[]{"extend", "retract", "toggle"});
 
-        reg("create", "stock_ticker", "create:stock_ticker",
+        reg("create", "stock_ticker", "Create_StockTicker",
             new String[]{"getStockItemDetail", "requestFiltered", "getItemDetail"});
 
-        reg("create", "stressometer", "create:stressometer",
+        reg("create", "stressometer", "Create_Stressometer",
             new String[]{"try_pull_overstressed", "try_pull_stress_change"});
 
-        reg("create", "tablecloth_shop", "create:tablecloth_shop",
+        reg("create", "tablecloth_shop", "Create_TableClothShop",
             new String[]{"setAddress", "setPriceTagItem", "setPriceTagCount", "setWares"});
 
-        reg("create", "track_observer", "create:track_observer",
+        reg("create", "track_observer", "Create_TrainObserver",
             new String[]{"try_pull_train_passing", "try_pull_train_passed"});
     }
 
@@ -384,7 +384,7 @@ public final class PeripheralRegistrations {
     public static void registerCreateAddition() {
         LOGGER.info("Registering Create Addition peripherals (5 types)");
 
-        reg("createaddition", "digital_adapter", "createaddition:digital_adapter",
+        reg("createaddition", "digital_adapter", "digital_adapter",
             new String[]{
                 "clearLine", "clear", "print", "getLine", "setLine", "getMaxLines",
                 "setTargetSpeed", "getTargetSpeed", "getKineticStress", "getKineticCapacity",
@@ -393,22 +393,22 @@ public final class PeripheralRegistrations {
                 "getElevatorFloorName", "gotoElevatorFloor", "getDurationAngle", "getDurationDistance"
             });
 
-        reg("createaddition", "electric_motor", "createaddition:electric_motor",
+        reg("createaddition", "electric_motor", "electric_motor",
             new String[]{
                 "getType", "setSpeed", "stop", "getSpeed", "getStressCapacity",
                 "getEnergyConsumption", "rotate", "translate", "getMaxInsert", "getMaxExtract"
             });
 
-        reg("createaddition", "modular_accumulator", "createaddition:modular_accumulator",
+        reg("createaddition", "modular_accumulator", "modular_accumulator",
             new String[]{
                 "getEnergy", "getCapacity", "getPercent", "getMaxInsert", "getMaxExtract",
                 "getHeight", "getWidth"
             });
 
-        reg("createaddition", "portable_energy_interface", "createaddition:portable_energy_interface",
+        reg("createaddition", "portable_energy_interface", "portable_energy_interface",
             new String[]{"getEnergy", "getCapacity", "isConnected", "getMaxInsert", "getMaxExtract"});
 
-        reg("createaddition", "redstone_relay", "createaddition:redstone_relay",
+        reg("createaddition", "redstone_relay", "redstone_relay",
             new String[]{"getMaxInsert", "getMaxExtract", "getThroughput", "isPowered"});
     }
 
@@ -433,16 +433,16 @@ public final class PeripheralRegistrations {
             "getClipDistance", "latestShip", "latestPlayer", "latestEntity", "latestBlock",
             "getCameraPosition", "getAbsViewForward", "isBeingUsed", "getDirection"
         ));
-        regWithImm("controlcraft", "camera", "controlcraft:camera", cameraMethods, cameraImm);
+        regWithImm("controlcraft", "camera", "camera", cameraMethods, cameraImm);
 
         // Cannon Mount
         String[] cannonMountMethods = {"getPitch", "getYaw", "setPitch", "setYaw", "assemble", "disassemble"};
-        regWithImm("controlcraft", "cannon_mount", "controlcraft:cannon_mount_peripheral",
+        regWithImm("controlcraft", "cannon_mount", "controlcraft\\$cannon_mount",
                 cannonMountMethods, new HashSet<>(Arrays.asList("getPitch", "getYaw")));
 
         // Compact Flap
         String[] compactFlapMethods = {"getAngle", "getTilt", "setAngle", "setTilt"};
-        regWithImm("controlcraft", "compact_flap", "controlcraft:compact_flap_peripheral",
+        regWithImm("controlcraft", "compact_flap", "compact_flap",
                 compactFlapMethods, new HashSet<>(Arrays.asList("getAngle", "getTilt")));
 
         // Dynamic Motor
@@ -451,18 +451,18 @@ public final class PeripheralRegistrations {
             "getCurrentValue", "getRelative", "isLocked",
             "setPID", "setTargetValue", "setOutputTorque", "setIsAdjustingAngle", "lock", "unlock"
         };
-        regWithImm("controlcraft", "dynamic_motor", "controlcraft:dynamic_motor_peripheral",
+        regWithImm("controlcraft", "dynamic_motor", "servo",
                 dynMotorMethods, new HashSet<>(Arrays.asList(
                     "getTargetValue", "getPhysics", "getAngle", "getAngularVelocity",
                     "getCurrentValue", "getRelative", "isLocked")));
 
         // Flap Bearing
         String[] flapBearingMethods = {"getAngle", "setAngle", "assembleNextTick", "disassembleNextTick"};
-        regWithImm("controlcraft", "flap_bearing", "controlcraft:flap_bearing_peripheral",
+        regWithImm("controlcraft", "flap_bearing", "WingController",
                 flapBearingMethods, new HashSet<>(Arrays.asList("getAngle")));
 
         // Jet
-        reg("controlcraft", "jet", "controlcraft:jet_peripheral",
+        reg("controlcraft", "jet", "attacker",
             new String[]{"setOutputThrust", "setHorizontalTilt", "setVerticalTilt"});
 
         // Kinematic Motor
@@ -470,23 +470,23 @@ public final class PeripheralRegistrations {
             "getTargetAngle", "getControlTarget", "getPhysics", "getAngle", "getRelative",
             "setTargetAngle", "setControlTarget", "setIsForcingAngle"
         };
-        regWithImm("controlcraft", "kinematic_motor", "controlcraft:kinematic_motor_peripheral",
+        regWithImm("controlcraft", "kinematic_motor", "servo",
                 kinMotorMethods, new HashSet<>(Arrays.asList(
                     "getTargetAngle", "getControlTarget", "getPhysics", "getAngle", "getRelative")));
 
         // Kinetic Resistor
         String[] kinResistorMethods = {"getRatio", "setRatio"};
-        regWithImm("controlcraft", "kinetic_resistor", "controlcraft:kinetic_resistor_peripheral",
+        regWithImm("controlcraft", "kinetic_resistor", "resistor",
                 kinResistorMethods, new HashSet<>(Arrays.asList("getRatio")));
 
         // Link Bridge
         String[] linkBridgeMethods = {"setInput", "getOutput"};
-        regWithImm("controlcraft", "link_bridge", "controlcraft:link_bridge_peripheral",
+        regWithImm("controlcraft", "link_bridge", "cc_link_bridge",
                 linkBridgeMethods, new HashSet<>(Arrays.asList("getOutput")));
 
         // Propeller Controller
         String[] propCtrlMethods = {"getTargetSpeed", "setTargetSpeed"};
-        regWithImm("controlcraft", "propeller_controller", "controlcraft:propeller_controller_peripheral",
+        regWithImm("controlcraft", "propeller_controller", "PropellerController",
                 propCtrlMethods, new HashSet<>(Arrays.asList("getTargetSpeed")));
 
         // Slider
@@ -494,12 +494,12 @@ public final class PeripheralRegistrations {
             "getDistance", "getCurrentValue", "getTargetValue", "getPhysics", "isLocked",
             "setOutputForce", "setPID", "setTargetValue", "lock", "unlock"
         };
-        regWithImm("controlcraft", "slider", "controlcraft:slider_peripheral",
+        regWithImm("controlcraft", "slider", "slider",
                 sliderMethods, new HashSet<>(Arrays.asList(
                     "getDistance", "getCurrentValue", "getTargetValue", "getPhysics", "isLocked")));
 
         // Spatial Anchor
-        reg("controlcraft", "spatial_anchor", "controlcraft:spatial_anchor_peripheral",
+        reg("controlcraft", "spatial_anchor", "spatial",
             new String[]{"setStatic", "setRunning", "setOffset", "setPPID", "setQPID", "setChannel"});
 
         // Spinalyzer
@@ -509,14 +509,14 @@ public final class PeripheralRegistrations {
             "getSpinalyzerPosition", "getSpinalyzerVelocity", "getPhysics",
             "applyInvariantForce", "applyInvariantTorque", "applyRotDependentForce", "applyRotDependentTorque"
         };
-        regWithImm("controlcraft", "spinalyzer", "controlcraft:spinalyzer_peripheral",
+        regWithImm("controlcraft", "spinalyzer", "spinalyzer",
                 spinalyzerMethods, new HashSet<>(Arrays.asList(
                     "getQuaternion", "getQuaternionJ", "getRotationMatrix", "getRotationMatrixT",
                     "getVelocity", "getAngularVelocity", "getPosition",
                     "getSpinalyzerPosition", "getSpinalyzerVelocity", "getPhysics")));
 
         // Transmitter
-        reg("controlcraft", "transmitter", "controlcraft:transmitter_peripheral",
+        reg("controlcraft", "transmitter", "transmitter",
             new String[]{"callRemote", "callRemoteAsync", "setProtocol"});
     }
 
@@ -527,13 +527,13 @@ public final class PeripheralRegistrations {
     public static void registerAdvancedPeripherals() {
         LOGGER.info("Registering Advanced Peripherals (12 types)");
 
-        reg("advancedperipherals", "block_reader", "advancedPeripherals:block_reader",
+        reg("advancedperipherals", "block_reader", "block_reader",
             new String[]{"getBlockName", "getBlockData", "getBlockStates", "isTileEntity"});
 
-        reg("advancedperipherals", "chat_box", "advancedPeripherals:chat_box",
+        reg("advancedperipherals", "chat_box", "chat_box",
             new String[]{"sendMessage", "sendFormattedMessage", "sendMessageToPlayer", "sendToastToPlayer"});
 
-        reg("advancedperipherals", "colony_integrator", "advancedPeripherals:colony_integrator",
+        reg("advancedperipherals", "colony_integrator", "colony_integrator",
             new String[]{
                 "isInColony", "getColonyID", "getColonyName", "getColonyStyle", "isActive",
                 "getAmountOfCitizens", "getMaxCitizens", "getHappiness", "getPosition",
@@ -541,10 +541,10 @@ public final class PeripheralRegistrations {
                 "getWorkOrders", "getRequests", "getBuilderResources", "isUnderAttack"
             });
 
-        reg("advancedperipherals", "compass", "advancedPeripherals:compass",
+        reg("advancedperipherals", "compass", "compass",
             new String[]{"getFacing"});
 
-        reg("advancedperipherals", "energy_detector", "advancedPeripherals:energy_detector",
+        reg("advancedperipherals", "energy_detector", "energy_detector",
             new String[]{"getTransferRate", "getTransferRateLimit", "setTransferRateLimit"});
 
         // Environment Detector
@@ -554,15 +554,15 @@ public final class PeripheralRegistrations {
             "getDayLightLevel", "getTime", "getMoonId", "getMoonName", "isMoon",
             "isSlimeChunk", "canSleepHere", "canSleepPlayer", "scanEntities", "scanCost"
         };
-        regWithImm("advancedperipherals", "environment_detector", "advancedPeripherals:environment_detector",
+        regWithImm("advancedperipherals", "environment_detector", "environment_detector",
                 envDetMethods, new HashSet<>(Arrays.asList("scanCost")));
 
         // Geo Scanner
         String[] geoScanMethods = {"cost", "scan", "chunkAnalyze"};
-        regWithImm("advancedperipherals", "geo_scanner", "advancedPeripherals:geo_scanner",
+        regWithImm("advancedperipherals", "geo_scanner", "geo_scanner",
                 geoScanMethods, new HashSet<>(Arrays.asList("cost")));
 
-        reg("advancedperipherals", "inventory_manager", "advancedPeripherals:inventory_manager",
+        reg("advancedperipherals", "inventory_manager", "inventory_manager",
             new String[]{
                 "getOwner", "addItemToPlayer", "removeItemFromPlayer", "list", "getArmor",
                 "isPlayerEquipped", "isWearing", "getItemInHand", "getItemInOffHand",
@@ -570,7 +570,7 @@ public final class PeripheralRegistrations {
             });
 
         // ME Bridge
-        reg("advancedperipherals", "me_bridge", "advancedPeripherals:me_bridge",
+        reg("advancedperipherals", "me_bridge", "me_bridge",
             new String[]{
                 "listItems", "getItem", "exportItem", "importItem", "exportItemToPeripheral",
                 "importItemFromPeripheral", "listFluids", "getFluid", "exportFluid", "importFluid",
@@ -582,10 +582,10 @@ public final class PeripheralRegistrations {
                 "getTotalFluidStorage", "getUsedFluidStorage", "getAvailableFluidStorage"
             });
 
-        reg("advancedperipherals", "nbt_storage", "advancedPeripherals:nbt_storage",
+        reg("advancedperipherals", "nbt_storage", "nbt_storage",
             new String[]{"read", "writeJson", "writeTable"});
 
-        reg("advancedperipherals", "player_detector", "advancedPeripherals:player_detector",
+        reg("advancedperipherals", "player_detector", "player_detector",
             new String[]{
                 "getOnlinePlayers", "getPlayersInRange", "getPlayersInCoords", "getPlayersInCubic",
                 "isPlayersInRange", "isPlayersInCoords", "isPlayersInCubic", "isPlayerInRange",
@@ -593,7 +593,7 @@ public final class PeripheralRegistrations {
             });
 
         // RS Bridge (same methods as ME Bridge + chemical storage getters)
-        reg("advancedperipherals", "rs_bridge", "advancedPeripherals:rs_bridge",
+        reg("advancedperipherals", "rs_bridge", "rs_bridge",
             new String[]{
                 "listItems", "getItem", "exportItem", "importItem", "exportItemToPeripheral",
                 "importItemFromPeripheral", "listFluids", "getFluid", "exportFluid", "importFluid",

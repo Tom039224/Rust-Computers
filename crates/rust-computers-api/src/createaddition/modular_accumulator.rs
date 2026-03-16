@@ -10,7 +10,7 @@ pub struct ModularAccumulator {
 }
 
 impl Peripheral for ModularAccumulator {
-    const NAME: &'static str = "createaddition:modular_accumulator";
+    const NAME: &'static str = "modular_accumulator";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

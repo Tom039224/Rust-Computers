@@ -12,7 +12,7 @@ pub struct BlockReader {
 }
 
 impl Peripheral for BlockReader {
-    const NAME: &'static str = "advancedPeripherals:block_reader";
+    const NAME: &'static str = "block_reader";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

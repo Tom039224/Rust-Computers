@@ -12,7 +12,7 @@ pub struct Compass {
 }
 
 impl Peripheral for Compass {
-    const NAME: &'static str = "advancedPeripherals:compass";
+    const NAME: &'static str = "compass";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

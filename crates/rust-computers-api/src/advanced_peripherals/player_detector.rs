@@ -45,7 +45,7 @@ pub struct PlayerDetector {
 }
 
 impl Peripheral for PlayerDetector {
-    const NAME: &'static str = "advancedPeripherals:player_detector";
+    const NAME: &'static str = "player_detector";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

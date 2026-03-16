@@ -11,7 +11,7 @@ pub struct Stressometer {
 }
 
 impl Peripheral for Stressometer {
-    const NAME: &'static str = "create:stressometer";
+    const NAME: &'static str = "Create_Stressometer";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

@@ -12,7 +12,7 @@ pub struct Transmitter {
 }
 
 impl Peripheral for Transmitter {
-    const NAME: &'static str = "controlcraft:transmitter_peripheral";
+    const NAME: &'static str = "transmitter";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

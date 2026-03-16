@@ -10,7 +10,7 @@ pub struct RedstoneRelay {
 }
 
 impl Peripheral for RedstoneRelay {
-    const NAME: &'static str = "createaddition:redstone_relay";
+    const NAME: &'static str = "redstone_relay";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

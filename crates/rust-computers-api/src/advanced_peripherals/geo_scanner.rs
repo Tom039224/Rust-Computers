@@ -26,7 +26,7 @@ pub struct GeoScanner {
 }
 
 impl Peripheral for GeoScanner {
-    const NAME: &'static str = "advancedPeripherals:geo_scanner";
+    const NAME: &'static str = "geo_scanner";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

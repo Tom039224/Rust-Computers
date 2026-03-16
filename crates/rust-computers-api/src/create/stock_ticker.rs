@@ -15,7 +15,7 @@ pub struct StockTicker {
 }
 
 impl Peripheral for StockTicker {
-    const NAME: &'static str = "create:stock_ticker";
+    const NAME: &'static str = "Create_StockTicker";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

@@ -13,7 +13,7 @@ pub struct RedstonePort {
 }
 
 impl Peripheral for RedstonePort {
-    const NAME: &'static str = "tm:redstone_port";
+    const NAME: &'static str = "tm_rsPort";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

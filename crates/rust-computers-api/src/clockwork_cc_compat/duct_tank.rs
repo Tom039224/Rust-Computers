@@ -10,7 +10,7 @@ pub struct DuctTank {
 }
 
 impl Peripheral for DuctTank {
-    const NAME: &'static str = "clockwork:duct_tank";
+    const NAME: &'static str = "cw_duct_tank";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

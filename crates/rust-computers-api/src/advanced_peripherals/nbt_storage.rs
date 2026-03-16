@@ -11,7 +11,7 @@ pub struct NbtStorage {
 }
 
 impl Peripheral for NbtStorage {
-    const NAME: &'static str = "advancedPeripherals:nbt_storage";
+    const NAME: &'static str = "nbt_storage";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

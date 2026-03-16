@@ -13,7 +13,7 @@ pub struct DigitalAdapter {
 }
 
 impl Peripheral for DigitalAdapter {
-    const NAME: &'static str = "createaddition:digital_adapter";
+    const NAME: &'static str = "digital_adapter";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

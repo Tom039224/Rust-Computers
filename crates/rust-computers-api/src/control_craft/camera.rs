@@ -42,7 +42,7 @@ pub struct Camera {
 }
 
 impl Peripheral for Camera {
-    const NAME: &'static str = "controlcraft:camera";
+    const NAME: &'static str = "camera";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

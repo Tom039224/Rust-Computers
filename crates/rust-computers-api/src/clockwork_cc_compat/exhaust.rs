@@ -10,7 +10,7 @@ pub struct Exhaust {
 }
 
 impl Peripheral for Exhaust {
-    const NAME: &'static str = "clockwork:exhaust";
+    const NAME: &'static str = "cw_exhaust";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

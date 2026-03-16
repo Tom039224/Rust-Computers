@@ -13,7 +13,7 @@ pub struct GoggleLinkPort {
 }
 
 impl Peripheral for GoggleLinkPort {
-    const NAME: &'static str = "sp:goggle_link_port";
+    const NAME: &'static str = "goggle_link_port";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

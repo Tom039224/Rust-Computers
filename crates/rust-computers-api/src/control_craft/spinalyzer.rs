@@ -30,7 +30,7 @@ pub struct Spinalyzer {
 }
 
 impl Peripheral for Spinalyzer {
-    const NAME: &'static str = "controlcraft:spinalyzer_peripheral";
+    const NAME: &'static str = "spinalyzer";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

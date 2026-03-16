@@ -66,7 +66,7 @@ pub struct MEBridge {
 }
 
 impl Peripheral for MEBridge {
-    const NAME: &'static str = "advancedPeripherals:me_bridge";
+    const NAME: &'static str = "me_bridge";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

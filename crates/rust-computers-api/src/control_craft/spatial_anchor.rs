@@ -11,7 +11,7 @@ pub struct SpatialAnchor {
 }
 
 impl Peripheral for SpatialAnchor {
-    const NAME: &'static str = "controlcraft:spatial_anchor_peripheral";
+    const NAME: &'static str = "spatial";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

@@ -13,7 +13,7 @@ pub struct ElectricMotor {
 }
 
 impl Peripheral for ElectricMotor {
-    const NAME: &'static str = "createaddition:electric_motor";
+    const NAME: &'static str = "electric_motor";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

@@ -16,7 +16,7 @@ pub struct RSBridge {
 }
 
 impl Peripheral for RSBridge {
-    const NAME: &'static str = "advancedPeripherals:rs_bridge";
+    const NAME: &'static str = "rs_bridge";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

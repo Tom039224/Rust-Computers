@@ -12,7 +12,7 @@ pub struct DisplayLink {
 }
 
 impl Peripheral for DisplayLink {
-    const NAME: &'static str = "create:display_link";
+    const NAME: &'static str = "Create_DisplayLink";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

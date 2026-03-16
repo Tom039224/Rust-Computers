@@ -45,7 +45,7 @@ pub struct EnvironmentDetector {
 }
 
 impl Peripheral for EnvironmentDetector {
-    const NAME: &'static str = "advancedPeripherals:environment_detector";
+    const NAME: &'static str = "environment_detector";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

@@ -15,7 +15,7 @@ pub struct TableclothShop {
 }
 
 impl Peripheral for TableclothShop {
-    const NAME: &'static str = "create:tablecloth_shop";
+    const NAME: &'static str = "Create_TableClothShop";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

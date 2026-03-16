@@ -34,7 +34,7 @@ pub struct InventoryManager {
 }
 
 impl Peripheral for InventoryManager {
-    const NAME: &'static str = "advancedPeripherals:inventory_manager";
+    const NAME: &'static str = "inventory_manager";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

@@ -16,7 +16,7 @@ pub struct Postbox {
 }
 
 impl Peripheral for Postbox {
-    const NAME: &'static str = "create:postbox";
+    const NAME: &'static str = "Create_Postbox";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

@@ -11,7 +11,7 @@ pub struct Slider {
 }
 
 impl Peripheral for Slider {
-    const NAME: &'static str = "controlcraft:slider_peripheral";
+    const NAME: &'static str = "slider";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

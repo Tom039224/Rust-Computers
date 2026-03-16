@@ -401,7 +401,7 @@ use crate::error::PeripheralError;
 /// 全ペリフェラル構造体が実装する trait。
 /// Trait implemented by all peripheral structs.
 pub trait Peripheral: Sized {
-    /// CC:Tweaked 上のペリフェラル型名 (例: `"create:creative_motor"`)
+    /// CC:Tweaked 上のペリフェラル型名 (例: `"Create_CreativeMotor"`)
     const NAME: &'static str;
     /// 指定アドレスに新しいインスタンスを作成する（内部用）。
     /// Create a new instance at the specified address (internal use).

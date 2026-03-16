@@ -11,7 +11,7 @@ pub struct CompactFlap {
 }
 
 impl Peripheral for CompactFlap {
-    const NAME: &'static str = "controlcraft:compact_flap_peripheral";
+    const NAME: &'static str = "compact_flap";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

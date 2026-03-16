@@ -14,7 +14,7 @@ pub struct NixieTube {
 }
 
 impl Peripheral for NixieTube {
-    const NAME: &'static str = "create:nixie_tube";
+    const NAME: &'static str = "Create_NixieTube";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

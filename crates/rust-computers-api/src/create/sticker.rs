@@ -12,7 +12,7 @@ pub struct Sticker {
 }
 
 impl Peripheral for Sticker {
-    const NAME: &'static str = "create:sticker";
+    const NAME: &'static str = "Create_Sticker";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

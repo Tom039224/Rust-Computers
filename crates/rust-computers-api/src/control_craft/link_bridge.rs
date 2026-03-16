@@ -11,7 +11,7 @@ pub struct LinkBridge {
 }
 
 impl Peripheral for LinkBridge {
-    const NAME: &'static str = "controlcraft:link_bridge_peripheral";
+    const NAME: &'static str = "cc_link_bridge";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

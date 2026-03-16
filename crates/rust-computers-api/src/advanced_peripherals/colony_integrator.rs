@@ -77,7 +77,7 @@ pub struct ColonyIntegrator {
 }
 
 impl Peripheral for ColonyIntegrator {
-    const NAME: &'static str = "advancedPeripherals:colony_integrator";
+    const NAME: &'static str = "colony_integrator";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

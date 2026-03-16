@@ -11,7 +11,7 @@ pub struct ChatBox {
 }
 
 impl Peripheral for ChatBox {
-    const NAME: &'static str = "advancedPeripherals:chat_box";
+    const NAME: &'static str = "chat_box";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

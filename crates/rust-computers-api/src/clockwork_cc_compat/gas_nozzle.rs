@@ -21,7 +21,7 @@ pub struct GasNozzle {
 }
 
 impl Peripheral for GasNozzle {
-    const NAME: &'static str = "clockwork:gas_nozzle";
+    const NAME: &'static str = "cw_gas_nozzle";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

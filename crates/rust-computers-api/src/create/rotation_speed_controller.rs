@@ -12,7 +12,7 @@ pub struct RotationSpeedController {
 }
 
 impl Peripheral for RotationSpeedController {
-    const NAME: &'static str = "create:rotation_speed_controller";
+    const NAME: &'static str = "Create_RotationSpeedController";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

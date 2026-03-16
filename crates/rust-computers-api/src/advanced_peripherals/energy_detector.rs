@@ -11,7 +11,7 @@ pub struct EnergyDetector {
 }
 
 impl Peripheral for EnergyDetector {
-    const NAME: &'static str = "advancedPeripherals:energy_detector";
+    const NAME: &'static str = "energy_detector";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

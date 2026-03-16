@@ -12,7 +12,7 @@ pub struct SequencedGearshift {
 }
 
 impl Peripheral for SequencedGearshift {
-    const NAME: &'static str = "create:sequenced_gearshift";
+    const NAME: &'static str = "Create_SequencedGearshift";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

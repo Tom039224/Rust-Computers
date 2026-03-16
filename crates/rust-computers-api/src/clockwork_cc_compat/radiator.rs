@@ -29,7 +29,7 @@ pub struct Radiator {
 }
 
 impl Peripheral for Radiator {
-    const NAME: &'static str = "clockwork:radiator";
+    const NAME: &'static str = "cw_radiator";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

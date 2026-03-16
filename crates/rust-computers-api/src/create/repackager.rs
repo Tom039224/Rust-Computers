@@ -16,7 +16,7 @@ pub struct Repackager {
 }
 
 impl Peripheral for Repackager {
-    const NAME: &'static str = "create:repackager";
+    const NAME: &'static str = "Create_Repackager";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

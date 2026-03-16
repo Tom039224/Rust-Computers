@@ -11,7 +11,7 @@ pub struct PropellerController {
 }
 
 impl Peripheral for PropellerController {
-    const NAME: &'static str = "controlcraft:propeller_controller_peripheral";
+    const NAME: &'static str = "PropellerController";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }

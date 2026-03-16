@@ -12,7 +12,7 @@ pub struct CreativeMotor {
 }
 
 impl Peripheral for CreativeMotor {
-    const NAME: &'static str = "create:creative_motor";
+    const NAME: &'static str = "Create_CreativeMotor";
 
     fn new(addr: PeriphAddr) -> Self {
         Self { addr }
