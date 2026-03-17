@@ -336,8 +336,12 @@ public final class PeripheralRegistrations {
         reg("create", "creative_motor", "Create_CreativeMotor",
             new String[]{"setGeneratedSpeed"});
 
-        reg("create", "display_link", "Create_DisplayLink",
-            new String[]{"setCursorPos", "write", "writeBytes", "clearLine", "clear", "update"});
+        // DisplayLink - 専用実装を使用
+        Block displayLinkBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("create", "display_link"));
+        if (displayLinkBlock != null && displayLinkBlock != Blocks.AIR) {
+            PeripheralProvider.register(displayLinkBlock, CreateDisplayLinkPeripheral::new);
+            LOGGER.debug("Registered peripheral: create:display_link -> Create_DisplayLink");
+        }
 
         reg("create", "frogport", "Create_Frogport",
             new String[]{"setAddress", "setConfiguration", "getItemDetail",
