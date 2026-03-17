@@ -56,42 +56,64 @@ impl Peripheral for Inventory {
 }
 
 impl Inventory {
-    /// インベントリサイズを取得する。
-    /// Get the inventory size.
+    // 1. size メソッド
+    /// インベントリサイズを取得する（book-read パターン）。
+    /// Get the inventory size (book-read pattern).
     pub fn book_next_size(&mut self) {
-        peripheral::book_request(self.addr, "size", &msgpack::array(&[]));
+        peripheral::book_request(self.addr, "size", &[]);
     }
+    
     pub fn read_last_size(&self) -> Result<u32, PeripheralError> {
         let data = peripheral::read_result(self.addr, "size")?;
         peripheral::decode(&data)
     }
-
-    /// 全スロットの一覧を取得する。
-    /// List all slots.
-    pub fn book_next_list(&mut self) {
-        peripheral::book_request(self.addr, "list", &msgpack::array(&[]));
+    
+    pub async fn async_size(&mut self) -> Result<u32, PeripheralError> {
+        self.book_next_size();
+        crate::wait_for_next_tick().await;
+        self.read_last_size()
     }
+    
+    // 2. list メソッド
+    /// 全スロットの一覧を取得する（book-read パターン）。
+    /// List all slots (book-read pattern).
+    pub fn book_next_list(&mut self) {
+        peripheral::book_request(self.addr, "list", &[]);
+    }
+    
     pub fn read_last_list(&self) -> Result<BTreeMap<u32, SlotInfo>, PeripheralError> {
         let data = peripheral::read_result(self.addr, "list")?;
         peripheral::decode(&data)
     }
-
-    /// 指定スロットのアイテム詳細を取得する。
-    /// Get item detail for the specified slot.
-    pub fn book_next_get_item_detail(&mut self, slot: u32) {
-        peripheral::book_request(
-            self.addr,
-            "getItemDetail",
-            &msgpack::array(&[msgpack::int(slot as i32)]),
-        );
+    
+    pub async fn async_list(&mut self) -> Result<BTreeMap<u32, SlotInfo>, PeripheralError> {
+        self.book_next_list();
+        crate::wait_for_next_tick().await;
+        self.read_last_list()
     }
+    
+    // 3. getItemDetail メソッド
+    /// 指定スロットのアイテム詳細を取得する（book-read パターン）。
+    /// Get item detail for the specified slot (book-read pattern).
+    pub fn book_next_get_item_detail(&mut self, slot: u32) {
+        let args = peripheral::encode(&slot).unwrap_or_default();
+        peripheral::book_request(self.addr, "getItemDetail", &args);
+    }
+    
     pub fn read_last_get_item_detail(&self) -> Result<Option<ItemDetail>, PeripheralError> {
         let data = peripheral::read_result(self.addr, "getItemDetail")?;
         peripheral::decode(&data)
     }
-
-    /// アイテムを別のインベントリに転送する。
-    /// Push items to another inventory.
+    
+    pub async fn async_get_item_detail(&mut self, slot: u32) -> Result<Option<ItemDetail>, PeripheralError> {
+        self.book_next_get_item_detail(slot);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_item_detail()
+    }
+    
+    // 4. pushItems メソッド（アクション系）
+    /// アイテムを別のインベントリに転送する（アクション系）。
+    /// Push items to another inventory (action pattern).
     pub fn book_next_push_items(
         &mut self,
         to: &Inventory,
@@ -114,6 +136,7 @@ impl Inventory {
         }
         peripheral::book_action(self.addr, "pushItems", &msgpack::array(&args));
     }
+    
     pub fn read_last_push_items(&self) -> Vec<Result<u32, PeripheralError>> {
         peripheral::read_action_results(self.addr, "pushItems")
             .into_iter()
@@ -123,9 +146,25 @@ impl Inventory {
             })
             .collect()
     }
-
-    /// 別のインベントリからアイテムを引き出す。
-    /// Pull items from another inventory.
+    
+    pub async fn async_push_items(
+        &mut self,
+        to: &Inventory,
+        from_slot: u32,
+        limit: Option<u32>,
+        to_slot: Option<u32>,
+    ) -> Result<u32, PeripheralError> {
+        self.book_next_push_items(to, from_slot, limit, to_slot);
+        crate::wait_for_next_tick().await;
+        self.read_last_push_items()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(0))
+    }
+    
+    // 5. pullItems メソッド（アクション系）
+    /// 別のインベントリからアイテムを引き出す（アクション系）。
+    /// Pull items from another inventory (action pattern).
     pub fn book_next_pull_items(
         &mut self,
         from: &Inventory,
@@ -148,6 +187,7 @@ impl Inventory {
         }
         peripheral::book_action(self.addr, "pullItems", &msgpack::array(&args));
     }
+    
     pub fn read_last_pull_items(&self) -> Vec<Result<u32, PeripheralError>> {
         peripheral::read_action_results(self.addr, "pullItems")
             .into_iter()
@@ -156,5 +196,20 @@ impl Inventory {
                 Err(e) => Err(PeripheralError::Bridge(e)),
             })
             .collect()
+    }
+    
+    pub async fn async_pull_items(
+        &mut self,
+        from: &Inventory,
+        from_slot: u32,
+        limit: Option<u32>,
+        to_slot: Option<u32>,
+    ) -> Result<u32, PeripheralError> {
+        self.book_next_pull_items(from, from_slot, limit, to_slot);
+        crate::wait_for_next_tick().await;
+        self.read_last_pull_items()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(0))
     }
 }

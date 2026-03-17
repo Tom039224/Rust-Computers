@@ -32,12 +32,12 @@
 - [x] 2.12 AdvancedPeripherals GeoScanner実装
 - [x] 2.13 Create DisplayLink実装
 - [x] 2.14 Create Station実装
-- [-] 2.15 その他優先度の高いペリフェラル実装
+- [x] 2.15 その他優先度の高いペリフェラル実装
 
 ## Phase 3: Rust API Implementation
 
-- [ ] 3.1 ペリフェラルラッパー生成フレームワーク設計
-- [ ] 3.2 book_next/read_last/async マクロ実装
+- [x] 3.1 ペリフェラルラッパー生成フレームワーク設計
+- [x] 3.2 book_next/read_last/async マクロ実装
 - [ ] 3.3 CC:Tweaked Inventory Rust実装
 - [ ] 3.4 CC:Tweaked Modem Rust実装
 - [ ] 3.5 CC:Tweaked Monitor Rust実装
