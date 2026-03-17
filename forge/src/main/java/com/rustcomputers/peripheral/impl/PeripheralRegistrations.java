@@ -378,14 +378,12 @@ public final class PeripheralRegistrations {
         reg("create", "speedometer", "Create_Speedometer",
             new String[]{"try_pull_speed_change"});
 
-        // Station
-        String[] stationMethods = {
-            "assemble", "disassemble", "setAssemblyMode", "setStationName",
-            "setTrainName", "setSchedule", "canTrainReach", "distanceTo",
-            "try_pull_train_arrive", "try_pull_train_depart"
-        };
-        regWithImm("create", "station", "create:station", stationMethods,
-                new HashSet<>(Arrays.asList("canTrainReach", "distanceTo")));
+        // Station - 専用実装を使用
+        Block stationBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("create", "station"));
+        if (stationBlock != null && stationBlock != Blocks.AIR) {
+            PeripheralProvider.register(stationBlock, CreateStationPeripheral::new);
+            LOGGER.debug("Registered peripheral: create:station -> create:station");
+        }
 
         reg("create", "sticker", "Create_Sticker",
             new String[]{"extend", "retract", "toggle"});
