@@ -22,8 +22,8 @@
 - [x] 2.2 イベント監視フレームワーク実装
 - [x] 2.3 複数リクエスト・複数回答対応
 - [x] 2.4 CC:Tweaked Inventory実装
-- [-] 2.5 CC:Tweaked Modem実装（イベント対応）
-- [ ] 2.6 CC:Tweaked Monitor実装（イベント対応）
+- [x] 2.5 CC:Tweaked Modem実装（イベント対応）
+- [-] 2.6 CC:Tweaked Monitor実装（イベント対応）
 - [ ] 2.7 CC:Tweaked Speaker実装
 - [ ] 2.8 AdvancedPeripherals BlockReader実装
 - [ ] 2.9 AdvancedPeripherals ChatBox実装

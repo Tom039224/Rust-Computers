@@ -220,6 +220,32 @@ public class RustComputers {
         BlockEntity monitorBe = level.getBlockEntity(pos);
         net.minecraft.core.BlockPos originPos = CcMonitorPeripheral.resolveMonitorOrigin(monitorBe, pos);
         CcMonitorPeripheral.queueTouchEvent(originPos, u, v);
+        
+        // monitor_touch イベントを CCEventReceiver にもキューイング
+        // Also queue monitor_touch event to CCEventReceiver
+        // イベント引数: side (string), x (int), y (int)
+        // Event args: side (string), x (int), y (int)
+        // ここでは簡易的に face 名を side として使用し、UV 座標を文字座標に変換
+        // Use face name as side, convert UV to character coordinates
+        try {
+            Object serverMonitor = monitorBe != null ? 
+                CcMonitorPeripheral.getServerMonitorReflection(monitorBe) : null;
+            if (serverMonitor != null) {
+                Object terminal = CcMonitorPeripheral.getTerminalReflection(serverMonitor);
+                if (terminal != null) {
+                    int w = CcMonitorPeripheral.getTerminalWidth(terminal);
+                    int h = CcMonitorPeripheral.getTerminalHeight(terminal);
+                    int cx = Math.max(1, Math.min(w, (int) (u * w) + 1));
+                    int cy = Math.max(1, Math.min(h, (int) (v * h) + 1));
+                    
+                    com.rustcomputers.peripheral.impl.CCEventReceiver.queueEventManually(
+                        originPos, "monitor_touch", face.getName(), cx, cy);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Failed to queue monitor_touch event: {}", e.getMessage());
+        }
+        
         LOGGER.debug("Monitor touch queued at {} (origin={}) face={} u={} v={}", pos, originPos, face, u, v);
     }
 

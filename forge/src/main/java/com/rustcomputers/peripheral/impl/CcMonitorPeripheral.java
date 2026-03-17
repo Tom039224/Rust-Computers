@@ -62,13 +62,23 @@ public class CcMonitorPeripheral implements PeripheralType {
             "getSize",
             "clear", "clearLine",
             "setCursorPos",
+            "getCursorPos",
             "write",
+            "blit",
             "setTextColor", "setTextColour",
+            "getTextColor", "getTextColour",
             "setBackgroundColor", "setBackgroundColour",
+            "getBackgroundColor", "getBackgroundColour",
+            "isColor", "isColour",
             "scroll",
             "setTextScale", "getTextScale",
+            "getCursorBlink",
+            "setCursorBlink",
+            "getPaletteColor", "getPaletteColour",
+            "setPaletteColor", "setPaletteColour",
             "isAdvanced",    // 高度モニター判定 / Advanced monitor check
-            "pollTouch",     // タッチイベントをデキュー / Dequeue a touch event
+            "pollTouch",     // タッチイベントをデキュー / Dequeue a touch event (deprecated)
+            "try_pull_monitor_touch",  // Event: monitor_touch イベント受信 / Receive monitor_touch event
     };
 
     // ----------------------------------------------------------------
@@ -86,14 +96,21 @@ public class CcMonitorPeripheral implements PeripheralType {
     @Nullable private static Method mGetTerminal;
 
     @Nullable private static Method mTermWrite;
+    @Nullable private static Method mTermBlit;
     @Nullable private static Method mTermClear;
     @Nullable private static Method mTermClearLine;
     @Nullable private static Method mTermSetCursorPos;
+    @Nullable private static Method mTermGetCursorPos;
     @Nullable private static Method mTermGetWidth;
     @Nullable private static Method mTermGetHeight;
     @Nullable private static Method mTermScroll;
     @Nullable private static Method mTermSetTextColour;
+    @Nullable private static Method mTermGetTextColour;
     @Nullable private static Method mTermSetBgColour;
+    @Nullable private static Method mTermGetBgColour;
+    @Nullable private static Method mTermGetCursorBlink;
+    @Nullable private static Method mTermSetCursorBlink;
+    @Nullable private static Method mTermGetPalette;
 
     @Nullable private static Method mBEGetTextScale;
     @Nullable private static Method mBESetTextScale;
@@ -155,6 +172,42 @@ public class CcMonitorPeripheral implements PeripheralType {
         }
     }
 
+    /**
+     * MonitorBlockEntity から ServerMonitor を取得する（リフレクション用ヘルパー）。
+     * Get ServerMonitor from MonitorBlockEntity (reflection helper).
+     */
+    public static Object getServerMonitorReflection(Object be) throws Exception {
+        if (mGetServerMonitor == null) return null;
+        return mGetServerMonitor.invoke(be);
+    }
+
+    /**
+     * ServerMonitor から Terminal を取得する（リフレクション用ヘルパー）。
+     * Get Terminal from ServerMonitor (reflection helper).
+     */
+    public static Object getTerminalReflection(Object serverMonitor) throws Exception {
+        if (mGetTerminal == null) return null;
+        return mGetTerminal.invoke(serverMonitor);
+    }
+
+    /**
+     * Terminal の幅を取得する（リフレクション用ヘルパー）。
+     * Get Terminal width (reflection helper).
+     */
+    public static int getTerminalWidth(Object terminal) throws Exception {
+        if (mTermGetWidth == null) return 0;
+        return (int) mTermGetWidth.invoke(terminal);
+    }
+
+    /**
+     * Terminal の高さを取得する（リフレクション用ヘルパー）。
+     * Get Terminal height (reflection helper).
+     */
+    public static int getTerminalHeight(Object terminal) throws Exception {
+        if (mTermGetHeight == null) return 0;
+        return (int) mTermGetHeight.invoke(terminal);
+    }
+
     // ----------------------------------------------------------------
     // 初期化 / Initialization
     // ----------------------------------------------------------------
@@ -188,14 +241,21 @@ public class CcMonitorPeripheral implements PeripheralType {
             mGetTerminal.setAccessible(true);
 
             mTermWrite        = terminalClass.getMethod("write", String.class);
+            mTermBlit         = terminalClass.getMethod("blit", String.class, String.class, String.class);
             mTermClear        = terminalClass.getMethod("clear");
             mTermClearLine    = terminalClass.getMethod("clearLine");
             mTermSetCursorPos = terminalClass.getMethod("setCursorPos", int.class, int.class);
+            mTermGetCursorPos = terminalClass.getMethod("getCursorPos");
             mTermGetWidth     = terminalClass.getMethod("getWidth");
             mTermGetHeight    = terminalClass.getMethod("getHeight");
             mTermScroll       = terminalClass.getMethod("scroll", int.class);
             mTermSetTextColour = terminalClass.getMethod("setTextColour", int.class);
+            mTermGetTextColour = terminalClass.getMethod("getTextColour");
             mTermSetBgColour   = terminalClass.getMethod("setBackgroundColour", int.class);
+            mTermGetBgColour   = terminalClass.getMethod("getBackgroundColour");
+            mTermGetCursorBlink = terminalClass.getMethod("getCursorBlink");
+            mTermSetCursorBlink = terminalClass.getMethod("setCursorBlink", boolean.class);
+            mTermGetPalette     = terminalClass.getMethod("getPalette");
 
             // OptionalなscaleBE系メソッド — 無ければスキップ / optional, skip if absent
             try {
@@ -271,8 +331,8 @@ public class CcMonitorPeripheral implements PeripheralType {
             return MsgPack.str("monitor");
         }
 
-        // isAdvanced / pollTouch は terminal 取得が不要なので先に処理
-        // Handle isAdvanced and pollTouch before requiring the terminal
+        // isAdvanced / pollTouch / try_pull_monitor_touch は terminal 取得が不要なので先に処理
+        // Handle isAdvanced, pollTouch, and try_pull_monitor_touch before requiring the terminal
         if ("isAdvanced".equals(methodName)) {
             ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(
                     level.getBlockState(peripheralPos).getBlock());
@@ -301,6 +361,11 @@ public class CcMonitorPeripheral implements PeripheralType {
             return MsgPack.array(
                     MsgPack.int32((int) (frac[0] * 100)),
                     MsgPack.int32((int) (frac[1] * 100)));
+        }
+        if ("try_pull_monitor_touch".equals(methodName)) {
+            // CCEventReceiver を使ってイベントキューから取得
+            // Use CCEventReceiver to get event from queue
+            return CCEventReceiver.tryPull(methodName, peripheralPos);
         }
 
         try {
@@ -335,6 +400,11 @@ public class CcMonitorPeripheral implements PeripheralType {
                         "Monitor not initialized — createServerTerminal() did not produce a ServerMonitor. "
                       + "CC:Tweaked version mismatch? Expected dan200.computercraft 1.116.x");
             }
+            
+            // IComputerAccess モックをアタッチして monitor_touch イベントを受信できるようにする (初回のみ)
+            // Attach mock IComputerAccess so monitor_touch events can be received (idempotent)
+            CCEventReceiver.ensureAttached(serverMonitor, peripheralPos);
+            
             Object terminal = mGetTerminal.invoke(serverMonitor);
             if (terminal == null) {
                 throw new PeripheralException("Monitor terminal is null");
@@ -349,7 +419,7 @@ public class CcMonitorPeripheral implements PeripheralType {
         }
     }
 
-    // getSize / getType / getTextScale は読み取り専用 → callImmediate で使用可能
+    // getSize / getType / getTextScale / getCursorPos / getTextColor / getBackgroundColor / isColor / getCursorBlink / getPaletteColor は読み取り専用 → callImmediate で使用可能
     @Nullable
     @Override
     public byte[] callImmediate(String methodName, byte[] args,
@@ -359,8 +429,19 @@ public class CcMonitorPeripheral implements PeripheralType {
             case "getType":
             case "getSize":
             case "getTextScale":
+            case "getCursorPos":
+            case "getTextColor":
+            case "getTextColour":
+            case "getBackgroundColor":
+            case "getBackgroundColour":
+            case "isColor":
+            case "isColour":
+            case "getCursorBlink":
+            case "getPaletteColor":
+            case "getPaletteColour":
             case "isAdvanced":  // 読み取り専用 / read-only
             case "pollTouch":   // キューからのデキュー / dequeue from queue
+            case "try_pull_monitor_touch":  // イベント受信 / event receive
                 return callMethod(methodName, args, level, peripheralPos);
             default:
                 return null; // 書き込み系は即時呼び出し不可
@@ -403,6 +484,111 @@ public class CcMonitorPeripheral implements PeripheralType {
             case "write": {
                 String text = getStrArg(args, 0, "text");
                 mTermWrite.invoke(term, text);
+                return MsgPack.nil();
+            }
+
+            case "blit": {
+                String text = getStrArg(args, 0, "text");
+                String textColor = getStrArg(args, 1, "textColor");
+                String backgroundColor = getStrArg(args, 2, "backgroundColor");
+                mTermBlit.invoke(term, text, textColor, backgroundColor);
+                return MsgPack.nil();
+            }
+
+            case "getCursorPos": {
+                int[] pos = (int[]) mTermGetCursorPos.invoke(term);
+                // Terminal は 0-indexed、Lua API は 1-indexed
+                // Terminal is 0-indexed, Lua API is 1-indexed
+                return MsgPack.array(MsgPack.int32(pos[0] + 1), MsgPack.int32(pos[1] + 1));
+            }
+
+            case "getCursorBlink": {
+                boolean blink = (boolean) mTermGetCursorBlink.invoke(term);
+                return MsgPack.bool(blink);
+            }
+
+            case "setCursorBlink": {
+                int offset = MsgPack.argOffset(args, 0);
+                if (offset < 0) throw new PeripheralException("Missing argument: blink");
+                boolean blink = decodeBool(args, offset);
+                mTermSetCursorBlink.invoke(term, blink);
+                return MsgPack.nil();
+            }
+
+            case "isColor":
+            case "isColour": {
+                // Advanced monitor かどうかで判定
+                // Check if advanced monitor by checking if BE is an advanced monitor
+                // We need to get the block type from the BE
+                try {
+                    // MonitorBlockEntity.getBlockState().getBlock()
+                    Method getBlockState = be.getClass().getMethod("getBlockState");
+                    Object blockState = getBlockState.invoke(be);
+                    Method getBlock = blockState.getClass().getMethod("getBlock");
+                    Object block = getBlock.invoke(blockState);
+                    
+                    ResourceLocation rl = ForgeRegistries.BLOCKS.getKey((net.minecraft.world.level.block.Block) block);
+                    return MsgPack.bool(rl != null && "monitor_advanced".equals(rl.getPath()));
+                } catch (Exception e) {
+                    return MsgPack.bool(false);
+                }
+            }
+
+            case "getTextColor":
+            case "getTextColour": {
+                int colourIndex = (int) mTermGetTextColour.invoke(term);
+                int bitmask = 1 << colourIndex;
+                return MsgPack.int32(bitmask);
+            }
+
+            case "getBackgroundColor":
+            case "getBackgroundColour": {
+                int colourIndex = (int) mTermGetBgColour.invoke(term);
+                int bitmask = 1 << colourIndex;
+                return MsgPack.int32(bitmask);
+            }
+
+            case "getPaletteColor":
+            case "getPaletteColour": {
+                int bitmask = getIntArg(args, 0, "color");
+                int colourIndex = colourFromBitmask(bitmask);
+                
+                // getPalette() returns Palette object
+                Object palette = mTermGetPalette.invoke(term);
+                if (palette == null) {
+                    return MsgPack.array(MsgPack.float64(0.0), MsgPack.float64(0.0), MsgPack.float64(0.0));
+                }
+                
+                // Palette.getColour(int) returns double[3] (r, g, b)
+                Method getColour = palette.getClass().getMethod("getColour", int.class);
+                double[] rgb = (double[]) getColour.invoke(palette, colourIndex);
+                return MsgPack.array(MsgPack.float64(rgb[0]), MsgPack.float64(rgb[1]), MsgPack.float64(rgb[2]));
+            }
+
+            case "setPaletteColor":
+            case "setPaletteColour": {
+                int bitmask = getIntArg(args, 0, "color");
+                int colourIndex = colourFromBitmask(bitmask);
+                
+                // Get RGB values
+                int offset1 = MsgPack.argOffset(args, 1);
+                int offset2 = MsgPack.argOffset(args, 2);
+                int offset3 = MsgPack.argOffset(args, 3);
+                if (offset1 < 0 || offset2 < 0 || offset3 < 0) {
+                    throw new PeripheralException("Missing RGB arguments");
+                }
+                double r = MsgPack.decodeF64(args, offset1);
+                double g = MsgPack.decodeF64(args, offset2);
+                double b = MsgPack.decodeF64(args, offset3);
+                
+                // getPalette() returns Palette object
+                Object palette = mTermGetPalette.invoke(term);
+                if (palette != null) {
+                    // Palette.setColour(int, double, double, double)
+                    Method setColour = palette.getClass().getMethod("setColour", 
+                            int.class, double.class, double.class, double.class);
+                    setColour.invoke(palette, colourIndex, r, g, b);
+                }
                 return MsgPack.nil();
             }
 
@@ -474,6 +660,13 @@ public class CcMonitorPeripheral implements PeripheralType {
                     "Invalid color bitmask: " + bitmask + " (must be a power of 2)");
         }
         return Integer.numberOfTrailingZeros(bitmask);
+    }
+
+    /** MsgPack の bool デコード */
+    private static boolean decodeBool(byte[] data, int offset) {
+        if (data == null || offset >= data.length) return false;
+        int b = data[offset] & 0xFF;
+        return b == 0xC3; // true
     }
 
     private static int getIntArg(byte[] args, int index, String argName) throws PeripheralException {

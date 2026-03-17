@@ -208,6 +208,38 @@ public class CCEventReceiver {
     }
 
     /**
+     * 手動でイベントをキューに追加する（CC:Tweaked が自動生成しないイベント用）。
+     * Manually enqueue an event (for events that CC:Tweaked doesn't auto-generate).
+     *
+     * @param pos       ブロック座標
+     * @param eventName イベント名
+     * @param eventArgs イベント引数（attachment name を含まない）
+     */
+    public static void queueEventManually(BlockPos pos, String eventName, Object... eventArgs) {
+        try {
+            byte[] encoded = encodeEventPayload(eventName, prependAttachmentName(eventArgs));
+            String key = queueKey(pos, eventName);
+            EVENT_QUEUES
+                    .computeIfAbsent(key, k -> new ConcurrentLinkedQueue<>())
+                    .offer(encoded);
+        } catch (Exception e) {
+            LOGGER.warn("CCEventReceiver: failed to manually queue event '{}' at {}: {}",
+                    eventName, pos, e.getMessage());
+        }
+    }
+
+    /**
+     * イベント引数の先頭に attachment name を追加する。
+     * Prepend attachment name to event arguments.
+     */
+    private static Object[] prependAttachmentName(Object[] args) {
+        Object[] result = new Object[args.length + 1];
+        result[0] = "rust_computer";
+        System.arraycopy(args, 0, result, 1, args.length);
+        return result;
+    }
+
+    /**
      * try_pull_X メソッドに対応するイベントデータをデキューして返す。
      * Dequeue and return event data for a try_pull_X method.
      *
