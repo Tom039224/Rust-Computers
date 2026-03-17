@@ -13,6 +13,7 @@ import com.rustcomputers.peripheral.MsgPack;
 import com.rustcomputers.peripheral.PeripheralDisconnectedException;
 import com.rustcomputers.peripheral.PeripheralException;
 import com.rustcomputers.peripheral.PeripheralProvider;
+import com.rustcomputers.peripheral.PeripheralRequestManager;
 import net.minecraftforge.fml.ModList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -55,6 +56,7 @@ public final class WasmEngine {
     /** クライアントへ送信待ちのログ行キュー / Pending log lines to send to clients */
     private final java.util.ArrayList<String> pendingLog = new java.util.ArrayList<>();
     private final RequestManager requestManager;
+    private final PeripheralRequestManager peripheralRequestManager;
     private final HostFunctions hostFunctions;
 
     private ComputerState state = ComputerState.STOPPED;
@@ -89,6 +91,7 @@ public final class WasmEngine {
         this.computerDir = computerDir;
         this.logBuffer = new LogBuffer(Config.LOG_BUFFER_SIZE.get());
         this.requestManager = new RequestManager();
+        this.peripheralRequestManager = new PeripheralRequestManager();
         this.hostFunctions = new HostFunctions(this);
     }
 
@@ -199,8 +202,9 @@ public final class WasmEngine {
      *
      * <p>design-proposal W-2 のフロー:
      * 1. 保留結果のタイムアウト処理
-     * 2. wasm_tick() を呼ぶ
-     * 3. 戻り値を確認</p>
+     * 2. ペリフェラルリクエストの実行
+     * 3. wasm_tick() を呼ぶ
+     * 4. 戻り値を確認</p>
      */
     public void tick() {
         if (state != ComputerState.RUNNING || wasmTick == null) {
@@ -209,6 +213,12 @@ public final class WasmEngine {
 
         tickCount++;
         requestManager.tick(tickCount, Config.REQUEST_TIMEOUT_TICKS.get());
+
+        // ペリフェラルリクエストを実行
+        // Execute peripheral requests
+        if (serverLevel != null) {
+            peripheralRequestManager.tick(peripherals, serverLevel);
+        }
 
         try {
             // 時間ベースの Fuel 計測 / Time-based fuel measurement
@@ -644,6 +654,7 @@ public final class WasmEngine {
     @Nullable public String getProgramName() { return programName; }
     public LogBuffer getLogBuffer()      { return logBuffer; }
     public RequestManager getRequestManager() { return requestManager; }
+    public PeripheralRequestManager getPeripheralRequestManager() { return peripheralRequestManager; }
     public long getTickCount()           { return tickCount; }
     public Path getComputerDir()         { return computerDir; }
 

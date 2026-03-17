@@ -8,7 +8,6 @@ import com.rustcomputers.peripheral.MsgPack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -57,6 +56,8 @@ public final class HostFunctions {
             hostFindPeripheralsByTypeImm(),
             hostGetTimeUtcMillis(),
             hostGetTimeIngameTicks(),
+            hostBookEvent(),
+            hostReadEvents(),
         };
     }
 
@@ -451,6 +452,117 @@ public final class HostFunctions {
             (Instance inst, long... args) -> {
                 long timeTicks = engine.getGameTicks();
                 return new long[]{ timeTicks };
+            }
+        );
+    }
+
+    // ==================================================================
+    // host_book_event(periph_id: i32, event_name_ptr: i32, event_name_len: i32) → void
+    // ==================================================================
+
+    /**
+     * イベントリスナーを登録する。
+     * Register an event listener.
+     *
+     * <p>指定されたペリフェラルの指定されたイベントを監視開始する。</p>
+     * <p>Start monitoring the specified event on the specified peripheral.</p>
+     *
+     * @param periph_id ペリフェラルID / peripheral ID
+     * @param event_name_ptr イベント名のポインタ / event name pointer
+     * @param event_name_len イベント名の長さ / event name length
+     */
+    private HostFunction hostBookEvent() {
+        return new HostFunction(
+            MODULE, "host_book_event",
+            FunctionType.of(List.of(ValType.I32, ValType.I32, ValType.I32), List.of()),
+            (Instance inst, long... args) -> {
+                int periphId = (int) args[0];
+                int eventNamePtr = (int) args[1];
+                int eventNameLen = (int) args[2];
+
+                // WASM メモリからイベント名を読み取る / Read event name from WASM memory
+                String eventName = inst.memory().readString(eventNamePtr, eventNameLen);
+
+                // イベントリスナーを登録 / Register event listener
+                engine.getPeripheralRequestManager().registerEventListener(periphId, eventName);
+
+                LOGGER.debug("Computer #{}: host_book_event: periphId={}, eventName={}",
+                        engine.getComputerId(), periphId, eventName);
+                return null;
+            }
+        );
+    }
+
+    // ==================================================================
+    // host_read_events(periph_id: i32, event_name_ptr: i32, event_name_len: i32,
+    //                  result_ptr: i32, result_buf_size: i32) → i32
+    // ==================================================================
+
+    /**
+     * イベントキューから全イベントを取得する。
+     * Get all events from the event queue.
+     *
+     * <p>結果は msgpack の配列としてエンコードされる。
+     * 各要素は Option&lt;Event&gt; を表現する（イベント未発生時は null）。</p>
+     * <p>Result is encoded as a msgpack array.
+     * Each element represents Option&lt;Event&gt; (null if no event occurred).</p>
+     *
+     * @return 結果バッファに書き込んだバイト数、バッファ不足なら負値
+     *         / bytes written to result buffer, negative if buffer too small
+     */
+    private HostFunction hostReadEvents() {
+        return new HostFunction(
+            MODULE, "host_read_events",
+            FunctionType.of(
+                List.of(ValType.I32, ValType.I32, ValType.I32, ValType.I32, ValType.I32),
+                List.of(ValType.I32)
+            ),
+            (Instance inst, long... args) -> {
+                int periphId = (int) args[0];
+                int eventNamePtr = (int) args[1];
+                int eventNameLen = (int) args[2];
+                int resultPtr = (int) args[3];
+                int resultBufSz = (int) args[4];
+
+                // WASM メモリからイベント名を読み取る / Read event name from WASM memory
+                String eventName = inst.memory().readString(eventNamePtr, eventNameLen);
+
+                // イベントキューから全イベントを取得 / Get all events from queue
+                java.util.List<Object> events = engine.getPeripheralRequestManager()
+                        .getEvents(periphId, eventName);
+
+                // msgpack 配列としてエンコード / Encode as msgpack array
+                // Vec<Option<T>> 形式: 各イベントを msgpack でエンコード
+                // Vec<Option<T>> format: encode each event as msgpack
+                byte[][] encoded = new byte[events.size()][];
+                for (int i = 0; i < events.size(); i++) {
+                    Object event = events.get(i);
+                    if (event instanceof byte[]) {
+                        encoded[i] = (byte[]) event;
+                    } else if (event instanceof com.rustcomputers.peripheral.buffer.PeripheralError) {
+                        // エラーの場合は null として扱う / Treat errors as null
+                        encoded[i] = MsgPack.nil();
+                    } else {
+                        // その他の場合も null として扱う / Treat other cases as null
+                        encoded[i] = MsgPack.nil();
+                    }
+                }
+                byte[] payload = MsgPack.array(encoded);
+
+                // バッファサイズチェック / Check buffer size
+                if (payload.length > resultBufSz) {
+                    LOGGER.warn("Computer #{}: host_read_events: " +
+                            "result buffer too small ({} < {})",
+                            engine.getComputerId(), resultBufSz, payload.length);
+                    return new long[]{ ErrorCodes.ERR_RESULT_BUF_TOO_SMALL };
+                }
+
+                // WASM メモリに書き込む / Write to WASM memory
+                inst.memory().write(resultPtr, payload);
+                LOGGER.debug("Computer #{}: host_read_events: " +
+                        "periphId={}, eventName='{}', count={}, written={}",
+                        engine.getComputerId(), periphId, eventName, events.size(), payload.length);
+                return new long[]{ payload.length };
             }
         );
     }
