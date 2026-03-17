@@ -33,18 +33,17 @@ CC:Tweakedは3種類のモデムを提供します：
 
 ### ✅ 実装済み
 
-- book_next_open / read_last_open
-- book_next_is_open / read_last_is_open
-- book_next_close / read_last_close
-- book_next_close_all / read_last_close_all
-- book_next_transmit / read_last_transmit
-- book_next_transmit_raw / read_last_transmit_raw
-- book_next_try_receive_raw / read_last_try_receive_raw
+- book_next_open / read_last_open / async_open
+- book_next_is_open / read_last_is_open / async_is_open
+- book_next_close / read_last_close / async_close
+- book_next_close_all / read_last_close_all / async_close_all
+- book_next_transmit / read_last_transmit / async_transmit
+- book_next_transmit_raw / read_last_transmit_raw / async_transmit_raw
+- book_next_try_receive_raw / read_last_try_receive_raw / async_try_receive_raw
 - receive_wait_raw (async)
 
 ### 🚧 未実装
 
-- async_* variants for all methods (except receive_wait_raw)
 - is_wireless() method (all variants)
 - get_names_remote() method (all variants)
 - modem_message event system

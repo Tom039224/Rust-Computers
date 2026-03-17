@@ -28,12 +28,7 @@ pub fn read_last_get_block_at(&self) -> Result<SPBlockInfo, PeripheralError> { .
 
 ### ✅ 実装済み
 
-- All book_next_* / read_last_* methods
-
-### 🚧 未実装
-
-- async_* variants for all methods
-
+- All book_next_* / read_last_* / async_* methods
 
 ## 型定義
 

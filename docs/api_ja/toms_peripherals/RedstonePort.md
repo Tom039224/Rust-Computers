@@ -118,12 +118,7 @@ pub fn read_last_test_bundled_input(&self) -> Result<bool, PeripheralError>
 
 ### ✅ 実装済み
 
-- All book_next_* / read_last_* methods
-
-### 🚧 未実装
-
-- async_* variants for all methods
-
+- All book_next_* / read_last_* / async_* methods
 
 ## Immediate メソッド
 

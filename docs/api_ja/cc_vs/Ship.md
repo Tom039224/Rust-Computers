@@ -167,12 +167,7 @@ pub fn read_last_try_pull_physics_ticks(&self) -> Result<Option<VSPhysicsTickDat
 
 ### ✅ 実装済み
 
-- All book_next_* / read_last_* methods
-
-### 🚧 未実装
-
-- async_* variants for all methods
-
+- All book_next_* / read_last_* / async_* methods
 
 ## 即時メソッド
 
