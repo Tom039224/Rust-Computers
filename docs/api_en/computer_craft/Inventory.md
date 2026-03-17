@@ -31,9 +31,9 @@ The Inventory API uses the three-function pattern for all methods:
 - book_next_push_items / read_last_push_items / async_push_items
 - book_next_pull_items / read_last_pull_items / async_pull_items
 
-### 🚧 Not Yet Implemented
+### ✅ Also Implemented
 
-- get_item_limit() method (all variants)
+- book_next_get_item_limit / read_last_get_item_limit / async_get_item_limit
 
 
 ## Methods

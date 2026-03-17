@@ -114,15 +114,19 @@ impl Inventory {
     // 4. pushItems メソッド（アクション系）
     /// アイテムを別のインベントリに転送する（アクション系）。
     /// Push items to another inventory (action pattern).
+    /// `to_name` はワイヤードモデムネットワーク上のペリフェラル名
+    /// (例: `"minecraft:chest_0"`)。
+    /// `to_name` is the peripheral name on the wired modem network
+    /// (e.g. `"minecraft:chest_0"`).
     pub fn book_next_push_items(
         &mut self,
-        to: &Inventory,
+        to_name: &str,
         from_slot: u32,
         limit: Option<u32>,
         to_slot: Option<u32>,
     ) {
         let mut args = alloc::vec![
-            msgpack::int(to.addr.raw() as i32),
+            msgpack::str(to_name),
             msgpack::int(from_slot as i32),
         ];
         if let Some(l) = limit {
@@ -149,12 +153,12 @@ impl Inventory {
     
     pub async fn async_push_items(
         &mut self,
-        to: &Inventory,
+        to_name: &str,
         from_slot: u32,
         limit: Option<u32>,
         to_slot: Option<u32>,
     ) -> Result<u32, PeripheralError> {
-        self.book_next_push_items(to, from_slot, limit, to_slot);
+        self.book_next_push_items(to_name, from_slot, limit, to_slot);
         crate::wait_for_next_tick().await;
         self.read_last_push_items()
             .into_iter()
@@ -165,15 +169,19 @@ impl Inventory {
     // 5. pullItems メソッド（アクション系）
     /// 別のインベントリからアイテムを引き出す（アクション系）。
     /// Pull items from another inventory (action pattern).
+    /// `from_name` はワイヤードモデムネットワーク上のペリフェラル名
+    /// (例: `"minecraft:chest_0"`)。
+    /// `from_name` is the peripheral name on the wired modem network
+    /// (e.g. `"minecraft:chest_0"`).
     pub fn book_next_pull_items(
         &mut self,
-        from: &Inventory,
+        from_name: &str,
         from_slot: u32,
         limit: Option<u32>,
         to_slot: Option<u32>,
     ) {
         let mut args = alloc::vec![
-            msgpack::int(from.addr.raw() as i32),
+            msgpack::str(from_name),
             msgpack::int(from_slot as i32),
         ];
         if let Some(l) = limit {
@@ -200,12 +208,12 @@ impl Inventory {
     
     pub async fn async_pull_items(
         &mut self,
-        from: &Inventory,
+        from_name: &str,
         from_slot: u32,
         limit: Option<u32>,
         to_slot: Option<u32>,
     ) -> Result<u32, PeripheralError> {
-        self.book_next_pull_items(from, from_slot, limit, to_slot);
+        self.book_next_pull_items(from_name, from_slot, limit, to_slot);
         crate::wait_for_next_tick().await;
         self.read_last_pull_items()
             .into_iter()

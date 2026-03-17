@@ -336,11 +336,15 @@ impl Monitor {
     }
 
     /// blit で文字列を描画する。
-    pub fn book_next_blit(&mut self, text: &str, text_color: MonitorColor, background_color: MonitorColor) {
+    /// `text_color` と `background_color` は text と同じ長さの 16 進カラーコード文字列
+    /// (例: `"0"` = 黒, `"f"` = 白)。
+    /// `text_color` and `background_color` are hex color code strings of the same
+    /// length as `text` (e.g. `"0"` = black, `"f"` = white).
+    pub fn book_next_blit(&mut self, text: &str, text_color: &str, background_color: &str) {
         let args = msgpack::array(&[
             msgpack::str(text),
-            msgpack::int(text_color.0 as i32),
-            msgpack::int(background_color.0 as i32),
+            msgpack::str(text_color),
+            msgpack::str(background_color),
         ]);
         peripheral::book_action(self.addr, "blit", &args);
     }
@@ -502,7 +506,7 @@ impl Monitor {
 
     /// blit で文字列を描画する（非同期）。
     /// Draw text with blit (async).
-    pub async fn async_blit(&mut self, text: &str, text_color: MonitorColor, background_color: MonitorColor) -> Result<(), PeripheralError> {
+    pub async fn async_blit(&mut self, text: &str, text_color: &str, background_color: &str) -> Result<(), PeripheralError> {
         self.book_next_blit(text, text_color, background_color);
         crate::wait_for_next_tick().await;
         self.read_last_blit()

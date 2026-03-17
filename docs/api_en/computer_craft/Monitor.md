@@ -32,12 +32,12 @@ The Monitor API uses the three-function pattern for all methods:
 
 - All book_next_* / read_last_* methods
 - *_imm() methods (immediate execution variants)
+- async_* variants for all methods
 - poll_touch() (async) - for touch events
 - book_next_try_poll_touch / read_last_try_poll_touch
 
 ### 🚧 Not Yet Implemented
 
-- async_* variants for all methods (except poll_touch)
 - monitor_resize event
 
 
@@ -345,8 +345,8 @@ pub async fn async_blit(&self, text: &str, text_color: &str, bg_color: &str) -> 
 
 **Parameters:**
 - `text: string` — Text to write
-- `textColor: string` — Text color codes (one per character)
-- `backgroundColor: string` — Background color codes (one per character)
+- `textColor: string` — Foreground color codes, one hex character per text character
+- `backgroundColor: string` — Background color codes, one hex character per text character
 
 **Returns:** `nil`
 
