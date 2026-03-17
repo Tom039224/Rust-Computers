@@ -151,36 +151,6 @@ end
 
 ---
 
-### `getItemLimit(slot)` / `book_next_get_item_limit(slot)` / `read_last_get_item_limit()` / `async_get_item_limit(slot)`
-
-スロットに保存できるアイテムの最大数を取得します。
-
-**Lua署名:**
-```lua
-function getItemLimit(slot: number) -> number
-```
-
-**Rust署名:**
-```rust
-pub fn book_next_get_item_limit(&mut self, slot: u32)
-pub fn read_last_get_item_limit(&self) -> Result<u32, PeripheralError>
-pub async fn async_get_item_limit(&self, slot: u32) -> Result<u32, PeripheralError>
-```
-
-**パラメータ:**
-- `slot: number` — スロットインデックス（1ベース）
-
-**戻り値:** `number` — このスロットの最大アイテム数（通常は64ですが、特殊なインベントリではより高い場合があります）
-
-**例:**
-```lua
-local inventory = peripheral.find("inventory")
-local limit = inventory.async_get_item_limit(1)
-print("スロット 1 は最大 " .. limit .. " 個のアイテムを保持できます")
-```
-
----
-
 ### `pushItems(toName, fromSlot, limit?, toSlot?)` / `book_next_push_items(...)` / `read_last_push_items()` / `async_push_items(...)`
 
 このインベントリから別の接続されたインベントリにアイテムを転送します。

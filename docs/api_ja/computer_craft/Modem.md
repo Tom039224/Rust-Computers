@@ -204,38 +204,6 @@ modem.async_open(43)  -- リプライチャネルを開く
 modem.async_transmit(15, 43, "こんにちは、世界！")
 ```
 
----
-
-### `isWireless()` / `book_next_is_wireless()` / `read_last_is_wireless()` / `async_is_wireless()`
-
-このモデムがワイヤレスかワイヤードかを確認します。
-
-**Lua署名:**
-```lua
-function isWireless() -> boolean
-```
-
-**Rust署名:**
-```rust
-pub fn book_next_is_wireless(&mut self)
-pub fn read_last_is_wireless(&self) -> Result<bool, PeripheralError>
-pub async fn async_is_wireless(&self) -> Result<bool, PeripheralError>
-```
-
-**戻り値:** `boolean` — ワイヤレスの場合は`true`、ワイヤードの場合は`false`
-
-**例:**
-```lua
-local modem = peripheral.find("modem")
-if modem.async_is_wireless() then
-  print("これはワイヤレスモデムです")
-else
-  print("これはワイヤードモデムです")
-end
-```
-
----
-
 ## イベント
 
 ### `modem_message`
