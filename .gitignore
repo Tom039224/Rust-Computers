@@ -33,3 +33,6 @@ forge-*-mdk.zip
 # Log
 logs/
 refs/
+
+# scripts
+scripts/
