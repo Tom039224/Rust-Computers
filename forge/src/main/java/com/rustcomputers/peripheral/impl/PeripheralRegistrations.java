@@ -587,10 +587,12 @@ public final class PeripheralRegistrations {
         regWithImm("advancedperipherals", "environment_detector", "environment_detector",
                 envDetMethods, new HashSet<>(Arrays.asList("scanCost")));
 
-        // Geo Scanner
-        String[] geoScanMethods = {"cost", "scan", "chunkAnalyze"};
-        regWithImm("advancedperipherals", "geo_scanner", "geo_scanner",
-                geoScanMethods, new HashSet<>(Arrays.asList("cost")));
+        // Geo Scanner - 専用実装を使用
+        Block geoScannerBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("advancedperipherals", "geo_scanner"));
+        if (geoScannerBlock != null && geoScannerBlock != Blocks.AIR) {
+            PeripheralProvider.register(geoScannerBlock, ApGeoScannerPeripheral::new);
+            LOGGER.debug("Registered peripheral: advancedperipherals:geo_scanner -> geo_scanner");
+        }
 
         reg("advancedperipherals", "inventory_manager", "inventory_manager",
             new String[]{

@@ -28,8 +28,8 @@
 - [x] 2.8 AdvancedPeripherals BlockReader実装
 - [x] 2.9 AdvancedPeripherals ChatBox実装
 - [x] 2.10 AdvancedPeripherals MEBridge実装
-- [-] 2.11 AdvancedPeripherals PlayerDetector実装
-- [ ] 2.12 AdvancedPeripherals GeoScanner実装
+- [x] 2.11 AdvancedPeripherals PlayerDetector実装
+- [-] 2.12 AdvancedPeripherals GeoScanner実装
 - [ ] 2.13 Create DisplayLink実装
 - [ ] 2.14 Create Station実装
 - [ ] 2.15 その他優先度の高いペリフェラル実装
