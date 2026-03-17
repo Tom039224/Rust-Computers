@@ -599,18 +599,12 @@ public final class PeripheralRegistrations {
                 "getEmptySpace", "isSpaceAvailable", "getFreeSlot", "listChest"
             });
 
-        // ME Bridge
-        reg("advancedperipherals", "me_bridge", "me_bridge",
-            new String[]{
-                "listItems", "getItem", "exportItem", "importItem", "exportItemToPeripheral",
-                "importItemFromPeripheral", "listFluids", "getFluid", "exportFluid", "importFluid",
-                "exportFluidToPeripheral", "importFluidFromPeripheral", "listChemicals", "getChemical",
-                "exportChemical", "importChemical", "exportChemicalToPeripheral", "importChemicalFromPeripheral",
-                "craftItem", "craftFluid", "craftChemical", "isItemCrafting", "isFluidCrafting",
-                "getEnergyStorage", "getMaxEnergyStorage", "getAvgPowerUsage", "getAvgPowerInjection",
-                "getTotalItemStorage", "getUsedItemStorage", "getAvailableItemStorage",
-                "getTotalFluidStorage", "getUsedFluidStorage", "getAvailableFluidStorage"
-            });
+        // ME Bridge - 専用実装を使用
+        Block meBridgeBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("advancedperipherals", "me_bridge"));
+        if (meBridgeBlock != null && meBridgeBlock != Blocks.AIR) {
+            PeripheralProvider.register(meBridgeBlock, ApMEBridgePeripheral::new);
+            LOGGER.debug("Registered peripheral: advancedperipherals:me_bridge -> me_bridge");
+        }
 
         reg("advancedperipherals", "nbt_storage", "nbt_storage",
             new String[]{"read", "writeJson", "writeTable"});
