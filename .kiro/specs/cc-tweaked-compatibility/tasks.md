@@ -53,7 +53,7 @@
 
 ## Phase 4: Documentation
 
-- [ ] 4.1 CC:Tweaked APIリファレンス作成（英語）
+- [x] 4.1 CC:Tweaked APIリファレンス作成（英語）
 - [ ] 4.2 CC:Tweaked APIリファレンス作成（日本語）
 - [ ] 4.3 AdvancedPeripherals APIリファレンス作成（英語）
 - [ ] 4.4 AdvancedPeripherals APIリファレンス作成（日本語）
@@ -65,31 +65,9 @@
 - [ ] 4.10 イベント処理チュートリアル作成
 - [ ] 4.11 複数ペリフェラル並行操作チュートリアル作成
 
-## Phase 5: Testing
+## Phase 5: Evaluating
+- [ ] 5.1 Phase1から4までのタスクを評価し、変更内容をまとめる(日本語)
 
-- [ ] 5.1 CC:Tweaked Inventory ユニットテスト
-- [ ] 5.2 CC:Tweaked Modem ユニットテスト
-- [ ] 5.3 CC:Tweaked Monitor ユニットテスト
-- [ ] 5.4 AdvancedPeripherals ユニットテスト
-- [ ] 5.5 Create ユニットテスト
-- [ ] 5.6 Request ordering プロパティテスト
-- [ ] 5.7 Action accumulation プロパティテスト
-- [ ] 5.8 Event polling termination プロパティテスト
-- [ ] 5.9 Tick boundary consistency プロパティテスト
-- [ ] 5.10 複数ペリフェラル並行操作統合テスト
-- [ ] 5.11 イベント駆動統合テスト
-- [ ] 5.12 Minecraft環境での実行テスト
-
-## Phase 6: Optimization & Polish
-
-- [ ] 6.1 FFI呼び出しのオーバーヘッド測定
-- [ ] 6.2 ペリフェラルアクセスのレイテンシ測定
-- [ ] 6.3 メモリ使用量の監視
-- [ ] 6.4 バッチ処理の最適化
-- [ ] 6.5 キャッシング戦略の実装
-- [ ] 6.6 エラーメッセージの改善
-- [ ] 6.7 ドキュメントの最終レビュー
-- [ ] 6.8 リリース準備
 
 ## Notes
 
@@ -97,4 +75,5 @@
 - Phase 1の完了後、Phase 2と3は並行実行可能
 - テストは各実装フェーズと並行して実施すること
 - ドキュメントは実装と同時に作成すること
-- 各タスクが終わったらv0.2.xとしてコミットすること
+- 各タスクが終わったらv0.2.xとしてコミットすること(xはコミットログを見て判断)
+  コミット名は「v0.2.x: Description in English」とすること。また、コミットにバージョンタグをつけること
