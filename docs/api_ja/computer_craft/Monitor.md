@@ -1,22 +1,22 @@
 # Monitor
 
-**Mod:** CC:Tweaked  
+**モジュール:** CC:Tweaked  
 **ペリフェラルタイプ:** `monitor`  
 **ソース:** `MonitorPeripheral.java`, `TermMethods.java`
 
 ## 概要
 
-Monitorペリフェラルはワールドに配置できるターミナルディスプレイを提供します。テキストレンダリング、カラー操作、タッチ入力（アドバンスドモニター）をサポートしています。モニターはTerminal APIの全メソッドを継承し、モニター固有のテキストスケーリングメソッドを追加します。
+Monitorペリフェラルは、ワールドに配置できるターミナルディスプレイを提供します。テキストレンダリング、色操作、タッチ入力（高度なモニターの場合）をサポートします。モニターはTerminal APIのすべてのメソッドを継承し、テキストスケーリング用のモニター固有のメソッドを追加します。
 
 ## 3つの関数パターン
 
-Monitor APIは全メソッドで3つの関数パターンを使用します：
+Monitor APIは、すべてのメソッドに対して3つの関数パターンを使用します：
 
-1. **`book_next_*`** — 次のティックのリクエストをスケジュール
-2. **`read_last_*`** — 前のティックの結果を読み取り
-3. **`async_*`** — book、待機、読み取りを1つの呼び出しで行う便利メソッド
+1. **`book_next_*`** - 次のティックのリクエストをスケジュール
+2. **`read_last_*`** - 前のティックの結果を読み取り
+3. **`async_*`** - 便利なメソッド（book、待機、読み取りを1つの呼び出しで実行）
 
-### パターン説明
+### パターンの説明
 
 ```lua
 -- 方法1: book_next / read_last パターン
@@ -30,8 +30,8 @@ monitor.async_clear()
 
 ## モニターの種類
 
-- **通常モニター** — モノクロームディスプレイ
-- **アドバンスドモニター** — カラーディスプレイとタッチサポート
+- **通常モニター** — モノクロディスプレイ
+- **高度なモニター** — カラーディスプレイとタッチサポート
 
 ## メソッド
 
@@ -57,7 +57,7 @@ pub async fn async_set_text_scale(&self, scale: f32) -> Result<(), PeripheralErr
 **戻り値:** `nil`
 
 **注記:**
-- スケールが大きいほどテキストが大きくなりますが、解像度が低下します
+- より大きなスケールはテキストを大きくしますが、解像度を低下させます
 - 有効な値: 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0
 
 **例:**
@@ -90,7 +90,7 @@ pub async fn async_get_text_scale(&self) -> Result<f32, PeripheralError>
 ```lua
 local monitor = peripheral.find("monitor")
 local scale = monitor.async_get_text_scale()
-print("Current scale: " .. scale)
+print("現在のスケール: " .. scale)
 ```
 
 ---
@@ -119,7 +119,7 @@ pub async fn async_write(&self, text: &str) -> Result<(), PeripheralError>
 **例:**
 ```lua
 local monitor = peripheral.find("monitor")
-monitor.async_write("Hello, World!")
+monitor.async_write("こんにちは、世界！")
 ```
 
 ---
@@ -172,7 +172,7 @@ pub async fn async_clear_line(&self) -> Result<(), PeripheralError>
 
 ### `scroll(lines)` / `book_next_scroll(lines)` / `read_last_scroll()` / `async_scroll(lines)`
 
-画面を縦方向にスクロールします。
+画面を垂直にスクロールします。
 
 **Lua署名:**
 ```lua
@@ -187,7 +187,7 @@ pub async fn async_scroll(&self, lines: u32) -> Result<(), PeripheralError>
 ```
 
 **パラメータ:**
-- `lines: number` — スクロールする行数（正の値=下、負の値=上）
+- `lines: number` — スクロールする行数（正 = 下、負 = 上）
 
 **戻り値:** `nil`
 
@@ -209,13 +209,13 @@ pub fn read_last_get_cursor_pos(&self) -> Result<(u32, u32), PeripheralError>
 pub async fn async_get_cursor_pos(&self) -> Result<(u32, u32), PeripheralError>
 ```
 
-**戻り値:** `number, number` — X座標とY座標（1から始まる）
+**戻り値:** `number, number` — X および Y 座標（1ベース）
 
 **例:**
 ```lua
 local monitor = peripheral.find("monitor")
 local x, y = monitor.async_get_cursor_pos()
-print(("Cursor at (%d, %d)"):format(x, y))
+print(("カーソル位置: (%d, %d)"):format(x, y))
 ```
 
 ---
@@ -237,8 +237,8 @@ pub async fn async_set_cursor_pos(&self, x: u32, y: u32) -> Result<(), Periphera
 ```
 
 **パラメータ:**
-- `x: number` — X座標（1から始まる）
-- `y: number` — Y座標（1から始まる）
+- `x: number` — X 座標（1ベース）
+- `y: number` — Y 座標（1ベース）
 
 **戻り値:** `nil`
 
@@ -266,7 +266,7 @@ pub fn read_last_get_cursor_blink(&self) -> Result<bool, PeripheralError>
 pub async fn async_get_cursor_blink(&self) -> Result<bool, PeripheralError>
 ```
 
-**戻り値:** `boolean` — 点滅している場合は `true`、そうでない場合は `false`
+**戻り値:** `boolean` — 点滅している場合は`true`、そうでない場合は`false`
 
 ---
 
@@ -295,7 +295,7 @@ pub async fn async_set_cursor_blink(&self, blink: bool) -> Result<(), Peripheral
 
 ### `getSize()` / `book_next_get_size()` / `read_last_get_size()` / `async_get_size()`
 
-モニターサイズを文字単位で取得します。
+モニターのサイズを文字単位で取得します。
 
 **Lua署名:**
 ```lua
@@ -315,14 +315,14 @@ pub async fn async_get_size(&self) -> Result<(u32, u32), PeripheralError>
 ```lua
 local monitor = peripheral.find("monitor")
 local width, height = monitor.async_get_size()
-print(("Monitor size: %d x %d"):format(width, height))
+print(("モニターサイズ: %d x %d"):format(width, height))
 ```
 
 ---
 
 ### `setTextColor(color)` / `book_next_set_text_color(color)` / `read_last_set_text_color()` / `async_set_text_color(color)`
 
-テキスト色を設定します（アドバンスドモニターのみ）。
+テキスト色を設定します（高度なモニターのみ）。
 
 **Lua署名:**
 ```lua
@@ -337,11 +337,11 @@ pub async fn async_set_text_color(&self, color: u32) -> Result<(), PeripheralErr
 ```
 
 **パラメータ:**
-- `color: number` — カラー値（0x000000–0xFFFFFF）
+- `color: number` — 色値（0x000000–0xFFFFFF）
 
 **戻り値:** `nil`
 
-**定義済みカラー:**
+**定義済みの色:**
 - `0xFFFFFF` — 白
 - `0xFF0000` — 赤
 - `0x00FF00` — 緑
@@ -375,7 +375,7 @@ pub async fn async_get_text_color(&self) -> Result<u32, PeripheralError>
 
 ### `setBackgroundColor(color)` / `book_next_set_background_color(color)` / `read_last_set_background_color()` / `async_set_background_color(color)`
 
-背景色を設定します（アドバンスドモニターのみ）。
+背景色を設定します（高度なモニターのみ）。
 
 **Lua署名:**
 ```lua
@@ -390,7 +390,7 @@ pub async fn async_set_background_color(&self, color: u32) -> Result<(), Periphe
 ```
 
 **パラメータ:**
-- `color: number` — カラー値（0x000000–0xFFFFFF）
+- `color: number` — 色値（0x000000–0xFFFFFF）
 
 **戻り値:** `nil`
 
@@ -418,7 +418,7 @@ pub async fn async_get_background_color(&self) -> Result<u32, PeripheralError>
 
 ### `blit(text, textColor, backgroundColor)` / `book_next_blit(...)` / `read_last_blit()` / `async_blit(...)`
 
-blitを使用して指定されたカラーでテキストを書き込みます。
+指定された色を使用してテキストを書き込みます。
 
 **Lua署名:**
 ```lua
@@ -434,12 +434,12 @@ pub async fn async_blit(&self, text: &str, text_color: &str, bg_color: &str) -> 
 
 **パラメータ:**
 - `text: string` — 書き込むテキスト
-- `textColor: string` — テキストカラーコード（1文字あたり1つ）
-- `backgroundColor: string` — 背景カラーコード（1文字あたり1つ）
+- `textColor: string` — テキスト色コード（文字ごとに1つ）
+- `backgroundColor: string` — 背景色コード（文字ごとに1つ）
 
 **戻り値:** `nil`
 
-**カラーコード:**
+**色コード:**
 - `0` — 黒, `1` — 青, `2` — 緑, `3` — シアン
 - `4` — 赤, `5` — マゼンタ, `6` — 黄, `7` — 白
 - `8` — ライトグレー, `9` — ライトブルー, `a` — ライム, `b` — ライトシアン
@@ -451,11 +451,11 @@ pub async fn async_blit(&self, text: &str, text_color: &str, bg_color: &str) -> 
 
 ### `monitor_resize`
 
-モニターサイズが変更されたときに発火します。
+モニターのサイズが変更されたときに発生します。
 
 **イベントパラメータ:**
 1. `string` — イベント名（`"monitor_resize"`）
-2. `string` — モニター側面またはネットワークID
+2. `string` — モニターの側またはネットワークID
 
 **例:**
 ```lua
@@ -464,7 +464,7 @@ local monitor = peripheral.find("monitor")
 while true do
   local event, side = os.pullEvent("monitor_resize")
   local width, height = monitor.async_get_size()
-  print(("Monitor resized to %d x %d"):format(width, height))
+  print(("モニターが %d x %d にリサイズされました"):format(width, height))
 end
 ```
 
@@ -472,13 +472,13 @@ end
 
 ### `monitor_touch`
 
-アドバンスドモニターが右クリックされたときに発火します。
+高度なモニターが右クリックされたときに発生します。
 
 **イベントパラメータ:**
 1. `string` — イベント名（`"monitor_touch"`）
-2. `string` — モニター側面またはネットワークID
-3. `number` — X座標（1から始まる）
-4. `number` — Y座標（1から始まる）
+2. `string` — モニターの側またはネットワークID
+3. `number` — X 座標（1ベース）
+4. `number` — Y 座標（1ベース）
 
 **例:**
 ```lua
@@ -486,7 +486,7 @@ local monitor = peripheral.find("monitor")
 
 while true do
   local event, side, x, y = os.pullEvent("monitor_touch")
-  print(("Touched at (%d, %d)"):format(x, y))
+  print(("タッチ位置: (%d, %d)"):format(x, y))
 end
 ```
 
@@ -501,10 +501,10 @@ local monitor = peripheral.find("monitor")
 
 monitor.async_clear()
 monitor.async_set_cursor_pos(1, 1)
-monitor.async_write("Hello, World!")
+monitor.async_write("こんにちは、世界！")
 ```
 
-### 例2: カラーテキスト（アドバンスドモニター）
+### 例2: カラーテキスト（高度なモニター）
 
 ```lua
 local monitor = peripheral.find("monitor")
@@ -513,11 +513,11 @@ monitor.async_clear()
 monitor.async_set_cursor_pos(1, 1)
 
 monitor.async_set_text_color(0xFF0000)  -- 赤
-monitor.async_write("Red Text")
+monitor.async_write("赤いテキスト")
 
 monitor.async_set_cursor_pos(1, 2)
 monitor.async_set_text_color(0x00FF00)  -- 緑
-monitor.async_write("Green Text")
+monitor.async_write("緑のテキスト")
 ```
 
 ### 例3: ターミナルリダイレクト
@@ -525,11 +525,11 @@ monitor.async_write("Green Text")
 ```lua
 local monitor = peripheral.find("monitor")
 
--- 全出力をモニターにリダイレクト
+-- すべての出力をモニターにリダイレクト
 term.redirect(monitor)
 
-print("This appears on the monitor")
-print("And this too!")
+print("これはモニターに表示されます")
+print("これも表示されます！")
 
 -- 通常の出力に戻す
 term.restore()
@@ -548,16 +548,16 @@ local function draw_button(x, y, text, color)
 end
 
 monitor.async_clear()
-draw_button(2, 2, "Button 1", 0xFF0000)
-draw_button(2, 4, "Button 2", 0x00FF00)
+draw_button(2, 2, "ボタン 1", 0xFF0000)
+draw_button(2, 4, "ボタン 2", 0x00FF00)
 
 while true do
   local event, side, x, y = os.pullEvent("monitor_touch")
   
   if y == 2 then
-    print("Button 1 pressed")
+    print("ボタン 1 が押されました")
   elseif y == 4 then
-    print("Button 2 pressed")
+    print("ボタン 2 が押されました")
   end
 end
 ```
@@ -572,11 +572,11 @@ while true do
   monitor.async_set_text_scale(scale)
   monitor.async_clear()
   monitor.async_set_cursor_pos(1, 1)
-  monitor.async_write("Scale: " .. scale)
+  monitor.async_write("スケール: " .. scale)
   
   local w, h = monitor.async_get_size()
   monitor.async_set_cursor_pos(1, 2)
-  monitor.async_write(("Size: %d x %d"):format(w, h))
+  monitor.async_write(("サイズ: %d x %d"):format(w, h))
   
   scale = scale + 0.5
   if scale > 5.0 then scale = 0.5 end
@@ -589,18 +589,18 @@ end
 
 ## エラーハンドリング
 
-全メソッドは以下の場合にエラーをスロー可能です：
+すべてのメソッドは以下の場合にエラーをスローする可能性があります：
 
 - **モニターが見つからない**: ペリフェラルが切断されている
-- **無効なカラー**: カラー値が範囲外
-- **無効なスケール**: テキストスケールが有効範囲外
+- **無効な色**: 色値が範囲外
+- **無効なスケール**: テキストスケールが有効な範囲内にない
 - **無効な位置**: カーソル位置が範囲外
 
-**エラーハンドリング例:**
+**エラーハンドリングの例:**
 ```lua
 local monitor = peripheral.find("monitor")
 if not monitor then
-  error("No monitor found")
+  error("モニターが見つかりません")
 end
 
 local success, result = pcall(function()
@@ -608,9 +608,9 @@ local success, result = pcall(function()
 end)
 
 if not success then
-  print("Error: " .. result)
+  print("エラー: " .. result)
 else
-  print("Scale set successfully")
+  print("スケールが正常に設定されました")
 end
 ```
 
@@ -620,13 +620,13 @@ end
 
 ### Color
 ```lua
--- RGB カラー値（0x000000 から 0xFFFFFF）
+-- RGB色値（0x000000 から 0xFFFFFF）
 type Color = number
 ```
 
 ### Position
 ```lua
--- (x, y) 座標（1から始まる）
+-- (x, y) 座標（1ベース）
 type Position = (number, number)
 ```
 
@@ -640,10 +640,10 @@ type Size = (number, number)
 
 ## 注記
 
-- 全座標は1から始まります（最初の位置は0ではなく1）
-- テキストスケールはディスプレイサイズと解像度の両方に影響します
-- カラーサポートはアドバンスドモニターが必要です
-- タッチイベントはアドバンスドモニターでのみ動作します
+- すべての座標は1ベース（最初の位置は0ではなく1）
+- テキストスケールは表示サイズと解像度の両方に影響します
+- 色サポートには高度なモニターが必要です
+- タッチイベントは高度なモニターでのみ機能します
 - 複数のモニターを1つの大きなディスプレイに組み合わせることができます
 - 3つの関数パターンは効率的なバッチ操作を可能にします
 
@@ -652,5 +652,5 @@ type Size = (number, number)
 ## 関連
 
 - [Speaker](./Speaker.md) — オーディオ出力ペリフェラル
-- [CC:Tweaked Documentation](https://tweaked.cc/) — 公式ドキュメント
+- [CC:Tweaked ドキュメント](https://tweaked.cc/) — 公式ドキュメント
 - `term` API — ターミナル操作API

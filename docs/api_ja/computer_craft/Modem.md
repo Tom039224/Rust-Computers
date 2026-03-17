@@ -1,22 +1,22 @@
 # Modem
 
-**Mod:** CC:Tweaked  
+**モジュール:** CC:Tweaked  
 **ペリフェラルタイプ:** `modem`  
 **ソース:** `ModemPeripheral.java`
 
 ## 概要
 
-Modemペリフェラルは無線および有線ネットワーク通信を提供します。チャンネルを開いてメッセージを送受信できます。モデムは無線モード（範囲制限あり）または有線モード（接続されたネットワーク上で無制限）で動作します。
+Modemペリフェラルは、ワイヤレスおよびワイヤードネットワーク通信を提供します。チャネルを開き、メッセージを送信し、他のモデムからデータを受信できます。モデムはワイヤレスモード（範囲制限あり）またはワイヤードモード（接続されたネットワーク上で無制限）で動作できます。
 
 ## 3つの関数パターン
 
-Modem APIは全メソッドで3つの関数パターンを使用します：
+Modem APIは、すべてのメソッドに対して3つの関数パターンを使用します：
 
-1. **`book_next_*`** — 次のティックのリクエストをスケジュール
-2. **`read_last_*`** — 前のティックの結果を読み取り
-3. **`async_*`** — book、待機、読み取りを1つの呼び出しで行う便利メソッド
+1. **`book_next_*`** - 次のティックのリクエストをスケジュール
+2. **`read_last_*`** - 前のティックの結果を読み取り
+3. **`async_*`** - 便利なメソッド（book、待機、読み取りを1つの呼び出しで実行）
 
-### パターン説明
+### パターンの説明
 
 ```lua
 -- 方法1: book_next / read_last パターン
@@ -32,15 +32,15 @@ modem.async_open(15)
 
 CC:Tweakedは3種類のモデムを提供します：
 
-1. **無線モデム** — 他の無線モデムと通信（デフォルト範囲64ブロック、y≥96で最大384ブロック）
-2. **エンダーモデム** — 無線モデムで無制限範囲とクロスディメンション対応
-3. **有線モデム** — ネットワークケーブルで接続されたネットワーク上で無制限範囲
+1. **ワイヤレスモデム** - 他のワイヤレスモデムと範囲内（デフォルト64ブロック、y≥96で最大384ブロック）で通信
+2. **エンダーモデム** - 無制限の範囲とクロスディメンション対応のワイヤレスモデム
+3. **ワイヤードモデム** - ネットワークケーブルに接続して、接続されたネットワーク上で無制限の範囲を実現
 
 ## メソッド
 
 ### `open(channel)` / `book_next_open(channel)` / `read_last_open()` / `async_open(channel)`
 
-チャンネルを開いてメッセージ受信をリッスンします。
+受信メッセージをリッスンするためのチャネルを開きます。
 
 **Lua署名:**
 ```lua
@@ -55,30 +55,30 @@ pub async fn async_open(&self, channel: u32) -> Result<(), PeripheralError>
 ```
 
 **パラメータ:**
-- `channel: number` — 開くチャンネル番号（0–65535）
+- `channel: number` — 開くチャネル番号（0–65535）
 
 **戻り値:** `nil`
 
 **注記:**
-- 最大128チャンネルを同時に開くことができます
-- メッセージを送信するためにチャンネルを開く必要はありません
+- 最大128個のチャネルを同時に開くことができます
+- 送信するためにチャネルを開く必要はなく、受信するためにのみ必要です
 
 **例:**
 ```lua
 local modem = peripheral.find("modem")
 modem.async_open(15)
-print("Channel 15 opened")
+print("チャネル 15 を開きました")
 ```
 
 **エラーハンドリング:**
-- チャンネル番号が範囲外の場合、エラーをスロー
-- 既に128チャンネルが開いている場合、エラーをスロー
+- チャネル番号が範囲外の場合、エラーをスロー
+- 128個のチャネルが既に開いている場合、エラーをスロー
 
 ---
 
 ### `isOpen(channel)` / `book_next_is_open(channel)` / `read_last_is_open()` / `async_is_open(channel)`
 
-チャンネルが現在開いているかを確認します。
+チャネルが現在開いているかどうかを確認します。
 
 **Lua署名:**
 ```lua
@@ -93,17 +93,17 @@ pub async fn async_is_open(&self, channel: u32) -> Result<bool, PeripheralError>
 ```
 
 **パラメータ:**
-- `channel: number` — 確認するチャンネル番号（0–65535）
+- `channel: number` — 確認するチャネル番号（0–65535）
 
-**戻り値:** `boolean` — 開いている場合は `true`、閉じている場合は `false`
+**戻り値:** `boolean` — 開いている場合は`true`、閉じている場合は`false`
 
 **例:**
 ```lua
 local modem = peripheral.find("modem")
 if modem.async_is_open(15) then
-  print("Channel 15 is open")
+  print("チャネル 15 は開いています")
 else
-  print("Channel 15 is closed")
+  print("チャネル 15 は閉じています")
 end
 ```
 
@@ -111,7 +111,7 @@ end
 
 ### `close(channel)` / `book_next_close(channel)` / `read_last_close()` / `async_close(channel)`
 
-開いているチャンネルを閉じます。
+開いているチャネルを閉じます。
 
 **Lua署名:**
 ```lua
@@ -126,7 +126,7 @@ pub async fn async_close(&self, channel: u32) -> Result<(), PeripheralError>
 ```
 
 **パラメータ:**
-- `channel: number` — 閉じるチャンネル番号（0–65535）
+- `channel: number` — 閉じるチャネル番号（0–65535）
 
 **戻り値:** `nil`
 
@@ -134,14 +134,14 @@ pub async fn async_close(&self, channel: u32) -> Result<(), PeripheralError>
 ```lua
 local modem = peripheral.find("modem")
 modem.async_close(15)
-print("Channel 15 closed")
+print("チャネル 15 を閉じました")
 ```
 
 ---
 
 ### `closeAll()` / `book_next_close_all()` / `read_last_close_all()` / `async_close_all()`
 
-開いている全チャンネルを閉じます。
+すべての開いているチャネルを閉じます。
 
 **Lua署名:**
 ```lua
@@ -161,14 +161,14 @@ pub async fn async_close_all(&self) -> Result<(), PeripheralError>
 ```lua
 local modem = peripheral.find("modem")
 modem.async_close_all()
-print("All channels closed")
+print("すべてのチャネルを閉じました")
 ```
 
 ---
 
 ### `transmit(channel, replyChannel, payload)` / `book_next_transmit(...)` / `read_last_transmit()` / `async_transmit(...)`
 
-チャンネルにメッセージを送信します。
+チャネルにメッセージを送信します。
 
 **Lua署名:**
 ```lua
@@ -183,32 +183,32 @@ pub async fn async_transmit<T: Serialize>(&self, channel: u32, reply_channel: u3
 ```
 
 **パラメータ:**
-- `channel: number` — ターゲットチャンネル（0–65535）
-- `replyChannel: number` — 応答用チャンネル（0–65535）
-- `payload: any` — メッセージデータ（プリミティブ型、テーブル、またはシリアライズ可能な型）
+- `channel: number` — ターゲットチャネル（0–65535）
+- `replyChannel: number` — 応答用のリプライチャネル（0–65535）
+- `payload: any` — メッセージデータ（プリミティブ、テーブル、またはシリアライズ可能な型）
 
 **戻り値:** `nil`
 
 **注記:**
-- ターゲットチャンネルを開く必要はありません
-- 応答チャンネルはあなたのモデムで開いておく必要があります
-- ペイロードはLua値（boolean、number、string、table）です
+- 送信するためにターゲットチャネルを開く必要はありません
+- リプライチャネルは応答を受信するためにあなたのモデムで開いている必要があります
+- ペイロードは任意のLua値（ブール値、数値、文字列、テーブル）です
 - 関数とメタテーブルは送信されません
 
 **例:**
 ```lua
 local modem = peripheral.find("modem")
-modem.async_open(43)  -- 応答チャンネルを開く
+modem.async_open(43)  -- リプライチャネルを開く
 
 -- メッセージを送信
-modem.async_transmit(15, 43, "Hello, world!")
+modem.async_transmit(15, 43, "こんにちは、世界！")
 ```
 
 ---
 
 ### `isWireless()` / `book_next_is_wireless()` / `read_last_is_wireless()` / `async_is_wireless()`
 
-このモデムが無線か有線かを確認します。
+このモデムがワイヤレスかワイヤードかを確認します。
 
 **Lua署名:**
 ```lua
@@ -222,15 +222,15 @@ pub fn read_last_is_wireless(&self) -> Result<bool, PeripheralError>
 pub async fn async_is_wireless(&self) -> Result<bool, PeripheralError>
 ```
 
-**戻り値:** `boolean` — 無線の場合は `true`、有線の場合は `false`
+**戻り値:** `boolean` — ワイヤレスの場合は`true`、ワイヤードの場合は`false`
 
 **例:**
 ```lua
 local modem = peripheral.find("modem")
 if modem.async_is_wireless() then
-  print("This is a wireless modem")
+  print("これはワイヤレスモデムです")
 else
-  print("This is a wired modem")
+  print("これはワイヤードモデムです")
 end
 ```
 
@@ -240,15 +240,15 @@ end
 
 ### `modem_message`
 
-開いているチャンネルでメッセージが受信されたときに発火します。
+開いているチャネルでメッセージが受信されたときに発生します。
 
 **イベントパラメータ:**
 1. `string` — イベント名（`"modem_message"`）
-2. `string` — モデムが接続されている側面
-3. `number` — メッセージが送信されたチャンネル
-4. `number` — 送信者が指定した応答チャンネル
+2. `string` — モデムが接続されている側
+3. `number` — メッセージが送信されたチャネル
+4. `number` — 送信者が指定したリプライチャネル
 5. `any` — メッセージペイロード
-6. `number | nil` — 送信者までの距離（ブロック単位）、クロスディメンションの場合は `nil`
+6. `number | nil` — ブロック単位での送信者までの距離（クロスディメンションの場合はnil）
 
 **例:**
 ```lua
@@ -257,12 +257,12 @@ modem.async_open(0)
 
 while true do
   local event, side, channel, replyChannel, message, distance = os.pullEvent("modem_message")
-  print(("Received on channel %d: %s"):format(channel, tostring(message)))
+  print(("チャネル %d で受信: %s"):format(channel, tostring(message)))
   
   if distance then
-    print(("Distance: %d blocks"):format(distance))
+    print(("距離: %d ブロック"):format(distance))
   else
-    print("Cross-dimension message")
+    print("クロスディメンションメッセージ")
   end
 end
 ```
@@ -274,20 +274,20 @@ end
 ### 例1: 基本的なメッセージ交換
 
 ```lua
--- 送信側
+-- 送信者
 local modem = peripheral.find("modem")
-modem.async_open(43)  -- 応答チャンネルを開く
-modem.async_transmit(15, 43, "Hello!")
+modem.async_open(43)  -- リプライチャネルを開く
+modem.async_transmit(15, 43, "こんにちは！")
 
--- 受信側
+-- 受信者
 local modem = peripheral.find("modem")
 modem.async_open(15)
 
 local event, side, channel, replyChannel, message, distance = os.pullEvent("modem_message")
-print("Received: " .. tostring(message))
+print("受信: " .. tostring(message))
 
--- 応答を送信
-modem.async_transmit(replyChannel, 15, "Hello back!")
+-- リプライを送信
+modem.async_transmit(replyChannel, 15, "こんにちは、返信です！")
 ```
 
 ### 例2: シンプルなサーバー
@@ -296,16 +296,16 @@ modem.async_transmit(replyChannel, 15, "Hello back!")
 local modem = peripheral.find("modem")
 modem.async_open(100)
 
-print("Server listening on channel 100...")
+print("サーバーがチャネル 100 でリッスン中...")
 
 while true do
   local event, side, channel, replyChannel, message, distance = os.pullEvent("modem_message")
   
   if channel == 100 then
-    print("Request: " .. tostring(message))
+    print("リクエスト: " .. tostring(message))
     
-    -- 応答を送信
-    modem.async_transmit(replyChannel, 100, "Response: " .. tostring(message))
+    -- レスポンスを送信
+    modem.async_transmit(replyChannel, 100, "レスポンス: " .. tostring(message))
   end
 end
 ```
@@ -315,22 +315,22 @@ end
 ```lua
 local modem = peripheral.find("modem")
 
--- 複数チャンネルをリッスン
+-- 複数のチャネルをリッスン
 for i = 1, 5 do
   modem.async_open(i)
 end
 
 while true do
   local event, side, channel, replyChannel, message, distance = os.pullEvent("modem_message")
-  print(("Channel %d: %s (distance: %s)"):format(
+  print(("チャネル %d: %s (距離: %s)"):format(
     channel,
     tostring(message),
-    distance and tostring(distance) or "unknown"
+    distance and tostring(distance) or "不明"
   ))
 end
 ```
 
-### 例4: リクエスト-応答パターン
+### 例4: リクエスト-リプライパターン
 
 ```lua
 local modem = peripheral.find("modem")
@@ -339,7 +339,7 @@ modem.async_open(43)
 -- リクエストを送信
 modem.async_transmit(15, 43, {action = "query", data = "test"})
 
--- タイムアウト付きで応答を待機
+-- タイムアウト付きでリプライを待機
 local timeout = os.startTimer(5)
 while true do
   local event, arg1, arg2, arg3, arg4, arg5 = os.pullEvent()
@@ -347,27 +347,27 @@ while true do
   if event == "modem_message" then
     local channel, replyChannel, message = arg3, arg4, arg5
     if channel == 43 then
-      print("Reply: " .. tostring(message))
+      print("リプライ: " .. tostring(message))
       break
     end
   elseif event == "timer" and arg1 == timeout then
-    print("Request timed out")
+    print("リクエストがタイムアウトしました")
     break
   end
 end
 ```
 
-### 例5: 有線ネットワーク検出
+### 例5: ワイヤードネットワーク検出
 
 ```lua
 local modem = peripheral.find("modem")
 
 if modem.async_is_wireless() then
-  print("Wireless modem detected")
-  print("Range: 64 blocks (up to 384 at y≥96)")
+  print("ワイヤレスモデムが検出されました")
+  print("範囲: 64 ブロック（y≥96で最大384）")
 else
-  print("Wired modem detected")
-  print("Range: Unlimited on connected network")
+  print("ワイヤードモデムが検出されました")
+  print("範囲: 接続されたネットワーク上で無制限")
 end
 ```
 
@@ -375,18 +375,18 @@ end
 
 ## エラーハンドリング
 
-全メソッドは以下の場合にエラーをスロー可能です：
+すべてのメソッドは以下の場合にエラーをスローする可能性があります：
 
 - **モデムが見つからない**: ペリフェラルが切断されている
-- **無効なチャンネル**: チャンネル番号が範囲外（0–65535）
-- **チャンネルが多すぎる**: 既に128チャンネルが開いている
-- **ネットワークエラー**: 有線ネットワーク接続が切断されている
+- **無効なチャネル**: チャネル番号が範囲外（0–65535）
+- **チャネルが多すぎる**: 128個のチャネルが既に開いている
+- **ネットワークエラー**: ワイヤードネットワーク接続が切断されている
 
-**エラーハンドリング例:**
+**エラーハンドリングの例:**
 ```lua
 local modem = peripheral.find("modem")
 if not modem then
-  error("No modem found")
+  error("モデムが見つかりません")
 end
 
 local success, result = pcall(function()
@@ -394,9 +394,9 @@ local success, result = pcall(function()
 end)
 
 if not success then
-  print("Error: " .. result)
+  print("エラー: " .. result)
 else
-  print("Channel opened successfully")
+  print("チャネルが正常に開きました")
 end
 ```
 
@@ -407,10 +407,10 @@ end
 ### ReceiveData
 ```lua
 {
-  channel: number,      -- メッセージが送信されたチャンネル
-  replyChannel: number, -- 送信者が指定した応答チャンネル
+  channel: number,      -- メッセージが送信されたチャネル
+  replyChannel: number, -- 送信者が指定したリプライチャネル
   payload: any,         -- メッセージデータ
-  distance: number | nil, -- ブロック単位での距離（クロスディメンションの場合は nil）
+  distance: number | nil, -- ブロック単位での距離（クロスディメンションの場合はnil）
 }
 ```
 
@@ -418,17 +418,17 @@ end
 
 ## 注記
 
-- チャンネル番号は0から65535の範囲
-- 最大128チャンネルを同時に開くことができます
-- 無線モデムは範囲制限があります。有線モデムはありません
+- チャネル番号は0から65535の範囲です
+- 最大128個のチャネルを同時に開くことができます
+- ワイヤレスモデムは範囲制限があります。ワイヤードモデムはありません
 - メッセージは即座に送信されますが、イベントとして受信されます
 - 3つの関数パターンは効率的なバッチ操作を可能にします
-- エンダーモデムはクロスディメンション通信に対応しています
+- エンダーモデムはディメンション間で通信できます
 
 ---
 
 ## 関連
 
-- [Inventory](./Inventory.md) — ネットワークアクセスに有線モデムが必要
-- [CC:Tweaked Documentation](https://tweaked.cc/) — 公式ドキュメント
-- `rednet` API — モデムの上に構築された高レベルネットワークAPI
+- [Inventory](./Inventory.md) — ネットワークアクセスにはワイヤードモデムが必要
+- [CC:Tweaked ドキュメント](https://tweaked.cc/) — 公式ドキュメント
+- `rednet` API — モデムの上に構築された高レベルのネットワーキングAPI

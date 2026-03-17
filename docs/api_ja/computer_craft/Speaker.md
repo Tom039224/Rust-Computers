@@ -1,22 +1,22 @@
 # Speaker
 
-**Mod:** CC:Tweaked  
+**モジュール:** CC:Tweaked  
 **ペリフェラルタイプ:** `speaker`  
 **ソース:** `SpeakerPeripheral.java`
 
 ## 概要
 
-Speakerペリフェラルはワールドで音を再生できます。3種類のオーディオをサポートしています：ノートブロック音、Minecraftサウンドイベント、生PCMオーディオ。スピーカーはスパム防止のためレート制限があります。
+Speakerペリフェラルは、Minecraftワールドで音を再生できます。3種類のオーディオをサポートします：ノートブロックノート、Minecraftサウンドイベント、生PCMオーディオ。スピーカーはスパム防止のためのレート制限があります。
 
 ## 3つの関数パターン
 
-Speaker APIは全メソッドで3つの関数パターンを使用します：
+Speaker APIは、すべてのメソッドに対して3つの関数パターンを使用します：
 
-1. **`book_next_*`** — 次のティックのリクエストをスケジュール
-2. **`read_last_*`** — 前のティックの結果を読み取り
-3. **`async_*`** — book、待機、読み取りを1つの呼び出しで行う便利メソッド
+1. **`book_next_*`** - 次のティックのリクエストをスケジュール
+2. **`read_last_*`** - 前のティックの結果を読み取り
+3. **`async_*`** - 便利なメソッド（book、待機、読み取りを1つの呼び出しで実行）
 
-### パターン説明
+### パターンの説明
 
 ```lua
 -- 方法1: book_next / read_last パターン
@@ -32,7 +32,7 @@ speaker.async_play_note("harp", 1.0, 12)
 
 ### `playNote(instrument, volume?, pitch?)` / `book_next_play_note(...)` / `read_last_play_note()` / `async_play_note(...)`
 
-ノートブロック音を再生します。
+ノートブロックノートを再生します。
 
 **Lua署名:**
 ```lua
@@ -49,9 +49,9 @@ pub async fn async_play_note(&self, instrument: &str, volume: Option<f32>, pitch
 **パラメータ:**
 - `instrument: string` — 楽器名（下記のリストを参照）
 - `volume?: number` — 音量レベル 0.0–3.0（デフォルト: 1.0）
-- `pitch?: number` — ピッチ（セミトーン単位）0–24（デフォルト: 12）
+- `pitch?: number` — ピッチ（半音） 0–24（デフォルト: 12）
 
-**戻り値:** `boolean` — 音が再生された場合は `true`、レート制限に達した場合は `false`
+**戻り値:** `boolean` — ノートが再生された場合は`true`、レート制限に達した場合は`false`
 
 **有効な楽器:**
 - `"harp"` — ハープ
@@ -63,10 +63,10 @@ pub async fn async_play_note(&self, instrument: &str, volume: Option<f32>, pitch
 - `"bell"` — ベル
 - `"guitar"` — ギター
 - `"chime"` — チャイム
-- `"xylophone"` — 木琴
+- `"xylophone"` — シロフォン
 - `"iron_xylophone"` — 鉄琴
 - `"cow_bell"` — カウベル
-- `"didgeridoo"` — ディジュリドゥ
+- `"didgeridoo"` — ディジェリドゥ
 - `"bit"` — ビット
 - `"banjo"` — バンジョー
 - `"pling"` — プリング
@@ -74,19 +74,19 @@ pub async fn async_play_note(&self, instrument: &str, volume: Option<f32>, pitch
 **ピッチリファレンス:**
 - ピッチ 0, 12, 24 = F#
 - ピッチ 6, 18 = C
-- ピッチ 12 = 中央C
+- ピッチ 12 = ミドルC
 
 **レート制限:**
-- スピーカーあたり1ティックあたり最大8音
+- スピーカーあたり1ティックあたり最大8ノート
 
 **例:**
 ```lua
 local speaker = peripheral.find("speaker")
 
--- ハープ音を再生
+-- ハープノートを再生
 speaker.async_play_note("harp", 1.0, 12)
 
--- 高音量でベース音を再生
+-- 高音量でベースノートを再生
 speaker.async_play_note("bass", 3.0, 0)
 ```
 
@@ -109,32 +109,32 @@ pub async fn async_play_sound(&self, name: &str, volume: Option<f32>, pitch: Opt
 ```
 
 **パラメータ:**
-- `name: string` — サウンドリソース名（例: `"minecraft:entity.creeper.primed"`）
+- `name: string` — サウンドリソース名（例：`"minecraft:entity.creeper.primed"`）
 - `volume?: number` — 音量レベル 0.0–3.0（デフォルト: 1.0）
 - `pitch?: number` — 再生速度 0.5–2.0（デフォルト: 1.0）
 
-**戻り値:** `boolean` — サウンドが再生された場合は `true`、できなかった場合は `false`
+**戻り値:** `boolean` — サウンドが再生された場合は`true`、別のサウンドが再生中の場合は`false`
 
 **一般的なサウンド:**
-- `"minecraft:entity.creeper.primed"` — クリーパーのヒス音
-- `"minecraft:entity.enderman.teleport"` — エンダーマンのテレポート音
-- `"minecraft:entity.generic.explode"` — 爆発音
+- `"minecraft:entity.creeper.primed"` — クリーパーのシュー音
+- `"minecraft:entity.enderman.teleport"` — エンダーマンのテレポート
+- `"minecraft:entity.generic.explode"` — 爆発
 - `"minecraft:block.note_block.harp"` — ノートブロックハープ
 - `"minecraft:block.note_block.bell"` — ノートブロックベル
-- `"minecraft:ui.button.click"` — ボタンクリック音
+- `"minecraft:ui.button.click"` — ボタンクリック
 
 **レート制限:**
 - 一度に1つのサウンドのみ再生可能
-- `playAudio` がまだ再生中の場合は再生できません
+- `playAudio` がアクティブな間は再生できません
 
 **例:**
 ```lua
 local speaker = peripheral.find("speaker")
 
--- クリーパーのヒス音を再生
+-- クリーパーのシュー音を再生
 speaker.async_play_sound("minecraft:entity.creeper.primed", 1.0, 1.0)
 
--- 高音量で爆発音を再生
+-- 高音量で爆発を再生
 speaker.async_play_sound("minecraft:entity.generic.explode", 3.0, 1.0)
 ```
 
@@ -142,7 +142,7 @@ speaker.async_play_sound("minecraft:entity.generic.explode", 3.0, 1.0)
 
 ### `stop()` / `book_next_stop()` / `read_last_stop()` / `async_stop()`
 
-全オーディオ再生を停止します。
+すべてのオーディオ再生を停止します。
 
 **Lua署名:**
 ```lua
@@ -176,7 +176,7 @@ speaker.async_stop()
 
 ### `speaker_audio_empty`
 
-スピーカーのオーディオバッファが空になり、さらにオーディオデータを受け入れる準備ができたときに発火します。
+スピーカーのオーディオバッファが空になり、より多くのオーディオデータの準備ができたときに発生します。
 
 **イベントパラメータ:**
 1. `string` — イベント名（`"speaker_audio_empty"`）
@@ -190,7 +190,7 @@ local speaker = peripheral.find("speaker")
 local success = speaker.playAudio(audioData)
 
 if not success then
-  -- バッファがいっぱいの場合、空になるまで待機
+  -- バッファが満杯、空になるまで待機
   os.pullEvent("speaker_audio_empty")
   speaker.playAudio(audioData)
 end
@@ -213,36 +213,36 @@ for _, pitch in ipairs(notes) do
 end
 ```
 
-### 例2: 効果音
+### 例2: サウンドエフェクト
 
 ```lua
 local speaker = peripheral.find("speaker")
 
--- 爆発音
+-- 爆発
 speaker.async_play_sound("minecraft:entity.generic.explode", 3.0, 1.0)
 sleep(1)
 
--- ベル音
+-- ベル
 speaker.async_play_sound("minecraft:block.note_block.bell", 2.0, 1.5)
 sleep(1)
 
--- クリック音
+-- クリック
 speaker.async_play_sound("minecraft:ui.button.click", 1.0, 1.0)
 ```
 
-### 例3: 和音
+### 例3: コード
 
 ```lua
 local speaker = peripheral.find("speaker")
 
--- Cメジャー和音を再生（C, E, G）
+-- Cメジャーコード（C, E, G）を再生
 speaker.async_play_note("harp", 1.0, 0)   -- C
 speaker.async_play_note("harp", 1.0, 4)   -- E
 speaker.async_play_note("harp", 1.0, 7)   -- G
 
 sleep(2)
 
--- Fメジャー和音を再生（F, A, C）
+-- Fメジャーコード（F, A, C）を再生
 speaker.async_play_note("harp", 1.0, 5)   -- F
 speaker.async_play_note("harp", 1.0, 9)   -- A
 speaker.async_play_note("harp", 1.0, 12)  -- C
@@ -273,7 +273,7 @@ for pitch = 0, 24 do
 end
 ```
 
-### 例6: ボリュームフェード
+### 例6: 音量フェード
 
 ```lua
 local speaker = peripheral.find("speaker")
@@ -295,18 +295,18 @@ end
 
 ## エラーハンドリング
 
-全メソッドは以下の場合にエラーをスロー可能です：
+すべてのメソッドは以下の場合にエラーをスローする可能性があります：
 
 - **スピーカーが見つからない**: ペリフェラルが切断されている
 - **無効な楽器**: 楽器名が認識されない
 - **無効なサウンド**: サウンドリソース名が無効または長すぎる（>512文字）
 - **無効なパラメータ**: 音量またはピッチ値が範囲外
 
-**エラーハンドリング例:**
+**エラーハンドリングの例:**
 ```lua
 local speaker = peripheral.find("speaker")
 if not speaker then
-  error("No speaker found")
+  error("スピーカーが見つかりません")
 end
 
 local success, result = pcall(function()
@@ -314,9 +314,9 @@ local success, result = pcall(function()
 end)
 
 if not success then
-  print("Error: " .. result)
+  print("エラー: " .. result)
 else
-  print("Note played successfully")
+  print("ノートが正常に再生されました")
 end
 ```
 
@@ -353,7 +353,7 @@ type Volume = number
 
 ### Pitch
 ```lua
--- 範囲: 0 から 24（セミトーン単位）
+-- 範囲: 0 から 24（半音）
 type Pitch = number
 ```
 
@@ -361,11 +361,11 @@ type Pitch = number
 
 ## 注記
 
-- スピーカーあたり1ティックあたり最大8音
+- スピーカーあたり1ティックあたり最大8ノート
 - 一度に1つのサウンドのみ再生可能
 - `playNote` と `playSound` は同時に再生できません
 - 3つの関数パターンは効率的なバッチ操作を可能にします
-- サウンド名はMinecraftのResourceLocation形式を使用します
+- サウンド名はMinecraftの ResourceLocation 形式を使用します
 - ピッチ値はノートブロッククリック数に直接対応します
 
 ---
@@ -373,5 +373,5 @@ type Pitch = number
 ## 関連
 
 - [Monitor](./Monitor.md) — ディスプレイペリフェラル
-- [CC:Tweaked Documentation](https://tweaked.cc/) — 公式ドキュメント
+- [CC:Tweaked ドキュメント](https://tweaked.cc/) — 公式ドキュメント
 - `cc.audio.dfpwm` — DFPWMオーディオコーデック（高度なオーディオ用）

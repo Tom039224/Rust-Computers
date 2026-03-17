@@ -56,7 +56,7 @@
 - [x] 4.1 CC:Tweaked APIリファレンス作成（英語）
 - [x] 4.2 CC:Tweaked APIリファレンス作成（日本語）
 - [x] 4.3 AdvancedPeripherals APIリファレンス作成（英語）
-- [ ] 4.4 AdvancedPeripherals APIリファレンス作成（日本語）
+- [-] 4.4 AdvancedPeripherals APIリファレンス作成（日本語）
 - [ ] 4.5 Create APIリファレンス作成（英語）
 - [ ] 4.6 Create APIリファレンス作成（日本語）
 - [ ] 4.7 その他modのAPIリファレンス作成
