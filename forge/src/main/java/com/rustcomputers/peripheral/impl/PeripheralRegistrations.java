@@ -556,8 +556,12 @@ public final class PeripheralRegistrations {
             LOGGER.debug("Registered peripheral: advancedperipherals:block_reader -> block_reader");
         }
 
-        reg("advancedperipherals", "chat_box", "chat_box",
-            new String[]{"sendMessage", "sendFormattedMessage", "sendMessageToPlayer", "sendToastToPlayer"});
+        // ChatBox - 専用実装を使用
+        Block chatBoxBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("advancedperipherals", "chat_box"));
+        if (chatBoxBlock != null && chatBoxBlock != Blocks.AIR) {
+            PeripheralProvider.register(chatBoxBlock, ApChatBoxPeripheral::new);
+            LOGGER.debug("Registered peripheral: advancedperipherals:chat_box -> chat_box");
+        }
 
         reg("advancedperipherals", "colony_integrator", "colony_integrator",
             new String[]{

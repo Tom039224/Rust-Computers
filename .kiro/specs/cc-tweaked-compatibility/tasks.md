@@ -25,8 +25,8 @@
 - [x] 2.5 CC:Tweaked Modem実装（イベント対応）
 - [x] 2.6 CC:Tweaked Monitor実装（イベント対応）
 - [x] 2.7 CC:Tweaked Speaker実装
-- [-] 2.8 AdvancedPeripherals BlockReader実装
-- [ ] 2.9 AdvancedPeripherals ChatBox実装
+- [x] 2.8 AdvancedPeripherals BlockReader実装
+- [-] 2.9 AdvancedPeripherals ChatBox実装
 - [ ] 2.10 AdvancedPeripherals MEBridge実装
 - [ ] 2.11 AdvancedPeripherals PlayerDetector実装
 - [ ] 2.12 AdvancedPeripherals GeoScanner実装
