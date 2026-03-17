@@ -240,8 +240,12 @@ public final class MsgPack {
                 encoded.put(String.valueOf(e.getKey()), packAny(e.getValue()));
             }
             return packMap(encoded);
-        }
-        // フォールバック: toString でエンコード / fallback: encode as string
+        }          if (value instanceof Object[]) {
+              Object[] arr = (Object[]) value;
+              List<byte[]> encoded = new java.util.ArrayList<>(arr.length);
+              for (Object item : arr) encoded.add(packAny(item));
+              return array(encoded);
+          }        // フォールバック: toString でエンコード / fallback: encode as string
         return str(value.toString());
     }
 
@@ -403,6 +407,81 @@ public final class MsgPack {
             throw new IllegalArgumentException("String data truncated");
         }
         return new String(data, start, len, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    /**
+     * MsgPack から任意のオブジェクトとしてデコードする (Object[] 汎用処理用)。
+     * Decode from MsgPack to any Object.
+     */
+    public static Object decodeAny(byte[] data, int[] offsetInOut) {
+        int pos = offsetInOut[0];
+        if (pos >= data.length) {
+            offsetInOut[0] = -1;
+            return null;
+        }
+        int b = data[pos] & 0xFF;
+
+        if (b <= 0x7F || b >= 0xE0 || b == 0xCC || b == 0xCD || b == 0xCE || b == 0xD0 || b == 0xD1 || b == 0xD2) {
+            double v = decodeF64(data, pos);
+            offsetInOut[0] = skipElement(data, pos);
+            return v;
+        }
+        if (b == 0xCA || b == 0xCB) {
+            double v = decodeF64(data, pos);
+            offsetInOut[0] = skipElement(data, pos);
+            return v;
+        }
+        if ((b & 0xE0) == 0xA0 || b == 0xD9 || b == 0xDA || b == 0xDB) {
+            String s = decodeStr(data, pos);
+            offsetInOut[0] = skipElement(data, pos);
+            return s;
+        }
+        if (b == 0xC0) {
+            offsetInOut[0] = pos + 1;
+            return null;
+        }
+        if (b == 0xC2) {
+            offsetInOut[0] = pos + 1;
+            return false;
+        }
+        if (b == 0xC3) {
+            offsetInOut[0] = pos + 1;
+            return true;
+        }
+        if ((b & 0xF0) == 0x90 || b == 0xDC || b == 0xDD) {
+            // array -> map (CC arrays are Lua tables)
+            int len = 0;
+            if ((b & 0xF0) == 0x90) { len = b & 0x0F; pos += 1; }
+            else if (b == 0xDC) { len = ((data[pos+1]&0xFF)<<8)|(data[pos+2]&0xFF); pos += 3; }
+            else { len = ((data[pos+1]&0xFF)<<24)|((data[pos+2]&0xFF)<<16)|((data[pos+3]&0xFF)<<8)|(data[pos+4]&0xFF); pos += 5; }
+
+            offsetInOut[0] = pos;
+            Map<Double, Object> map = new java.util.HashMap<>();
+            for (int i = 0; i < len; i++) {
+                map.put((double) (i + 1), decodeAny(data, offsetInOut));
+            }
+            return map;
+        }
+        if ((b & 0xF0) == 0x80 || b == 0xDE || b == 0xDF) {
+            // map -> map
+            int len = 0;
+            if ((b & 0xF0) == 0x80) { len = b & 0x0F; pos += 1; }
+            else if (b == 0xDE) { len = ((data[pos+1]&0xFF)<<8)|(data[pos+2]&0xFF); pos += 3; }
+            else { len = ((data[pos+1]&0xFF)<<24)|((data[pos+2]&0xFF)<<16)|((data[pos+3]&0xFF)<<8)|(data[pos+4]&0xFF); pos += 5; }
+
+            offsetInOut[0] = pos;
+            Map<Object, Object> map = new java.util.HashMap<>();
+            for (int i = 0; i < len; i++) {
+                Object k = decodeAny(data, offsetInOut);
+                Object v = decodeAny(data, offsetInOut);
+                map.put(k, v);
+            }
+            return map;
+        }
+        
+        // unknown, just skip
+        offsetInOut[0] = skipElement(data, pos);
+        return null;
     }
 
     // ------------------------------------------------------------------

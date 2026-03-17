@@ -221,6 +221,19 @@ public class CcGenericPeripheral implements PeripheralType {
     // @LuaFunction メソッド検索 / Find @LuaFunction methods
     // ------------------------------------------------------------------
 
+    private static boolean hasLuaAnnotation(Method m) {
+        if (luaFunctionAnnotation != null && m.isAnnotationPresent(luaFunctionAnnotation)) {
+            return true;
+        }
+        for (Annotation ann : m.getAnnotations()) {
+            String name = ann.annotationType().getSimpleName();
+            if (name.equals("LuaFunction") || name.equals("LuaMethod")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * 対象クラスの @LuaFunction メソッドをキャッシュ付きで検索する。
      * Find @LuaFunction methods on the target class (with caching).
@@ -229,7 +242,7 @@ public class CcGenericPeripheral implements PeripheralType {
         return METHOD_CACHE.computeIfAbsent(clazz, cls -> {
             Map<String, Method> map = new HashMap<>();
             for (Method m : cls.getMethods()) {
-                if (m.isAnnotationPresent(luaFunctionAnnotation)) {
+                if (hasLuaAnnotation(m)) {
                     m.setAccessible(true);
                     map.put(m.getName(), m);
                 }
@@ -238,7 +251,7 @@ public class CcGenericPeripheral implements PeripheralType {
             Class<?> parent = cls.getSuperclass();
             while (parent != null && parent != Object.class) {
                 for (Method m : parent.getDeclaredMethods()) {
-                    if (m.isAnnotationPresent(luaFunctionAnnotation) && !map.containsKey(m.getName())) {
+                    if (hasLuaAnnotation(m) && !map.containsKey(m.getName())) {
                         m.setAccessible(true);
                         map.put(m.getName(), m);
                     }
@@ -419,6 +432,16 @@ public class CcGenericPeripheral implements PeripheralType {
                 result[i] = decodeBool(args, offset);
             } else if (pt == String.class) {
                 result[i] = MsgPack.decodeStr(args, offset);
+            } else if (pt == Object[].class) {
+                // Read all remaining arguments into Object[] (usually for varargs or LuaMethod wrappers)
+                List<Object> list = new ArrayList<>();
+                int[] offsetInOut = new int[]{offset};
+                while (offsetInOut[0] < args.length && offsetInOut[0] > 0) {
+                    list.add(MsgPack.decodeAny(args, offsetInOut));
+                }
+                result[i] = list.toArray(new Object[0]);
+                argIndex = 999; // mark all processed
+                continue;
             } else if (pt == Optional.class) {
                 // Optional<T> — 中身の型を推定して渡す
                 // Note: 実行時にジェネリクス型消去されるため、簡易的に Object にフォールバック
