@@ -163,3 +163,55 @@ impl DisplayLink {
             .collect()
     }
 }
+
+impl DisplayLink {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_set_cursor_pos(&mut self, x: u32, y: u32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_cursor_pos(x, y);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_cursor_pos()
+    }
+
+    pub async fn async_get_cursor_pos(&mut self) -> Result<(u32, u32), PeripheralError> {
+        self.book_next_get_cursor_pos();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_cursor_pos()
+    }
+
+    pub async fn async_get_size(&mut self) -> Result<(u32, u32), PeripheralError> {
+        self.book_next_get_size();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_size()
+    }
+
+    pub async fn async_is_color(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_color();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_color()
+    }
+
+    pub async fn async_write(&mut self, text: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_write(text);
+        crate::wait_for_next_tick().await;
+        self.read_last_write()
+    }
+
+    pub async fn async_clear_line(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_clear_line();
+        crate::wait_for_next_tick().await;
+        self.read_last_clear_line()
+    }
+
+    pub async fn async_clear(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_clear();
+        crate::wait_for_next_tick().await;
+        self.read_last_clear()
+    }
+
+    pub async fn async_update(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_update();
+        crate::wait_for_next_tick().await;
+        self.read_last_update()
+    }
+}

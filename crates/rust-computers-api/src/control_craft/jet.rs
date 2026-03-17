@@ -61,3 +61,23 @@ impl Jet {
             .collect()
     }
 }
+
+impl Jet {
+    pub async fn async_set_output_thrust(&mut self, thrust: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_output_thrust(thrust);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_output_thrust()
+    }
+
+    pub async fn async_set_horizontal_tilt(&mut self, angle: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_horizontal_tilt(angle);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_horizontal_tilt()
+    }
+
+    pub async fn async_set_vertical_tilt(&mut self, angle: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_vertical_tilt(angle);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_vertical_tilt()
+    }
+}

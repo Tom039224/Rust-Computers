@@ -263,3 +263,109 @@ impl ColonyIntegrator {
         peripheral::decode(&data)
     }
 }
+
+impl ColonyIntegrator {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_is_in_colony(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_in_colony();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_in_colony()
+    }
+
+    pub async fn async_get_colony_id(&mut self) -> Result<i32, PeripheralError> {
+        self.book_next_get_colony_id();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_colony_id()
+    }
+
+    pub async fn async_get_colony_name(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_colony_name();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_colony_name()
+    }
+
+    pub async fn async_get_colony_style(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_colony_style();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_colony_style()
+    }
+
+    pub async fn async_is_active(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_active();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_active()
+    }
+
+    pub async fn async_get_amount_of_citizens(&mut self) -> Result<i32, PeripheralError> {
+        self.book_next_get_amount_of_citizens();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_amount_of_citizens()
+    }
+
+    pub async fn async_get_max_citizens(&mut self) -> Result<i32, PeripheralError> {
+        self.book_next_get_max_citizens();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_max_citizens()
+    }
+
+    pub async fn async_get_happiness(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_happiness();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_happiness()
+    }
+
+    pub async fn async_get_position(&mut self) -> Result<ColonyPosition, PeripheralError> {
+        self.book_next_get_position();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_position()
+    }
+
+    pub async fn async_get_citizens(&mut self) -> Result<Vec<CitizenInfo>, PeripheralError> {
+        self.book_next_get_citizens();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_citizens()
+    }
+
+    pub async fn async_get_citizen_info(&mut self, id: i32) -> Result<CitizenInfo, PeripheralError> {
+        self.book_next_get_citizen_info(id);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_citizen_info()
+    }
+
+    pub async fn async_get_buildings(&mut self) -> Result<Vec<BuildingInfo>, PeripheralError> {
+        self.book_next_get_buildings();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_buildings()
+    }
+
+    pub async fn async_get_building_info(&mut self, x: f64, y: f64, z: f64) -> Result<BuildingInfo, PeripheralError> {
+        self.book_next_get_building_info(x, y, z);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_building_info()
+    }
+
+    pub async fn async_get_work_orders(&mut self) -> Result<Vec<WorkOrderInfo>, PeripheralError> {
+        self.book_next_get_work_orders();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_work_orders()
+    }
+
+    pub async fn async_get_requests(&mut self) -> Result<msgpack::Value, PeripheralError> {
+        self.book_next_get_requests();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_requests()
+    }
+
+    pub async fn async_get_builder_resources(&mut self, x: f64, y: f64, z: f64) -> Result<msgpack::Value, PeripheralError> {
+        self.book_next_get_builder_resources(x, y, z);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_builder_resources()
+    }
+
+    pub async fn async_is_under_attack(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_under_attack();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_under_attack()
+    }
+}

@@ -99,3 +99,35 @@ impl WatchDogTimer {
             .collect()
     }
 }
+
+impl WatchDogTimer {
+    pub async fn async_is_enabled(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_enabled();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_enabled()
+    }
+
+    pub async fn async_get_timeout(&mut self) -> Result<u32, PeripheralError> {
+        self.book_next_get_timeout();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_timeout()
+    }
+
+    pub async fn async_set_enabled(&mut self, enabled: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_enabled(enabled);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_enabled()
+    }
+
+    pub async fn async_set_timeout(&mut self, ticks: u32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_timeout(ticks);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_timeout()
+    }
+
+    pub async fn async_reset(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_reset();
+        crate::wait_for_next_tick().await;
+        self.read_last_reset()
+    }
+}

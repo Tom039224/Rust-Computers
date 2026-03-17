@@ -71,3 +71,29 @@ impl CompactFlap {
             .collect()
     }
 }
+
+impl CompactFlap {
+    pub async fn async_get_angle(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_angle();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_angle()
+    }
+
+    pub async fn async_get_tilt(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_tilt();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_tilt()
+    }
+
+    pub async fn async_set_angle(&mut self, angle: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_angle(angle);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_angle()
+    }
+
+    pub async fn async_set_tilt(&mut self, tilt: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_tilt(tilt);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_tilt()
+    }
+}

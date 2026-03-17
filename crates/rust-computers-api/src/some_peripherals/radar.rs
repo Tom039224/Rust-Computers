@@ -206,3 +206,29 @@ impl Radar {
         peripheral::decode(&data)
     }
 }
+
+impl Radar {
+    pub async fn async_scan_for_entities(&mut self, radius: f64) -> Result<Vec<SPEntityInfo>, PeripheralError> {
+        self.book_next_scan_for_entities(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_scan_for_entities()
+    }
+
+    pub async fn async_scan_for_ships(&mut self, radius: f64) -> Result<Vec<SPShipInfo>, PeripheralError> {
+        self.book_next_scan_for_ships(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_scan_for_ships()
+    }
+
+    pub async fn async_scan_for_players(&mut self, radius: f64) -> Result<Vec<SPEntityInfo>, PeripheralError> {
+        self.book_next_scan_for_players(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_scan_for_players()
+    }
+
+    pub async fn async_get_config_info(&mut self) -> Result<BTreeMap<String, String>, PeripheralError> {
+        self.book_next_get_config_info();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_config_info()
+    }
+}

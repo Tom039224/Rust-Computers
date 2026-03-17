@@ -62,3 +62,25 @@ impl NbtStorage {
             .collect()
     }
 }
+
+impl NbtStorage {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_read(&mut self) -> Result<msgpack::Value, PeripheralError> {
+        self.book_next_read();
+        crate::wait_for_next_tick().await;
+        self.read_last_read()
+    }
+
+    pub async fn async_write_json(&mut self, snbt: &str) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_write_json(snbt);
+        crate::wait_for_next_tick().await;
+        self.read_last_write_json()
+    }
+
+    pub async fn async_write_table(&mut self, table_data: &[u8]) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_write_table(table_data);
+        crate::wait_for_next_tick().await;
+        self.read_last_write_table()
+    }
+}

@@ -36,3 +36,11 @@ impl Keyboard {
             .collect()
     }
 }
+
+impl Keyboard {
+    pub async fn async_set_fire_native_events(&mut self, enabled: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_fire_native_events(enabled);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_fire_native_events()
+    }
+}

@@ -259,3 +259,107 @@ impl PlayerDetector {
         peripheral::decode(&data)
     }
 }
+
+impl PlayerDetector {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_get_online_players(&mut self) -> Result<Vec<String>, PeripheralError> {
+        self.book_next_get_online_players();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_online_players()
+    }
+
+    pub async fn async_get_players_in_range(&mut self, radius: f64) -> Result<Vec<String>, PeripheralError> {
+        self.book_next_get_players_in_range(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_players_in_range()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn async_get_players_in_coords(
+        &mut self,
+        x1: f64, y1: f64, z1: f64,
+        x2: f64, y2: f64, z2: f64,
+    ) -> Result<Vec<String>, PeripheralError> {
+        self.book_next_get_players_in_coords(x1, y1, z1, x2, y2, z2);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_players_in_coords()
+    }
+
+    pub async fn async_get_players_in_cubic(&mut self, dx: f64, dy: f64, dz: f64) -> Result<Vec<String>, PeripheralError> {
+        self.book_next_get_players_in_cubic(dx, dy, dz);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_players_in_cubic()
+    }
+
+    pub async fn async_is_players_in_range(&mut self, radius: f64) -> Result<bool, PeripheralError> {
+        self.book_next_is_players_in_range(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_players_in_range()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn async_is_players_in_coords(
+        &mut self,
+        x1: f64, y1: f64, z1: f64,
+        x2: f64, y2: f64, z2: f64,
+    ) -> Result<bool, PeripheralError> {
+        self.book_next_is_players_in_coords(x1, y1, z1, x2, y2, z2);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_players_in_coords()
+    }
+
+    pub async fn async_is_players_in_cubic(&mut self, dx: f64, dy: f64, dz: f64) -> Result<bool, PeripheralError> {
+        self.book_next_is_players_in_cubic(dx, dy, dz);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_players_in_cubic()
+    }
+
+    pub async fn async_is_player_in_range(&mut self, player: &str, radius: f64) -> Result<bool, PeripheralError> {
+        self.book_next_is_player_in_range(player, radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_player_in_range()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn async_is_player_in_coords(
+        &mut self,
+        player: &str,
+        x1: f64, y1: f64, z1: f64,
+        x2: f64, y2: f64, z2: f64,
+    ) -> Result<bool, PeripheralError> {
+        self.book_next_is_player_in_coords(player, x1, y1, z1, x2, y2, z2);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_player_in_coords()
+    }
+
+    pub async fn async_is_player_in_cubic(
+        &mut self,
+        player: &str,
+        dx: f64, dy: f64, dz: f64,
+    ) -> Result<bool, PeripheralError> {
+        self.book_next_is_player_in_cubic(player, dx, dy, dz);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_player_in_cubic()
+    }
+
+    pub async fn async_get_player_pos(
+        &mut self,
+        player: &str,
+        decimals: Option<u32>,
+    ) -> Result<ADPlayerInfo, PeripheralError> {
+        self.book_next_get_player_pos(player, decimals);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_player_pos()
+    }
+
+    pub async fn async_get_player(
+        &mut self,
+        player: &str,
+        decimals: Option<u32>,
+    ) -> Result<ADPlayerInfo, PeripheralError> {
+        self.book_next_get_player(player, decimals);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_player()
+    }
+}

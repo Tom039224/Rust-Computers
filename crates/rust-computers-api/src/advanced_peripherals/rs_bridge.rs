@@ -477,3 +477,223 @@ impl RSBridge {
         peripheral::decode(&data)
     }
 }
+
+impl RSBridge {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_list_items(&mut self) -> Result<Vec<MEItemEntry>, PeripheralError> {
+        self.book_next_list_items();
+        crate::wait_for_next_tick().await;
+        self.read_last_list_items()
+    }
+
+    pub async fn async_get_item(&mut self, filter: &[u8]) -> Result<MEItemEntry, PeripheralError> {
+        self.book_next_get_item(filter);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_item()
+    }
+
+    pub async fn async_export_item(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_export_item(filter, side);
+        crate::wait_for_next_tick().await;
+        self.read_last_export_item()
+    }
+
+    pub async fn async_import_item(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_import_item(filter, side);
+        crate::wait_for_next_tick().await;
+        self.read_last_import_item()
+    }
+
+    pub async fn async_export_item_to_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_export_item_to_peripheral(filter, target_name);
+        crate::wait_for_next_tick().await;
+        self.read_last_export_item_to_peripheral()
+    }
+
+    pub async fn async_import_item_from_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_import_item_from_peripheral(filter, target_name);
+        crate::wait_for_next_tick().await;
+        self.read_last_import_item_from_peripheral()
+    }
+
+    pub async fn async_list_fluids(&mut self) -> Result<Vec<MEFluidEntry>, PeripheralError> {
+        self.book_next_list_fluids();
+        crate::wait_for_next_tick().await;
+        self.read_last_list_fluids()
+    }
+
+    pub async fn async_get_fluid(&mut self, filter: &[u8]) -> Result<MEFluidEntry, PeripheralError> {
+        self.book_next_get_fluid(filter);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_fluid()
+    }
+
+    pub async fn async_export_fluid(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_export_fluid(filter, side);
+        crate::wait_for_next_tick().await;
+        self.read_last_export_fluid()
+    }
+
+    pub async fn async_import_fluid(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_import_fluid(filter, side);
+        crate::wait_for_next_tick().await;
+        self.read_last_import_fluid()
+    }
+
+    pub async fn async_export_fluid_to_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_export_fluid_to_peripheral(filter, target_name);
+        crate::wait_for_next_tick().await;
+        self.read_last_export_fluid_to_peripheral()
+    }
+
+    pub async fn async_import_fluid_from_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_import_fluid_from_peripheral(filter, target_name);
+        crate::wait_for_next_tick().await;
+        self.read_last_import_fluid_from_peripheral()
+    }
+
+    pub async fn async_list_chemicals(&mut self) -> Result<Vec<MEChemicalEntry>, PeripheralError> {
+        self.book_next_list_chemicals();
+        crate::wait_for_next_tick().await;
+        self.read_last_list_chemicals()
+    }
+
+    pub async fn async_get_chemical(&mut self, filter: &[u8]) -> Result<MEChemicalEntry, PeripheralError> {
+        self.book_next_get_chemical(filter);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_chemical()
+    }
+
+    pub async fn async_export_chemical(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_export_chemical(filter, side);
+        crate::wait_for_next_tick().await;
+        self.read_last_export_chemical()
+    }
+
+    pub async fn async_import_chemical(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_import_chemical(filter, side);
+        crate::wait_for_next_tick().await;
+        self.read_last_import_chemical()
+    }
+
+    pub async fn async_export_chemical_to_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_export_chemical_to_peripheral(filter, target_name);
+        crate::wait_for_next_tick().await;
+        self.read_last_export_chemical_to_peripheral()
+    }
+
+    pub async fn async_import_chemical_from_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_import_chemical_from_peripheral(filter, target_name);
+        crate::wait_for_next_tick().await;
+        self.read_last_import_chemical_from_peripheral()
+    }
+
+    pub async fn async_craft_item(&mut self, filter: &[u8]) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_craft_item(filter);
+        crate::wait_for_next_tick().await;
+        self.read_last_craft_item()
+    }
+
+    pub async fn async_craft_fluid(&mut self, filter: &[u8]) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_craft_fluid(filter);
+        crate::wait_for_next_tick().await;
+        self.read_last_craft_fluid()
+    }
+
+    pub async fn async_craft_chemical(&mut self, filter: &[u8]) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_craft_chemical(filter);
+        crate::wait_for_next_tick().await;
+        self.read_last_craft_chemical()
+    }
+
+    pub async fn async_is_item_crafting(&mut self, filter: &[u8]) -> Result<bool, PeripheralError> {
+        self.book_next_is_item_crafting(filter);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_item_crafting()
+    }
+
+    pub async fn async_is_fluid_crafting(&mut self, filter: &[u8]) -> Result<bool, PeripheralError> {
+        self.book_next_is_fluid_crafting(filter);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_fluid_crafting()
+    }
+
+    pub async fn async_get_energy_storage(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_energy_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_energy_storage()
+    }
+
+    pub async fn async_get_max_energy_storage(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_max_energy_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_max_energy_storage()
+    }
+
+    pub async fn async_get_avg_power_usage(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_avg_power_usage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_avg_power_usage()
+    }
+
+    pub async fn async_get_avg_power_injection(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_avg_power_injection();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_avg_power_injection()
+    }
+
+    pub async fn async_get_total_item_storage(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_total_item_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_total_item_storage()
+    }
+
+    pub async fn async_get_used_item_storage(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_used_item_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_used_item_storage()
+    }
+
+    pub async fn async_get_available_item_storage(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_available_item_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_available_item_storage()
+    }
+
+    pub async fn async_get_total_fluid_storage(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_total_fluid_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_total_fluid_storage()
+    }
+
+    pub async fn async_get_used_fluid_storage(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_used_fluid_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_used_fluid_storage()
+    }
+
+    pub async fn async_get_available_fluid_storage(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_available_fluid_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_available_fluid_storage()
+    }
+
+    pub async fn async_get_total_chemical_storage(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_total_chemical_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_total_chemical_storage()
+    }
+
+    pub async fn async_get_used_chemical_storage(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_used_chemical_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_used_chemical_storage()
+    }
+
+    pub async fn async_get_available_chemical_storage(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_available_chemical_storage();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_available_chemical_storage()
+    }
+}

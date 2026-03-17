@@ -156,3 +156,83 @@ impl DynamicMotor {
             .collect()
     }
 }
+
+impl DynamicMotor {
+    pub async fn async_get_target_value(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_target_value();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_target_value()
+    }
+
+    pub async fn async_get_physics(&mut self) -> Result<crate::msgpack::Value, PeripheralError> {
+        self.book_next_get_physics();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_physics()
+    }
+
+    pub async fn async_get_angle(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_angle();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_angle()
+    }
+
+    pub async fn async_get_angular_velocity(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_angular_velocity();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_angular_velocity()
+    }
+
+    pub async fn async_get_current_value(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_current_value();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_current_value()
+    }
+
+    pub async fn async_get_relative(&mut self) -> Result<[[f64; 3]; 3], PeripheralError> {
+        self.book_next_get_relative();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_relative()
+    }
+
+    pub async fn async_is_locked(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_locked();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_locked()
+    }
+
+    pub async fn async_set_pid(&mut self, p: f64, i: f64, d: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_pid(p, i, d);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_pid()
+    }
+
+    pub async fn async_set_target_value(&mut self, value: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_target_value(value);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_target_value()
+    }
+
+    pub async fn async_set_output_torque(&mut self, scale: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_output_torque(scale);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_output_torque()
+    }
+
+    pub async fn async_set_is_adjusting_angle(&mut self, enabled: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_is_adjusting_angle(enabled);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_is_adjusting_angle()
+    }
+
+    pub async fn async_lock(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_lock();
+        crate::wait_for_next_tick().await;
+        self.read_last_lock()
+    }
+
+    pub async fn async_unlock(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_unlock();
+        crate::wait_for_next_tick().await;
+        self.read_last_unlock()
+    }
+}

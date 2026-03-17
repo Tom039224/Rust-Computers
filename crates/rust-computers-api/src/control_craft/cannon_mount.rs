@@ -93,3 +93,41 @@ impl CannonMount {
             .collect()
     }
 }
+
+impl CannonMount {
+    pub async fn async_get_pitch(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_pitch();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_pitch()
+    }
+
+    pub async fn async_get_yaw(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_yaw();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_yaw()
+    }
+
+    pub async fn async_set_pitch(&mut self, pitch: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_pitch(pitch);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_pitch()
+    }
+
+    pub async fn async_set_yaw(&mut self, yaw: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_yaw(yaw);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_yaw()
+    }
+
+    pub async fn async_assemble(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_assemble();
+        crate::wait_for_next_tick().await;
+        self.read_last_assemble()
+    }
+
+    pub async fn async_disassemble(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_disassemble();
+        crate::wait_for_next_tick().await;
+        self.read_last_disassemble()
+    }
+}

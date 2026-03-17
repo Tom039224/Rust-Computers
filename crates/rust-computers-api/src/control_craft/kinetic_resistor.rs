@@ -58,3 +58,17 @@ impl KineticResistor {
             .collect()
     }
 }
+
+impl KineticResistor {
+    pub async fn async_get_ratio(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_ratio();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_ratio()
+    }
+
+    pub async fn async_set_ratio(&mut self, ratio: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_ratio(ratio);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_ratio()
+    }
+}

@@ -105,3 +105,41 @@ impl SpatialAnchor {
             .collect()
     }
 }
+
+impl SpatialAnchor {
+    pub async fn async_set_static(&mut self, enabled: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_static(enabled);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_static()
+    }
+
+    pub async fn async_set_running(&mut self, enabled: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_running(enabled);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_running()
+    }
+
+    pub async fn async_set_offset(&mut self, offset: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_offset(offset);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_offset()
+    }
+
+    pub async fn async_set_ppid(&mut self, p: f64, i: f64, d: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_ppid(p, i, d);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_ppid()
+    }
+
+    pub async fn async_set_qpid(&mut self, p: f64, i: f64, d: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_qpid(p, i, d);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_qpid()
+    }
+
+    pub async fn async_set_channel(&mut self, channel: i64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_channel(channel);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_channel()
+    }
+}

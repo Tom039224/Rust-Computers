@@ -406,3 +406,103 @@ impl Station {
         }
     }
 }
+
+impl Station {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_assemble(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_assemble();
+        crate::wait_for_next_tick().await;
+        self.read_last_assemble()
+    }
+
+    pub async fn async_disassemble(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_disassemble();
+        crate::wait_for_next_tick().await;
+        self.read_last_disassemble()
+    }
+
+    pub async fn async_set_assembly_mode(&mut self, mode: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_assembly_mode(mode);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_assembly_mode()
+    }
+
+    pub async fn async_is_in_assembly_mode(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_in_assembly_mode();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_in_assembly_mode()
+    }
+
+    pub async fn async_get_station_name(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_station_name();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_station_name()
+    }
+
+    pub async fn async_set_station_name(&mut self, name: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_station_name(name);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_station_name()
+    }
+
+    pub async fn async_is_train_present(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_train_present();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_train_present()
+    }
+
+    pub async fn async_is_train_imminent(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_train_imminent();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_train_imminent()
+    }
+
+    pub async fn async_is_train_enroute(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_train_enroute();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_train_enroute()
+    }
+
+    pub async fn async_get_train_name(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_train_name();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_train_name()
+    }
+
+    pub async fn async_set_train_name(&mut self, name: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_train_name(name);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_train_name()
+    }
+
+    pub async fn async_has_schedule(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_has_schedule();
+        crate::wait_for_next_tick().await;
+        self.read_last_has_schedule()
+    }
+
+    pub async fn async_get_schedule(&mut self) -> Result<BTreeMap<String, Value>, PeripheralError> {
+        self.book_next_get_schedule();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_schedule()
+    }
+
+    pub async fn async_set_schedule(&mut self, schedule: &BTreeMap<String, Value>) -> Vec<Result<(), PeripheralError>> {
+        let _ = self.book_next_set_schedule(schedule);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_schedule()
+    }
+
+    pub async fn async_can_train_reach(&mut self, dest: &str) -> Result<(bool, Option<String>), PeripheralError> {
+        self.book_next_can_train_reach(dest);
+        crate::wait_for_next_tick().await;
+        self.read_last_can_train_reach()
+    }
+
+    pub async fn async_distance_to(&mut self, dest: &str) -> Result<(Option<f64>, Option<String>), PeripheralError> {
+        self.book_next_distance_to(dest);
+        crate::wait_for_next_tick().await;
+        self.read_last_distance_to()
+    }
+}

@@ -141,3 +141,37 @@ impl Raycaster {
         peripheral::decode(&data)
     }
 }
+
+impl Raycaster {
+    pub async fn async_raycast(
+        &mut self,
+        distance: f64,
+        variables: Option<(f64, f64, Option<f64>)>,
+        euler_mode: Option<bool>,
+        im_execute: Option<bool>,
+        check_for_blocks: Option<bool>,
+        only_distance: Option<bool>,
+    ) -> Result<SPRaycastResult, PeripheralError> {
+        self.book_next_raycast(distance, variables, euler_mode, im_execute, check_for_blocks, only_distance);
+        crate::wait_for_next_tick().await;
+        self.read_last_raycast()
+    }
+
+    pub async fn async_add_stickers(&mut self, state: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_add_stickers(state);
+        crate::wait_for_next_tick().await;
+        self.read_last_add_stickers()
+    }
+
+    pub async fn async_get_config_info(&mut self) -> Result<BTreeMap<String, String>, PeripheralError> {
+        self.book_next_get_config_info();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_config_info()
+    }
+
+    pub async fn async_get_facing_direction(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_facing_direction();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_facing_direction()
+    }
+}

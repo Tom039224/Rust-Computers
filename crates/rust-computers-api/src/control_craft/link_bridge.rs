@@ -55,3 +55,17 @@ impl LinkBridge {
         peripheral::decode(&data)
     }
 }
+
+impl LinkBridge {
+    pub async fn async_set_input(&mut self, index: f64, value: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_input(index, value);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_input()
+    }
+
+    pub async fn async_get_output(&mut self, index: f64) -> Result<f64, PeripheralError> {
+        self.book_next_get_output(index);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_output()
+    }
+}

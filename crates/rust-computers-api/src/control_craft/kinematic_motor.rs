@@ -112,3 +112,53 @@ impl KinematicMotor {
             .collect()
     }
 }
+
+impl KinematicMotor {
+    pub async fn async_get_target_angle(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_target_angle();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_target_angle()
+    }
+
+    pub async fn async_get_control_target(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_control_target();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_control_target()
+    }
+
+    pub async fn async_get_physics(&mut self) -> Result<crate::msgpack::Value, PeripheralError> {
+        self.book_next_get_physics();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_physics()
+    }
+
+    pub async fn async_get_angle(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_angle();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_angle()
+    }
+
+    pub async fn async_get_relative(&mut self) -> Result<[[f64; 3]; 3], PeripheralError> {
+        self.book_next_get_relative();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_relative()
+    }
+
+    pub async fn async_set_target_angle(&mut self, value: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_target_angle(value);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_target_angle()
+    }
+
+    pub async fn async_set_control_target(&mut self, target: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_control_target(target);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_control_target()
+    }
+
+    pub async fn async_set_is_forcing_angle(&mut self, enabled: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_is_forcing_angle(enabled);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_is_forcing_angle()
+    }
+}

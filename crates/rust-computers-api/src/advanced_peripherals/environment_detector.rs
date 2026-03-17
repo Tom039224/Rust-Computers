@@ -251,3 +251,121 @@ impl EnvironmentDetector {
         peripheral::decode(&data)
     }
 }
+
+impl EnvironmentDetector {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_get_biome(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_biome();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_biome()
+    }
+
+    pub async fn async_get_dimension(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_dimension();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_dimension()
+    }
+
+    pub async fn async_is_dimension(&mut self, dim: &str) -> Result<bool, PeripheralError> {
+        self.book_next_is_dimension(dim);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_dimension()
+    }
+
+    pub async fn async_list_dimensions(&mut self) -> Result<Vec<String>, PeripheralError> {
+        self.book_next_list_dimensions();
+        crate::wait_for_next_tick().await;
+        self.read_last_list_dimensions()
+    }
+
+    pub async fn async_is_raining(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_raining();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_raining()
+    }
+
+    pub async fn async_is_thunder(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_thunder();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_thunder()
+    }
+
+    pub async fn async_is_sunny(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_sunny();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_sunny()
+    }
+
+    pub async fn async_get_sky_light_level(&mut self) -> Result<i32, PeripheralError> {
+        self.book_next_get_sky_light_level();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_sky_light_level()
+    }
+
+    pub async fn async_get_block_light_level(&mut self) -> Result<i32, PeripheralError> {
+        self.book_next_get_block_light_level();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_block_light_level()
+    }
+
+    pub async fn async_get_day_light_level(&mut self) -> Result<i32, PeripheralError> {
+        self.book_next_get_day_light_level();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_day_light_level()
+    }
+
+    pub async fn async_get_time(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_time();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_time()
+    }
+
+    pub async fn async_get_moon_id(&mut self) -> Result<i32, PeripheralError> {
+        self.book_next_get_moon_id();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_moon_id()
+    }
+
+    pub async fn async_get_moon_name(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_moon_name();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_moon_name()
+    }
+
+    pub async fn async_is_moon(&mut self, phase: &str) -> Result<bool, PeripheralError> {
+        self.book_next_is_moon(phase);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_moon()
+    }
+
+    pub async fn async_is_slime_chunk(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_slime_chunk();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_slime_chunk()
+    }
+
+    pub async fn async_can_sleep_here(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_can_sleep_here();
+        crate::wait_for_next_tick().await;
+        self.read_last_can_sleep_here()
+    }
+
+    pub async fn async_can_sleep_player(&mut self, name: &str) -> Result<bool, PeripheralError> {
+        self.book_next_can_sleep_player(name);
+        crate::wait_for_next_tick().await;
+        self.read_last_can_sleep_player()
+    }
+
+    pub async fn async_scan_entities(&mut self, radius: f64) -> Result<Vec<EntityInfo>, PeripheralError> {
+        self.book_next_scan_entities(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_scan_entities()
+    }
+
+    pub async fn async_scan_cost(&mut self, radius: f64) -> Result<f64, PeripheralError> {
+        self.book_next_scan_cost(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_scan_cost()
+    }
+}

@@ -151,3 +151,47 @@ impl Digitizer {
         peripheral::decode(&data)
     }
 }
+
+impl Digitizer {
+    pub async fn async_digitize_amount(&mut self, amount: Option<u32>) -> Vec<Result<String, PeripheralError>> {
+        self.book_next_digitize_amount(amount);
+        crate::wait_for_next_tick().await;
+        self.read_last_digitize_amount()
+    }
+
+    pub async fn async_rematerialize_amount(&mut self, uuid: &str, amount: Option<u32>) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_rematerialize_amount(uuid, amount);
+        crate::wait_for_next_tick().await;
+        self.read_last_rematerialize_amount()
+    }
+
+    pub async fn async_merge_digital_items(&mut self, into_uuid: &str, from_uuid: &str, amount: Option<u32>) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_merge_digital_items(into_uuid, from_uuid, amount);
+        crate::wait_for_next_tick().await;
+        self.read_last_merge_digital_items()
+    }
+
+    pub async fn async_separate_digital_item(&mut self, from_uuid: &str, amount: u32) -> Vec<Result<String, PeripheralError>> {
+        self.book_next_separate_digital_item(from_uuid, amount);
+        crate::wait_for_next_tick().await;
+        self.read_last_separate_digital_item()
+    }
+
+    pub async fn async_check_id(&mut self, uuid: &str) -> Result<SPItemData, PeripheralError> {
+        self.book_next_check_id(uuid);
+        crate::wait_for_next_tick().await;
+        self.read_last_check_id()
+    }
+
+    pub async fn async_get_item_in_slot(&mut self) -> Result<SPItemData, PeripheralError> {
+        self.book_next_get_item_in_slot();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_item_in_slot()
+    }
+
+    pub async fn async_get_item_limit_in_slot(&mut self) -> Result<u32, PeripheralError> {
+        self.book_next_get_item_limit_in_slot();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_item_limit_in_slot()
+    }
+}

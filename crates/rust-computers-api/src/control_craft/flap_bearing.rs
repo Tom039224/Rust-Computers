@@ -80,3 +80,29 @@ impl FlapBearing {
             .collect()
     }
 }
+
+impl FlapBearing {
+    pub async fn async_get_angle(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_angle();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_angle()
+    }
+
+    pub async fn async_set_angle(&mut self, angle: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_angle(angle);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_angle()
+    }
+
+    pub async fn async_assemble_next_tick(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_assemble_next_tick();
+        crate::wait_for_next_tick().await;
+        self.read_last_assemble_next_tick()
+    }
+
+    pub async fn async_disassemble_next_tick(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_disassemble_next_tick();
+        crate::wait_for_next_tick().await;
+        self.read_last_disassemble_next_tick()
+    }
+}

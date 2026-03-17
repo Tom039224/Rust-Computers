@@ -90,3 +90,25 @@ impl SequencedGearshift {
         peripheral::decode(&data)
     }
 }
+
+impl SequencedGearshift {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_rotate(&mut self, amount: i32, speed_modifier: Option<i32>) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_rotate(amount, speed_modifier);
+        crate::wait_for_next_tick().await;
+        self.read_last_rotate()
+    }
+
+    pub async fn async_move_by(&mut self, distance: i32, speed_modifier: Option<i32>) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_move_by(distance, speed_modifier);
+        crate::wait_for_next_tick().await;
+        self.read_last_move_by()
+    }
+
+    pub async fn async_is_running(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_running();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_running()
+    }
+}

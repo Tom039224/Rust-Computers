@@ -60,3 +60,31 @@ impl BlockReader {
         peripheral::decode(&data)
     }
 }
+
+impl BlockReader {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_get_block_name(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_block_name();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_block_name()
+    }
+
+    pub async fn async_get_block_data(&mut self) -> Result<msgpack::Value, PeripheralError> {
+        self.book_next_get_block_data();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_block_data()
+    }
+
+    pub async fn async_get_block_states(&mut self) -> Result<msgpack::Value, PeripheralError> {
+        self.book_next_get_block_states();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_block_states()
+    }
+
+    pub async fn async_is_tile_entity(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_tile_entity();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_tile_entity()
+    }
+}

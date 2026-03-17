@@ -174,3 +174,161 @@ impl GasNozzle {
 
     super::gas_network::gas_network_methods!();
 }
+
+impl GasNozzle {
+    pub async fn async_set_pointer(&mut self, value: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_pointer(value);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_pointer()
+    }
+
+    pub async fn async_get_pointer(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_pointer();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_pointer()
+    }
+
+    pub async fn async_get_pointer_speed(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_pointer_speed();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_pointer_speed()
+    }
+
+    pub async fn async_get_pocket_temperature(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_pocket_temperature();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_pocket_temperature()
+    }
+
+    pub async fn async_get_duct_temperature(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_duct_temperature();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_duct_temperature()
+    }
+
+    pub async fn async_get_target_temperature(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_target_temperature();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_target_temperature()
+    }
+
+    pub async fn async_get_balloon_volume(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_balloon_volume();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_balloon_volume()
+    }
+
+    pub async fn async_get_leaks(&mut self) -> Result<alloc::vec::Vec<LeakInfo>, PeripheralError> {
+        self.book_next_get_leaks();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_leaks()
+    }
+
+    pub async fn async_get_temperature_delta(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_temperature_delta();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_temperature_delta()
+    }
+
+    pub async fn async_has_balloon(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_has_balloon();
+        crate::wait_for_next_tick().await;
+        self.read_last_has_balloon()
+    }
+
+    pub async fn async_get_buoyancy_force(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_buoyancy_force();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_buoyancy_force()
+    }
+
+    pub async fn async_get_balloon_pressure(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_balloon_pressure();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_balloon_pressure()
+    }
+
+    pub async fn async_get_balloon_gas_contents(&mut self) -> Result<alloc::collections::BTreeMap<alloc::string::String, f64>, PeripheralError> {
+        self.book_next_get_balloon_gas_contents();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_balloon_gas_contents()
+    }
+
+    pub async fn async_get_loss_rate(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_loss_rate();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_loss_rate()
+    }
+
+    pub async fn async_get_inflow_rate(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_inflow_rate();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_inflow_rate()
+    }
+
+    pub async fn async_get_missing_positions(&mut self) -> Result<alloc::vec::Vec<super::CLPosition>, PeripheralError> {
+        self.book_next_get_missing_positions();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_missing_positions()
+    }
+
+    pub async fn async_get_total_gas_mass(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_total_gas_mass();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_total_gas_mass()
+    }
+
+    pub async fn async_get_leak_integrity(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_leak_integrity();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_leak_integrity()
+    }
+
+    pub async fn async_get_max_leaks(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_max_leaks();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_max_leaks()
+    }
+
+    pub async fn async_get_internal_density(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_internal_density();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_internal_density()
+    }
+
+    pub async fn async_get_temperature(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_temperature();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_temperature()
+    }
+
+    pub async fn async_get_pressure(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_pressure();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_pressure()
+    }
+
+    pub async fn async_get_heat_energy(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_heat_energy();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_heat_energy()
+    }
+
+    pub async fn async_get_gas_mass(&mut self) -> Result<alloc::collections::BTreeMap<alloc::string::String, f64>, PeripheralError> {
+        self.book_next_get_gas_mass();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_gas_mass()
+    }
+
+    pub async fn async_get_position(&mut self) -> Result<super::CLPosition, PeripheralError> {
+        self.book_next_get_position();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_position()
+    }
+
+    pub async fn async_get_network_info(&mut self) -> Result<crate::msgpack::Value, PeripheralError> {
+        self.book_next_get_network_info();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_network_info()
+    }
+}

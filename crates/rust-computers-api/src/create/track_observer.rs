@@ -129,3 +129,17 @@ impl TrackObserver {
         }
     }
 }
+
+impl TrackObserver {
+    pub async fn async_is_train_passing(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_train_passing();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_train_passing()
+    }
+
+    pub async fn async_get_passing_train_name(&mut self) -> Result<Option<String>, PeripheralError> {
+        self.book_next_get_passing_train_name();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_passing_train_name()
+    }
+}

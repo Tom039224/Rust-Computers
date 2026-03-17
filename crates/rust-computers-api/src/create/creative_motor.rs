@@ -61,3 +61,19 @@ impl CreativeMotor {
         peripheral::decode(&data)
     }
 }
+
+impl CreativeMotor {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_set_generated_speed(&mut self, speed: i32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_generated_speed(speed);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_generated_speed()
+    }
+
+    pub async fn async_get_generated_speed(&mut self) -> Result<f32, PeripheralError> {
+        self.book_next_get_generated_speed();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_generated_speed()
+    }
+}

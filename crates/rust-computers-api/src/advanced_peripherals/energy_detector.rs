@@ -53,3 +53,25 @@ impl EnergyDetector {
             .collect()
     }
 }
+
+impl EnergyDetector {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_get_transfer_rate(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_transfer_rate();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_transfer_rate()
+    }
+
+    pub async fn async_get_transfer_rate_limit(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_transfer_rate_limit();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_transfer_rate_limit()
+    }
+
+    pub async fn async_set_transfer_rate_limit(&mut self, rate: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_transfer_rate_limit(rate);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_transfer_rate_limit()
+    }
+}

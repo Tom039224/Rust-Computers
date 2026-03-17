@@ -64,3 +64,17 @@ impl PropellerController {
             .collect()
     }
 }
+
+impl PropellerController {
+    pub async fn async_get_target_speed(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_target_speed();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_target_speed()
+    }
+
+    pub async fn async_set_target_speed(&mut self, speed: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_target_speed(speed);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_target_speed()
+    }
+}

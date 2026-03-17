@@ -227,3 +227,85 @@ impl ChatBox {
         peripheral::decode(&data)
     }
 }
+
+impl ChatBox {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_send_message(
+        &mut self,
+        message: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_send_message(message, prefix, brackets, color);
+        crate::wait_for_next_tick().await;
+        self.read_last_send_message()
+    }
+
+    pub async fn async_send_formatted_message(
+        &mut self,
+        json: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_send_formatted_message(json, prefix, brackets, color);
+        crate::wait_for_next_tick().await;
+        self.read_last_send_formatted_message()
+    }
+
+    pub async fn async_send_message_to_player(
+        &mut self,
+        message: &str,
+        player: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_send_message_to_player(message, player, prefix, brackets, color);
+        crate::wait_for_next_tick().await;
+        self.read_last_send_message_to_player()
+    }
+
+    pub async fn async_send_formatted_message_to_player(
+        &mut self,
+        json: &str,
+        player: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) -> Result<bool, PeripheralError> {
+        self.book_next_send_formatted_message_to_player(json, player, prefix, brackets, color);
+        crate::wait_for_next_tick().await;
+        self.read_last_send_formatted_message_to_player()
+    }
+
+    pub async fn async_send_toast_to_player(
+        &mut self,
+        title: &str,
+        subtitle: &str,
+        player: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_send_toast_to_player(title, subtitle, player, prefix, brackets, color);
+        crate::wait_for_next_tick().await;
+        self.read_last_send_toast_to_player()
+    }
+
+    pub async fn async_send_formatted_toast_to_player(
+        &mut self,
+        json_title: &str,
+        json_subtitle: &str,
+        player: &str,
+        prefix: Option<&str>,
+        brackets: Option<&str>,
+        color: Option<&str>,
+    ) -> Result<bool, PeripheralError> {
+        self.book_next_send_formatted_toast_to_player(json_title, json_subtitle, player, prefix, brackets, color);
+        crate::wait_for_next_tick().await;
+        self.read_last_send_formatted_toast_to_player()
+    }
+}

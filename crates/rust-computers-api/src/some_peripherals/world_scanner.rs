@@ -59,3 +59,11 @@ impl WorldScanner {
         peripheral::decode(&data)
     }
 }
+
+impl WorldScanner {
+    pub async fn async_get_block_at(&mut self, x: i32, y: i32, z: i32, is_shipyard: bool) -> Result<SPBlockInfo, PeripheralError> {
+        self.book_next_get_block_at(x, y, z, is_shipyard);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_block_at()
+    }
+}

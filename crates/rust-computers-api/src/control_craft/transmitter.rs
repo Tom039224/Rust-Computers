@@ -85,3 +85,31 @@ impl Transmitter {
             .collect()
     }
 }
+
+impl Transmitter {
+    pub async fn async_call_remote(&mut self, access: &str, ctx: &str, extra_args: &[Vec<u8>]) -> Result<crate::msgpack::Value, PeripheralError> {
+        self.book_next_call_remote(access, ctx, extra_args);
+        crate::wait_for_next_tick().await;
+        self.read_last_call_remote()
+    }
+
+    pub async fn async_call_remote_async(
+        &mut self,
+        access: &str,
+        ctx: &str,
+        slot_name: &str,
+        remote_name: &str,
+        method: &str,
+        extra_args: &[Vec<u8>],
+    ) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_call_remote_async(access, ctx, slot_name, remote_name, method, extra_args);
+        crate::wait_for_next_tick().await;
+        self.read_last_call_remote_async()
+    }
+
+    pub async fn async_set_protocol(&mut self, protocol: i64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_protocol(protocol);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_protocol()
+    }
+}

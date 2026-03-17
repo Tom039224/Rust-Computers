@@ -63,3 +63,53 @@ impl RedstoneDuct {
 
     super::gas_network::gas_network_methods!();
 }
+
+impl RedstoneDuct {
+    pub async fn async_get_power(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_power();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_power()
+    }
+
+    pub async fn async_get_conditional(&mut self) -> Result<ConditionalInfo, PeripheralError> {
+        self.book_next_get_conditional();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_conditional()
+    }
+
+    pub async fn async_get_temperature(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_temperature();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_temperature()
+    }
+
+    pub async fn async_get_pressure(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_pressure();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_pressure()
+    }
+
+    pub async fn async_get_heat_energy(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_heat_energy();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_heat_energy()
+    }
+
+    pub async fn async_get_gas_mass(&mut self) -> Result<alloc::collections::BTreeMap<alloc::string::String, f64>, PeripheralError> {
+        self.book_next_get_gas_mass();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_gas_mass()
+    }
+
+    pub async fn async_get_position(&mut self) -> Result<super::CLPosition, PeripheralError> {
+        self.book_next_get_position();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_position()
+    }
+
+    pub async fn async_get_network_info(&mut self) -> Result<crate::msgpack::Value, PeripheralError> {
+        self.book_next_get_network_info();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_network_info()
+    }
+}

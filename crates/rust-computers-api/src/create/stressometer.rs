@@ -127,3 +127,19 @@ impl Stressometer {
         }
     }
 }
+
+impl Stressometer {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_get_stress(&mut self) -> Result<f32, PeripheralError> {
+        self.book_next_get_stress();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_stress()
+    }
+
+    pub async fn async_get_stress_capacity(&mut self) -> Result<f32, PeripheralError> {
+        self.book_next_get_stress_capacity();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_stress_capacity()
+    }
+}

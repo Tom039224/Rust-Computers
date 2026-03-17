@@ -168,3 +168,41 @@ impl Postbox {
         }
     }
 }
+
+impl Postbox {
+    pub async fn async_set_address(&mut self, address: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_address(address);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_address()
+    }
+
+    pub async fn async_get_address(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_address();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_address()
+    }
+
+    pub async fn async_list(&mut self) -> Result<Vec<CRSlotInfo>, PeripheralError> {
+        self.book_next_list();
+        crate::wait_for_next_tick().await;
+        self.read_last_list()
+    }
+
+    pub async fn async_get_item_detail(&mut self, slot: u32) -> Result<Option<CRItemDetail>, PeripheralError> {
+        self.book_next_get_item_detail(slot);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_item_detail()
+    }
+
+    pub async fn async_get_configuration(&mut self) -> Result<CRPackage, PeripheralError> {
+        self.book_next_get_configuration();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_configuration()
+    }
+
+    pub async fn async_set_configuration(&mut self, config: &CRPackage) -> Vec<Result<(), PeripheralError>> {
+        let _ = self.book_next_set_configuration(config);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_configuration()
+    }
+}

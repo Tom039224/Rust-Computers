@@ -58,6 +58,11 @@ public class CcGenericPeripheral implements PeripheralType {
                              ServerLevel level, BlockPos peripheralPos)
             throws PeripheralException {
         try {
+            // try_pull_* メソッドは CCEventReceiver に委譲する
+            // Delegate try_pull_* methods to CCEventReceiver
+            if (methodName.startsWith("try_pull_")) {
+                return CCEventReceiver.tryPull(methodName, peripheralPos);
+            }
             // Generic implementation: return nil for all methods
             // Specific peripherals should override this
             return encodeNil();

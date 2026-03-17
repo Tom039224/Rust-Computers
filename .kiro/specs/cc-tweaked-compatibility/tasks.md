@@ -128,18 +128,18 @@
 
 ### 6.3 イベントシステム実装（Event System Implementation）
 - [x] 6.3.1 Java側: イベント監視フレームワーク実装
-  - [ ] 6.3.1.1 EventMonitorクラスの実装
-  - [ ] 6.3.1.2 イベントキューの実装
-  - [ ] 6.3.1.3 Tick-basedイベントポーリング
+  - [x] 6.3.1.1 EventMonitorクラスの実装
+  - [x] 6.3.1.2 イベントキューの実装
+  - [x] 6.3.1.3 Tick-basedイベントポーリング
 - [ ] 6.3.2 Rust側: イベントポーリングAPI実装
   - [ ] 6.3.2.1 book_next_*_event() メソッドパターン
   - [ ] 6.3.2.2 read_last_*_event() メソッドパターン
   - [ ] 6.3.2.3 async_*_event() メソッドパターン
-- [ ] 6.3.3 Modem: modem_messageイベント実装
+- [-] 6.3.3 Modem: modem_messageイベント実装
   - [ ] 6.3.3.1 Java側: ModemMessageEventの監視
-  - [ ] 6.3.3.2 Rust側: book_next_receive_event()
-  - [ ] 6.3.3.3 Rust側: read_last_receive_event()
-  - [ ] 6.3.3.4 Rust側: async_receive_event()
+  - [x] 6.3.3.2 Rust側: book_next_receive_event()
+  - [x] 6.3.3.3 Rust側: read_last_receive_event()
+  - [x] 6.3.3.4 Rust側: async_receive_event()
 - [ ] 6.3.4 Monitor: monitor_resizeイベント実装
   - [ ] 6.3.4.1 Java側: MonitorResizeEventの監視
   - [ ] 6.3.4.2 Rust側: イベントポーリングメソッド
@@ -154,19 +154,19 @@
   - [ ] 6.3.7.2 Rust側: イベントポーリングメソッド
 
 ### 6.4 AdvancedPeripherals - async_*メソッド追加
-- [ ] 6.4.1 MEBridge: 全メソッドにasync_*バリアントを追加（約60メソッド）
-  - [ ] 6.4.1.1 マクロベースの自動生成を検討
-  - [ ] 6.4.1.2 async_list_items(), async_get_item(), etc.
-- [ ] 6.4.2 PlayerDetector: 全メソッドにasync_*バリアントを追加
-- [ ] 6.4.3 ChatBox: 全メソッドにasync_*バリアントを追加
-- [ ] 6.4.4 BlockReader: 全メソッドにasync_*バリアントを追加
-- [ ] 6.4.5 GeoScanner: 全メソッドにasync_*バリアントを追加
-- [ ] 6.4.6 EnvironmentDetector: 全メソッドにasync_*バリアントを追加
-- [ ] 6.4.7 EnergyDetector: 全メソッドにasync_*バリアントを追加
-- [ ] 6.4.8 その他のAdvancedPeripherals: async_*バリアントを追加
+- [-] 6.4.1 MEBridge: 全メソッドにasync_*バリアントを追加（約60メソッド）
+  - [x] 6.4.1.1 マクロベースの自動生成を検討
+  - [x] 6.4.1.2 async_list_items(), async_get_item(), etc.
+- [x] 6.4.2 PlayerDetector: 全メソッドにasync_*バリアントを追加
+- [x] 6.4.3 ChatBox: 全メソッドにasync_*バリアントを追加
+- [x] 6.4.4 BlockReader: 全メソッドにasync_*バリアントを追加
+- [x] 6.4.5 GeoScanner: 全メソッドにasync_*バリアントを追加
+- [x] 6.4.6 EnvironmentDetector: 全メソッドにasync_*バリアントを追加
+- [x] 6.4.7 EnergyDetector: 全メソッドにasync_*バリアントを追加
+- [x] 6.4.8 その他のAdvancedPeripherals: async_*バリアントを追加
 
 ### 6.5 その他のMod - async_*メソッド追加
-- [ ] 6.5.1 Create: 全ペリフェラルにasync_*バリアントを追加
+- [x] 6.5.1 Create: 全ペリフェラルにasync_*バリアントを追加
 - [ ] 6.5.2 Control-Craft: 全ペリフェラルにasync_*バリアントを追加
 - [ ] 6.5.3 Clockwork CC Compat: 全ペリフェラルにasync_*バリアントを追加
 - [ ] 6.5.4 Some-Peripherals: 全ペリフェラルにasync_*バリアントを追加

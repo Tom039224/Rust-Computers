@@ -37,3 +37,11 @@ impl GoggleLinkPort {
         peripheral::decode(&data)
     }
 }
+
+impl GoggleLinkPort {
+    pub async fn async_get_connected(&mut self) -> Result<BTreeMap<String, crate::msgpack::Value>, PeripheralError> {
+        self.book_next_get_connected();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_connected()
+    }
+}

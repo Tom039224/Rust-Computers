@@ -500,3 +500,167 @@ impl Ship {
         }
     }
 }
+
+impl Ship {
+    pub async fn async_get_id(&mut self) -> Result<i64, PeripheralError> {
+        self.book_next_get_id();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_id()
+    }
+
+    pub async fn async_get_mass(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_mass();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_mass()
+    }
+
+    pub async fn async_get_moment_of_inertia_tensor(&mut self) -> Result<[[f64; 3]; 3], PeripheralError> {
+        self.book_next_get_moment_of_inertia_tensor();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_moment_of_inertia_tensor()
+    }
+
+    pub async fn async_get_slug(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_slug();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_slug()
+    }
+
+    pub async fn async_get_angular_velocity(&mut self) -> Result<VSVector3, PeripheralError> {
+        self.book_next_get_angular_velocity();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_angular_velocity()
+    }
+
+    pub async fn async_get_quaternion(&mut self) -> Result<VSQuaternion, PeripheralError> {
+        self.book_next_get_quaternion();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_quaternion()
+    }
+
+    pub async fn async_get_scale(&mut self) -> Result<VSVector3, PeripheralError> {
+        self.book_next_get_scale();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_scale()
+    }
+
+    pub async fn async_get_shipyard_position(&mut self) -> Result<VSVector3, PeripheralError> {
+        self.book_next_get_shipyard_position();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_shipyard_position()
+    }
+
+    pub async fn async_get_size(&mut self) -> Result<VSVector3, PeripheralError> {
+        self.book_next_get_size();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_size()
+    }
+
+    pub async fn async_get_velocity(&mut self) -> Result<VSVector3, PeripheralError> {
+        self.book_next_get_velocity();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_velocity()
+    }
+
+    pub async fn async_get_worldspace_position(&mut self) -> Result<VSVector3, PeripheralError> {
+        self.book_next_get_worldspace_position();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_worldspace_position()
+    }
+
+    pub async fn async_is_static(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_static();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_static()
+    }
+
+    pub async fn async_get_transformation_matrix(&mut self) -> Result<VSTransformMatrix, PeripheralError> {
+        self.book_next_get_transformation_matrix();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_transformation_matrix()
+    }
+
+    pub async fn async_get_joints(&mut self) -> Result<Vec<VSJoint>, PeripheralError> {
+        self.book_next_get_joints();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_joints()
+    }
+
+    pub async fn async_transform_position_to_world(&mut self, pos: VSVector3) -> Result<VSVector3, PeripheralError> {
+        self.book_next_transform_position_to_world(pos);
+        crate::wait_for_next_tick().await;
+        self.read_last_transform_position_to_world()
+    }
+
+    pub async fn async_set_slug(&mut self, name: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_slug(name);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_slug()
+    }
+
+    pub async fn async_set_static(&mut self, is_static: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_static(is_static);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_static()
+    }
+
+    pub async fn async_set_scale_value(&mut self, scale: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_scale_value(scale);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_scale_value()
+    }
+
+    pub async fn async_teleport(&mut self, data: &VSTeleportData) -> Vec<Result<(), PeripheralError>> {
+        let _ = self.book_next_teleport(data);
+        crate::wait_for_next_tick().await;
+        self.read_last_teleport()
+    }
+
+    pub async fn async_apply_world_force(&mut self, fx: f64, fy: f64, fz: f64, pos: Option<VSVector3>) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_world_force(fx, fy, fz, pos);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_world_force()
+    }
+
+    pub async fn async_apply_world_torque(&mut self, tx: f64, ty: f64, tz: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_world_torque(tx, ty, tz);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_world_torque()
+    }
+
+    pub async fn async_apply_model_force(&mut self, fx: f64, fy: f64, fz: f64, pos: Option<VSVector3>) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_model_force(fx, fy, fz, pos);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_model_force()
+    }
+
+    pub async fn async_apply_model_torque(&mut self, tx: f64, ty: f64, tz: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_model_torque(tx, ty, tz);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_model_torque()
+    }
+
+    pub async fn async_apply_world_force_to_model_pos(&mut self, fx: f64, fy: f64, fz: f64, px: f64, py: f64, pz: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_world_force_to_model_pos(fx, fy, fz, px, py, pz);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_world_force_to_model_pos()
+    }
+
+    pub async fn async_apply_body_force(&mut self, fx: f64, fy: f64, fz: f64, pos: Option<VSVector3>) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_body_force(fx, fy, fz, pos);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_body_force()
+    }
+
+    pub async fn async_apply_body_torque(&mut self, tx: f64, ty: f64, tz: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_body_torque(tx, ty, tz);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_body_torque()
+    }
+
+    pub async fn async_apply_world_force_to_body_pos(&mut self, fx: f64, fy: f64, fz: f64, px: f64, py: f64, pz: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_world_force_to_body_pos(fx, fy, fz, px, py, pz);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_world_force_to_body_pos()
+    }
+}

@@ -169,3 +169,65 @@ impl RedstonePort {
         peripheral::decode(&data)
     }
 }
+
+impl RedstonePort {
+    pub async fn async_get_input(&mut self, side: &str) -> Result<bool, PeripheralError> {
+        self.book_next_get_input(side);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_input()
+    }
+
+    pub async fn async_get_analog_input(&mut self, side: &str) -> Result<u8, PeripheralError> {
+        self.book_next_get_analog_input(side);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_analog_input()
+    }
+
+    pub async fn async_get_bundled_input(&mut self, side: &str) -> Result<u16, PeripheralError> {
+        self.book_next_get_bundled_input(side);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_bundled_input()
+    }
+
+    pub async fn async_get_output(&mut self, side: &str) -> Result<bool, PeripheralError> {
+        self.book_next_get_output(side);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_output()
+    }
+
+    pub async fn async_get_analog_output(&mut self, side: &str) -> Result<u8, PeripheralError> {
+        self.book_next_get_analog_output(side);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_analog_output()
+    }
+
+    pub async fn async_get_bundled_output(&mut self, side: &str) -> Result<u16, PeripheralError> {
+        self.book_next_get_bundled_output(side);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_bundled_output()
+    }
+
+    pub async fn async_set_output(&mut self, side: &str, value: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_output(side, value);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_output()
+    }
+
+    pub async fn async_set_analog_output(&mut self, side: &str, value: u8) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_analog_output(side, value);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_analog_output()
+    }
+
+    pub async fn async_set_bundled_output(&mut self, side: &str, mask: u16) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_bundled_output(side, mask);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_bundled_output()
+    }
+
+    pub async fn async_test_bundled_input(&mut self, side: &str, mask: u16) -> Result<bool, PeripheralError> {
+        self.book_next_test_bundled_input(side, mask);
+        crate::wait_for_next_tick().await;
+        self.read_last_test_bundled_input()
+    }
+}

@@ -136,3 +136,65 @@ impl Slider {
             .collect()
     }
 }
+
+impl Slider {
+    pub async fn async_get_distance(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_distance();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_distance()
+    }
+
+    pub async fn async_get_current_value(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_current_value();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_current_value()
+    }
+
+    pub async fn async_get_target_value(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_target_value();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_target_value()
+    }
+
+    pub async fn async_get_physics(&mut self) -> Result<crate::msgpack::Value, PeripheralError> {
+        self.book_next_get_physics();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_physics()
+    }
+
+    pub async fn async_is_locked(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_locked();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_locked()
+    }
+
+    pub async fn async_set_output_force(&mut self, scale: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_output_force(scale);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_output_force()
+    }
+
+    pub async fn async_set_pid(&mut self, p: f64, i: f64, d: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_pid(p, i, d);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_pid()
+    }
+
+    pub async fn async_set_target_value(&mut self, target: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_target_value(target);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_target_value()
+    }
+
+    pub async fn async_lock(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_lock();
+        crate::wait_for_next_tick().await;
+        self.read_last_lock()
+    }
+
+    pub async fn async_unlock(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_unlock();
+        crate::wait_for_next_tick().await;
+        self.read_last_unlock()
+    }
+}

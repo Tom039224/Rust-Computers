@@ -156,3 +156,53 @@ impl RedstoneRequester {
         peripheral::decode(&data)
     }
 }
+
+impl RedstoneRequester {
+    pub async fn async_request(&mut self, items: &[CROrderItem]) -> Vec<Result<(), PeripheralError>> {
+        let _ = self.book_next_request(items);
+        crate::wait_for_next_tick().await;
+        self.read_last_request()
+    }
+
+    pub async fn async_set_request(&mut self, slot: u32, item: &CROrderItem) -> Vec<Result<(), PeripheralError>> {
+        let _ = self.book_next_set_request(slot, item);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_request()
+    }
+
+    pub async fn async_set_crafting_request(&mut self, slot: u32, item: &CROrderItem) -> Vec<Result<(), PeripheralError>> {
+        let _ = self.book_next_set_crafting_request(slot, item);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_crafting_request()
+    }
+
+    pub async fn async_get_request(&mut self, slot: u32) -> Result<Option<CRItemFilter>, PeripheralError> {
+        self.book_next_get_request(slot);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_request()
+    }
+
+    pub async fn async_get_configuration(&mut self) -> Result<CRPackage, PeripheralError> {
+        self.book_next_get_configuration();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_configuration()
+    }
+
+    pub async fn async_set_configuration(&mut self, config: &CRPackage) -> Vec<Result<(), PeripheralError>> {
+        let _ = self.book_next_set_configuration(config);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_configuration()
+    }
+
+    pub async fn async_set_address(&mut self, address: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_address(address);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_address()
+    }
+
+    pub async fn async_get_address(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_address();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_address()
+    }
+}

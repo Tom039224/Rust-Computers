@@ -149,3 +149,59 @@ impl TableclothShop {
             .collect()
     }
 }
+
+impl TableclothShop {
+    pub async fn async_is_shop(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_shop();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_shop()
+    }
+
+    pub async fn async_get_address(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_address();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_address()
+    }
+
+    pub async fn async_set_address(&mut self, address: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_address(address);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_address()
+    }
+
+    pub async fn async_get_price_tag_item(&mut self) -> Result<Option<CRItemDetail>, PeripheralError> {
+        self.book_next_get_price_tag_item();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_price_tag_item()
+    }
+
+    pub async fn async_set_price_tag_item(&mut self, item_name: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_price_tag_item(item_name);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_price_tag_item()
+    }
+
+    pub async fn async_get_price_tag_count(&mut self) -> Result<u32, PeripheralError> {
+        self.book_next_get_price_tag_count();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_price_tag_count()
+    }
+
+    pub async fn async_set_price_tag_count(&mut self, count: u32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_price_tag_count(count);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_price_tag_count()
+    }
+
+    pub async fn async_get_wares(&mut self) -> Result<Option<CRItemDetail>, PeripheralError> {
+        self.book_next_get_wares();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_wares()
+    }
+
+    pub async fn async_set_wares(&mut self, item_name: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_wares(item_name);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_wares()
+    }
+}

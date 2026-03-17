@@ -154,3 +154,29 @@ impl Aerodynamics {
         peripheral::decode(&data)
     }
 }
+
+impl Aerodynamics {
+    pub async fn async_get_atmospheric_parameters(&mut self) -> Result<Option<VSAtmosphericParameters>, PeripheralError> {
+        self.book_next_get_atmospheric_parameters();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_atmospheric_parameters()
+    }
+
+    pub async fn async_get_air_density(&mut self, y: Option<f64>) -> Result<Option<f64>, PeripheralError> {
+        self.book_next_get_air_density(y);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_air_density()
+    }
+
+    pub async fn async_get_air_pressure(&mut self, y: Option<f64>) -> Result<Option<f64>, PeripheralError> {
+        self.book_next_get_air_pressure(y);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_air_pressure()
+    }
+
+    pub async fn async_get_air_temperature(&mut self, y: Option<f64>) -> Result<Option<f64>, PeripheralError> {
+        self.book_next_get_air_temperature(y);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_air_temperature()
+    }
+}

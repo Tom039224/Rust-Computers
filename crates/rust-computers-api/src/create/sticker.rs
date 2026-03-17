@@ -117,3 +117,37 @@ impl Sticker {
             .collect()
     }
 }
+
+impl Sticker {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_is_extended(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_extended();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_extended()
+    }
+
+    pub async fn async_is_attached_to_block(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_attached_to_block();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_attached_to_block()
+    }
+
+    pub async fn async_extend(&mut self) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_extend();
+        crate::wait_for_next_tick().await;
+        self.read_last_extend()
+    }
+
+    pub async fn async_retract(&mut self) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_retract();
+        crate::wait_for_next_tick().await;
+        self.read_last_retract()
+    }
+
+    pub async fn async_toggle(&mut self) -> Vec<Result<bool, PeripheralError>> {
+        self.book_next_toggle();
+        crate::wait_for_next_tick().await;
+        self.read_last_toggle()
+    }
+}

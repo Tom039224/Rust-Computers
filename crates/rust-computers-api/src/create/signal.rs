@@ -176,3 +176,43 @@ impl Signal {
         }
     }
 }
+
+impl Signal {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_get_state(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_state();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_state()
+    }
+
+    pub async fn async_is_forced_red(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_forced_red();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_forced_red()
+    }
+
+    pub async fn async_set_forced_red(&mut self, powered: bool) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_forced_red(powered);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_forced_red()
+    }
+
+    pub async fn async_list_blocking_train_names(&mut self) -> Result<Vec<String>, PeripheralError> {
+        self.book_next_list_blocking_train_names();
+        crate::wait_for_next_tick().await;
+        self.read_last_list_blocking_train_names()
+    }
+
+    pub async fn async_get_signal_type(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_signal_type();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_signal_type()
+    }
+
+    pub async fn async_cycle_signal_type(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_cycle_signal_type();
+        crate::wait_for_next_tick().await;
+        self.read_last_cycle_signal_type()
+    }
+}

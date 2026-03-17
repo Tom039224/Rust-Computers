@@ -96,3 +96,35 @@ impl StockTicker {
         peripheral::decode(&data)
     }
 }
+
+impl StockTicker {
+    pub async fn async_stock(&mut self) -> Result<Vec<CRSlotInfo>, PeripheralError> {
+        self.book_next_stock();
+        crate::wait_for_next_tick().await;
+        self.read_last_stock()
+    }
+
+    pub async fn async_get_stock_item_detail(&mut self, slot: u32) -> Result<Option<CRItemDetail>, PeripheralError> {
+        self.book_next_get_stock_item_detail(slot);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_stock_item_detail()
+    }
+
+    pub async fn async_request_filtered(&mut self, filters: &[CRItemFilter]) -> Vec<Result<(), PeripheralError>> {
+        let _ = self.book_next_request_filtered(filters);
+        crate::wait_for_next_tick().await;
+        self.read_last_request_filtered()
+    }
+
+    pub async fn async_list(&mut self) -> Result<Vec<CRSlotInfo>, PeripheralError> {
+        self.book_next_list();
+        crate::wait_for_next_tick().await;
+        self.read_last_list()
+    }
+
+    pub async fn async_get_item_detail(&mut self, slot: u32) -> Result<Option<CRItemDetail>, PeripheralError> {
+        self.book_next_get_item_detail(slot);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_item_detail()
+    }
+}

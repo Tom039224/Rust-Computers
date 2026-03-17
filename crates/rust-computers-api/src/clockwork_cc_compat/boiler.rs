@@ -76,3 +76,101 @@ impl Boiler {
     imm_getter!(book_next_get_fluid_contents, read_last_get_fluid_contents, get_fluid_contents_imm, "getFluidContents", CLFluidInfo);
     imm_getter!(book_next_get_controller_pos, read_last_get_controller_pos, get_controller_pos_imm, "getControllerPos", CLPosition);
 }
+
+impl Boiler {
+    pub async fn async_is_active(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_active();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_active()
+    }
+
+    pub async fn async_get_heat_level(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_heat_level();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_heat_level()
+    }
+
+    pub async fn async_get_active_heat(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_active_heat();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_active_heat()
+    }
+
+    pub async fn async_is_passive_heat(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_passive_heat();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_passive_heat()
+    }
+
+    pub async fn async_get_water_supply(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_water_supply();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_water_supply()
+    }
+
+    pub async fn async_get_attached_engines(&mut self) -> Result<u32, PeripheralError> {
+        self.book_next_get_attached_engines();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_attached_engines()
+    }
+
+    pub async fn async_get_attached_whistles(&mut self) -> Result<u32, PeripheralError> {
+        self.book_next_get_attached_whistles();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_attached_whistles()
+    }
+
+    pub async fn async_get_engine_efficiency(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_engine_efficiency();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_engine_efficiency()
+    }
+
+    pub async fn async_get_boiler_size(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_boiler_size();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_boiler_size()
+    }
+
+    pub async fn async_get_width(&mut self) -> Result<u32, PeripheralError> {
+        self.book_next_get_width();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_width()
+    }
+
+    pub async fn async_get_height(&mut self) -> Result<u32, PeripheralError> {
+        self.book_next_get_height();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_height()
+    }
+
+    pub async fn async_get_max_heat_for_size(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_max_heat_for_size();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_max_heat_for_size()
+    }
+
+    pub async fn async_get_max_heat_for_water(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_max_heat_for_water();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_max_heat_for_water()
+    }
+
+    pub async fn async_get_fill_state(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_fill_state();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_fill_state()
+    }
+
+    pub async fn async_get_fluid_contents(&mut self) -> Result<CLFluidInfo, PeripheralError> {
+        self.book_next_get_fluid_contents();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_fluid_contents()
+    }
+
+    pub async fn async_get_controller_pos(&mut self) -> Result<CLPosition, PeripheralError> {
+        self.book_next_get_controller_pos();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_controller_pos()
+    }
+}

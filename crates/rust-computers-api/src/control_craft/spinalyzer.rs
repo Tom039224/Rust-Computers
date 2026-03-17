@@ -198,3 +198,89 @@ impl Spinalyzer {
             .collect()
     }
 }
+
+impl Spinalyzer {
+    pub async fn async_get_quaternion(&mut self) -> Result<CTLQuaternion, PeripheralError> {
+        self.book_next_get_quaternion();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_quaternion()
+    }
+
+    pub async fn async_get_quaternion_j(&mut self) -> Result<CTLQuaternion, PeripheralError> {
+        self.book_next_get_quaternion_j();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_quaternion_j()
+    }
+
+    pub async fn async_get_rotation_matrix(&mut self) -> Result<[[f64; 3]; 3], PeripheralError> {
+        self.book_next_get_rotation_matrix();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_rotation_matrix()
+    }
+
+    pub async fn async_get_rotation_matrix_t(&mut self) -> Result<[[f64; 3]; 3], PeripheralError> {
+        self.book_next_get_rotation_matrix_t();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_rotation_matrix_t()
+    }
+
+    pub async fn async_get_velocity(&mut self) -> Result<CTLVec3, PeripheralError> {
+        self.book_next_get_velocity();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_velocity()
+    }
+
+    pub async fn async_get_angular_velocity(&mut self) -> Result<CTLVec3, PeripheralError> {
+        self.book_next_get_angular_velocity();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_angular_velocity()
+    }
+
+    pub async fn async_get_position(&mut self) -> Result<CTLVec3, PeripheralError> {
+        self.book_next_get_position();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_position()
+    }
+
+    pub async fn async_get_spinalyzer_position(&mut self) -> Result<CTLVec3, PeripheralError> {
+        self.book_next_get_spinalyzer_position();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_spinalyzer_position()
+    }
+
+    pub async fn async_get_spinalyzer_velocity(&mut self) -> Result<CTLVec3, PeripheralError> {
+        self.book_next_get_spinalyzer_velocity();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_spinalyzer_velocity()
+    }
+
+    pub async fn async_get_physics(&mut self) -> Result<crate::msgpack::Value, PeripheralError> {
+        self.book_next_get_physics();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_physics()
+    }
+
+    pub async fn async_apply_invariant_force(&mut self, x: f64, y: f64, z: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_invariant_force(x, y, z);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_invariant_force()
+    }
+
+    pub async fn async_apply_invariant_torque(&mut self, x: f64, y: f64, z: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_invariant_torque(x, y, z);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_invariant_torque()
+    }
+
+    pub async fn async_apply_rot_dependent_force(&mut self, x: f64, y: f64, z: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_rot_dependent_force(x, y, z);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_rot_dependent_force()
+    }
+
+    pub async fn async_apply_rot_dependent_torque(&mut self, x: f64, y: f64, z: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_rot_dependent_torque(x, y, z);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_rot_dependent_torque()
+    }
+}

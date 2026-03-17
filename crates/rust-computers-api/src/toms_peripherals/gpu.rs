@@ -352,3 +352,104 @@ impl GPU {
         peripheral::decode(&data)
     }
 }
+
+impl GPU {
+    pub async fn async_set_size(&mut self, pixels: u32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_size(pixels);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_size()
+    }
+
+    pub async fn async_refresh_size(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_refresh_size();
+        crate::wait_for_next_tick().await;
+        self.read_last_refresh_size()
+    }
+
+    pub async fn async_get_size(&mut self) -> Result<(u32, u32, u32, u32, u32), PeripheralError> {
+        self.book_next_get_size();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_size()
+    }
+
+    pub async fn async_fill(&mut self, r: f32, g: f32, b: f32, a: f32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_fill(r, g, b, a);
+        crate::wait_for_next_tick().await;
+        self.read_last_fill()
+    }
+
+    pub async fn async_sync(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_sync();
+        crate::wait_for_next_tick().await;
+        self.read_last_sync()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn async_filled_rectangle(&mut self, x: u32, y: u32, w: u32, h: u32, r: f32, g: f32, b: f32, a: f32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_filled_rectangle(x, y, w, h, r, g, b, a);
+        crate::wait_for_next_tick().await;
+        self.read_last_filled_rectangle()
+    }
+
+    pub async fn async_draw_image(&mut self, image: &TMImage, x: u32, y: u32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_draw_image(image, x, y);
+        crate::wait_for_next_tick().await;
+        self.read_last_draw_image()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn async_draw_text(&mut self, text: &str, x: u32, y: u32, r: f32, g: f32, b: f32, a: f32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_draw_text(text, x, y, r, g, b, a);
+        crate::wait_for_next_tick().await;
+        self.read_last_draw_text()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn async_draw_char(&mut self, ch: char, x: u32, y: u32, r: f32, g: f32, b: f32, a: f32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_draw_char(ch, x, y, r, g, b, a);
+        crate::wait_for_next_tick().await;
+        self.read_last_draw_char()
+    }
+
+    pub async fn async_get_text_length(&mut self, text: &str) -> Result<u32, PeripheralError> {
+        self.book_next_get_text_length(text);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_text_length()
+    }
+
+    pub async fn async_set_font(&mut self, font_name: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_font(font_name);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_font()
+    }
+
+    pub async fn async_clear_chars(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_clear_chars();
+        crate::wait_for_next_tick().await;
+        self.read_last_clear_chars()
+    }
+
+    pub async fn async_add_new_char(&mut self, codepoint: u32, data: &[u8]) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_add_new_char(codepoint, data);
+        crate::wait_for_next_tick().await;
+        self.read_last_add_new_char()
+    }
+
+    pub async fn async_create_window(&mut self, x: u32, y: u32, w: u32, h: u32) -> Result<TMWindow, PeripheralError> {
+        self.book_next_create_window(x, y, w, h);
+        crate::wait_for_next_tick().await;
+        self.read_last_create_window()
+    }
+
+    pub async fn async_decode_image(&mut self, data: &str) -> Result<TMImage, PeripheralError> {
+        self.book_next_decode_image(data);
+        crate::wait_for_next_tick().await;
+        self.read_last_decode_image()
+    }
+
+    pub async fn async_new_image(&mut self, w: u32, h: u32) -> Result<TMImage, PeripheralError> {
+        self.book_next_new_image(w, h);
+        crate::wait_for_next_tick().await;
+        self.read_last_new_image()
+    }
+}

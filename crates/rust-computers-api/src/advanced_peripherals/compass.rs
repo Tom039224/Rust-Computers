@@ -33,3 +33,13 @@ impl Compass {
         peripheral::decode(&data)
     }
 }
+
+impl Compass {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_get_facing(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_facing();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_facing()
+    }
+}

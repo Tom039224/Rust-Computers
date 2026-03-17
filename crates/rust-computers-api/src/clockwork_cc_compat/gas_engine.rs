@@ -68,3 +68,17 @@ impl GasEngine {
         peripheral::decode(&data)
     }
 }
+
+impl GasEngine {
+    pub async fn async_get_attached_engines(&mut self) -> Result<u32, PeripheralError> {
+        self.book_next_get_attached_engines();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_attached_engines()
+    }
+
+    pub async fn async_get_total_efficiency(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_total_efficiency();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_total_efficiency()
+    }
+}

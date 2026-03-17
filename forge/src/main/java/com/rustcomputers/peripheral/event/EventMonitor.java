@@ -1,6 +1,7 @@
 package com.rustcomputers.peripheral.event;
 
 import com.rustcomputers.peripheral.AttachedPeripheral;
+import com.rustcomputers.peripheral.impl.CCEventReceiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,14 +102,20 @@ public class EventMonitor {
      *
      * @param peripheral ペリフェラル / peripheral
      * @param eventName  イベント名 / event name
-     * @return イベントデータ、なければnull / event data or null if none
+     * @return イベントデータ（MsgPackバイト列）、なければnull / event data (MsgPack bytes) or null
      */
     private Object pollEventFromPeripheral(AttachedPeripheral peripheral, String eventName) {
-        // TODO: ペリフェラルタイプごとのイベントポーリング実装
-        // TODO: Implement event polling for each peripheral type
-        // 現在は未実装（Phase 2の後続タスクで実装）
-        // Currently not implemented (will be implemented in subsequent Phase 2 tasks)
-        return null;
+        // CCEventReceiver の try_pull_* パターンを使ってイベントをポーリング
+        // Use CCEventReceiver's try_pull_* pattern to poll events
+        String tryPullMethod = "try_pull_" + eventName;
+        byte[] payload = CCEventReceiver.tryPull(tryPullMethod, peripheral.peripheralPos());
+
+        // nil (0xc0) の場合はイベントなし
+        // nil (0xc0) means no event
+        if (payload == null || (payload.length == 1 && (payload[0] & 0xFF) == 0xC0)) {
+            return null;
+        }
+        return payload;
     }
 
     /**

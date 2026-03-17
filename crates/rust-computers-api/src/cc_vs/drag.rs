@@ -207,3 +207,71 @@ impl Drag {
             .collect()
     }
 }
+
+impl Drag {
+    pub async fn async_get_drag_force(&mut self) -> Result<Option<VSVector3>, PeripheralError> {
+        self.book_next_get_drag_force();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_drag_force()
+    }
+
+    pub async fn async_get_lift_force(&mut self) -> Result<Option<VSVector3>, PeripheralError> {
+        self.book_next_get_lift_force();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_lift_force()
+    }
+
+    pub async fn async_enable_drag(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_enable_drag();
+        crate::wait_for_next_tick().await;
+        self.read_last_enable_drag()
+    }
+
+    pub async fn async_disable_drag(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_disable_drag();
+        crate::wait_for_next_tick().await;
+        self.read_last_disable_drag()
+    }
+
+    pub async fn async_enable_lift(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_enable_lift();
+        crate::wait_for_next_tick().await;
+        self.read_last_enable_lift()
+    }
+
+    pub async fn async_disable_lift(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_disable_lift();
+        crate::wait_for_next_tick().await;
+        self.read_last_disable_lift()
+    }
+
+    pub async fn async_enable_rot_drag(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_enable_rot_drag();
+        crate::wait_for_next_tick().await;
+        self.read_last_enable_rot_drag()
+    }
+
+    pub async fn async_disable_rot_drag(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_disable_rot_drag();
+        crate::wait_for_next_tick().await;
+        self.read_last_disable_rot_drag()
+    }
+
+    pub async fn async_set_wind_direction(&mut self, x: f64, y: f64, z: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_wind_direction(x, y, z);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_wind_direction()
+    }
+
+    pub async fn async_set_wind_speed(&mut self, speed: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_wind_speed(speed);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_wind_speed()
+    }
+
+    pub async fn async_apply_wind_impulse(&mut self, x: f64, y: f64, z: f64, speed: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_apply_wind_impulse(x, y, z, speed);
+        crate::wait_for_next_tick().await;
+        self.read_last_apply_wind_impulse()
+    }
+}

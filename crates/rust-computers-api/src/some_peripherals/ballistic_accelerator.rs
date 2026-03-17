@@ -377,3 +377,86 @@ impl BallisticAccelerator {
         peripheral::decode(&data)
     }
 }
+
+impl BallisticAccelerator {
+    pub async fn async_time_in_air(
+        &mut self,
+        y_proj: f64,
+        y_tgt: f64,
+        y_vel: f64,
+        gravity: Option<f64>,
+        drag: Option<f64>,
+        max_steps: Option<u32>,
+    ) -> Result<SPTimeResult, PeripheralError> {
+        self.book_next_time_in_air(y_proj, y_tgt, y_vel, gravity, drag, max_steps);
+        crate::wait_for_next_tick().await;
+        self.read_last_time_in_air()
+    }
+
+    pub async fn async_try_pitch(
+        &mut self,
+        pitch: f64,
+        speed: f64,
+        length: f64,
+        dist: f64,
+        cannon: SPCoordinate,
+        target: SPCoordinate,
+        gravity: Option<f64>,
+        drag: Option<f64>,
+        max_steps: Option<u32>,
+    ) -> Result<(f64, f64, f64), PeripheralError> {
+        self.book_next_try_pitch(pitch, speed, length, dist, cannon, target, gravity, drag, max_steps);
+        crate::wait_for_next_tick().await;
+        self.read_last_try_pitch()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn async_calculate_pitch(
+        &mut self,
+        cannon: SPCoordinate,
+        target: SPCoordinate,
+        speed: f64,
+        length: f64,
+        amin: Option<f64>,
+        amax: Option<f64>,
+        gravity: Option<f64>,
+        drag: Option<f64>,
+        max_delta_t_error: Option<f64>,
+        max_steps: Option<u32>,
+        num_iterations: Option<u32>,
+        num_elements: Option<u32>,
+        check_impossible: Option<bool>,
+    ) -> Result<SPPitchResult, PeripheralError> {
+        self.book_next_calculate_pitch(cannon, target, speed, length, amin, amax, gravity, drag, max_delta_t_error, max_steps, num_iterations, num_elements, check_impossible);
+        crate::wait_for_next_tick().await;
+        self.read_last_calculate_pitch()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn async_batch_calculate_pitches(
+        &mut self,
+        cannon: SPCoordinate,
+        targets: &[SPCoordinate],
+        speed: f64,
+        length: f64,
+        amin: Option<f64>,
+        amax: Option<f64>,
+        gravity: Option<f64>,
+        drag: Option<f64>,
+        max_delta_t_error: Option<f64>,
+        max_steps: Option<u32>,
+        num_iterations: Option<u32>,
+        num_elements: Option<u32>,
+        check_impossible: Option<bool>,
+    ) -> Result<Vec<SPPitchResult>, PeripheralError> {
+        self.book_next_batch_calculate_pitches(cannon, targets, speed, length, amin, amax, gravity, drag, max_delta_t_error, max_steps, num_iterations, num_elements, check_impossible);
+        crate::wait_for_next_tick().await;
+        self.read_last_batch_calculate_pitches()
+    }
+
+    pub async fn async_get_drag(&mut self, base_drag: f64, dim_drag_multiplier: f64) -> Result<f64, PeripheralError> {
+        self.book_next_get_drag(base_drag, dim_drag_multiplier);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_drag()
+    }
+}

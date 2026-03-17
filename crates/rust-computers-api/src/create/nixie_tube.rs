@@ -83,3 +83,25 @@ impl NixieTube {
             .collect()
     }
 }
+
+impl NixieTube {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_set_text(&mut self, text: &str, colour: Option<&str>) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_text(text, colour);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_text()
+    }
+
+    pub async fn async_set_text_colour(&mut self, colour: &str) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_text_colour(colour);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_text_colour()
+    }
+
+    pub async fn async_set_signal(&mut self, front: &CRSignalParams, back: Option<&CRSignalParams>) -> Vec<Result<(), PeripheralError>> {
+        let _ = self.book_next_set_signal(front, back);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_signal()
+    }
+}

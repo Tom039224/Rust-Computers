@@ -328,3 +328,185 @@ impl Camera {
             .collect()
     }
 }
+
+impl Camera {
+    pub async fn async_get_abs_view_transform(&mut self) -> Result<CTLTransform, PeripheralError> {
+        self.book_next_get_abs_view_transform();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_abs_view_transform()
+    }
+
+    pub async fn async_get_pitch(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_pitch();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_pitch()
+    }
+
+    pub async fn async_get_yaw(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_yaw();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_yaw()
+    }
+
+    pub async fn async_get_transformed_pitch(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_transformed_pitch();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_transformed_pitch()
+    }
+
+    pub async fn async_get_transformed_yaw(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_transformed_yaw();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_transformed_yaw()
+    }
+
+    pub async fn async_get_clip_distance(&mut self) -> Result<f64, PeripheralError> {
+        self.book_next_get_clip_distance();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_clip_distance()
+    }
+
+    pub async fn async_latest_ship(&mut self) -> Result<Option<crate::msgpack::Value>, PeripheralError> {
+        self.book_next_latest_ship();
+        crate::wait_for_next_tick().await;
+        self.read_last_latest_ship()
+    }
+
+    pub async fn async_latest_player(&mut self) -> Result<Option<crate::msgpack::Value>, PeripheralError> {
+        self.book_next_latest_player();
+        crate::wait_for_next_tick().await;
+        self.read_last_latest_player()
+    }
+
+    pub async fn async_latest_entity(&mut self) -> Result<Option<crate::msgpack::Value>, PeripheralError> {
+        self.book_next_latest_entity();
+        crate::wait_for_next_tick().await;
+        self.read_last_latest_entity()
+    }
+
+    pub async fn async_latest_block(&mut self) -> Result<Option<crate::msgpack::Value>, PeripheralError> {
+        self.book_next_latest_block();
+        crate::wait_for_next_tick().await;
+        self.read_last_latest_block()
+    }
+
+    pub async fn async_get_camera_position(&mut self) -> Result<(f64, f64, f64), PeripheralError> {
+        self.book_next_get_camera_position();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_camera_position()
+    }
+
+    pub async fn async_get_abs_view_forward(&mut self) -> Result<(f64, f64, f64), PeripheralError> {
+        self.book_next_get_abs_view_forward();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_abs_view_forward()
+    }
+
+    pub async fn async_is_being_used(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_being_used();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_being_used()
+    }
+
+    pub async fn async_get_direction(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_direction();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_direction()
+    }
+
+    pub async fn async_clip(&mut self) -> Result<CTLRaycastResult, PeripheralError> {
+        self.book_next_clip();
+        crate::wait_for_next_tick().await;
+        self.read_last_clip()
+    }
+
+    pub async fn async_clip_entity(&mut self) -> Result<CTLRaycastResult, PeripheralError> {
+        self.book_next_clip_entity();
+        crate::wait_for_next_tick().await;
+        self.read_last_clip_entity()
+    }
+
+    pub async fn async_clip_block(&mut self) -> Result<CTLRaycastResult, PeripheralError> {
+        self.book_next_clip_block();
+        crate::wait_for_next_tick().await;
+        self.read_last_clip_block()
+    }
+
+    pub async fn async_clip_all_entity(&mut self) -> Result<Vec<CTLRaycastResult>, PeripheralError> {
+        self.book_next_clip_all_entity();
+        crate::wait_for_next_tick().await;
+        self.read_last_clip_all_entity()
+    }
+
+    pub async fn async_clip_ship(&mut self) -> Result<CTLRaycastResult, PeripheralError> {
+        self.book_next_clip_ship();
+        crate::wait_for_next_tick().await;
+        self.read_last_clip_ship()
+    }
+
+    pub async fn async_clip_player(&mut self) -> Result<CTLRaycastResult, PeripheralError> {
+        self.book_next_clip_player();
+        crate::wait_for_next_tick().await;
+        self.read_last_clip_player()
+    }
+
+    pub async fn async_set_pitch(&mut self, degrees: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_pitch(degrees);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_pitch()
+    }
+
+    pub async fn async_set_yaw(&mut self, degrees: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_yaw(degrees);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_yaw()
+    }
+
+    pub async fn async_outline_to_user(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_outline_to_user();
+        crate::wait_for_next_tick().await;
+        self.read_last_outline_to_user()
+    }
+
+    pub async fn async_force_pitch_yaw(&mut self, pitch: f64, yaw: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_force_pitch_yaw(pitch, yaw);
+        crate::wait_for_next_tick().await;
+        self.read_last_force_pitch_yaw()
+    }
+
+    pub async fn async_set_clip_range(&mut self, range: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_clip_range(range);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_clip_range()
+    }
+
+    pub async fn async_set_cone_angle(&mut self, angle: f64) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_set_cone_angle(angle);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_cone_angle()
+    }
+
+    pub async fn async_raycast(&mut self, x: f64, y: f64, z: f64) -> Result<CTLRaycastResult, PeripheralError> {
+        self.book_next_raycast(x, y, z);
+        crate::wait_for_next_tick().await;
+        self.read_last_raycast()
+    }
+
+    pub async fn async_get_entities(&mut self, radius: f64) -> Result<Vec<crate::msgpack::Value>, PeripheralError> {
+        self.book_next_get_entities(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_entities()
+    }
+
+    pub async fn async_get_mobs(&mut self, radius: f64) -> Result<Vec<crate::msgpack::Value>, PeripheralError> {
+        self.book_next_get_mobs(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_mobs()
+    }
+
+    pub async fn async_reset(&mut self) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_reset();
+        crate::wait_for_next_tick().await;
+        self.read_last_reset()
+    }
+}

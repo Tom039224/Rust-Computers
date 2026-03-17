@@ -199,3 +199,85 @@ impl InventoryManager {
         peripheral::decode(&data)
     }
 }
+
+impl InventoryManager {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_get_owner(&mut self) -> Result<String, PeripheralError> {
+        self.book_next_get_owner();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_owner()
+    }
+
+    pub async fn async_add_item_to_player(&mut self, slot: u32, count: Option<u32>) -> Vec<Result<u32, PeripheralError>> {
+        self.book_next_add_item_to_player(slot, count);
+        crate::wait_for_next_tick().await;
+        self.read_last_add_item_to_player()
+    }
+
+    pub async fn async_remove_item_from_player(&mut self, slot: u32, count: Option<u32>) -> Vec<Result<u32, PeripheralError>> {
+        self.book_next_remove_item_from_player(slot, count);
+        crate::wait_for_next_tick().await;
+        self.read_last_remove_item_from_player()
+    }
+
+    pub async fn async_list(&mut self) -> Result<Vec<ADItemEntry>, PeripheralError> {
+        self.book_next_list();
+        crate::wait_for_next_tick().await;
+        self.read_last_list()
+    }
+
+    pub async fn async_get_armor(&mut self) -> Result<Vec<ADItemEntry>, PeripheralError> {
+        self.book_next_get_armor();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_armor()
+    }
+
+    pub async fn async_is_player_equipped(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_player_equipped();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_player_equipped()
+    }
+
+    pub async fn async_is_wearing(&mut self, slot: u32) -> Result<bool, PeripheralError> {
+        self.book_next_is_wearing(slot);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_wearing()
+    }
+
+    pub async fn async_get_item_in_hand(&mut self) -> Result<ADItemEntry, PeripheralError> {
+        self.book_next_get_item_in_hand();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_item_in_hand()
+    }
+
+    pub async fn async_get_item_in_off_hand(&mut self) -> Result<ADItemEntry, PeripheralError> {
+        self.book_next_get_item_in_off_hand();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_item_in_off_hand()
+    }
+
+    pub async fn async_get_empty_space(&mut self) -> Result<u32, PeripheralError> {
+        self.book_next_get_empty_space();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_empty_space()
+    }
+
+    pub async fn async_is_space_available(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_space_available();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_space_available()
+    }
+
+    pub async fn async_get_free_slot(&mut self) -> Result<i32, PeripheralError> {
+        self.book_next_get_free_slot();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_free_slot()
+    }
+
+    pub async fn async_list_chest(&mut self) -> Result<Vec<ADItemEntry>, PeripheralError> {
+        self.book_next_list_chest();
+        crate::wait_for_next_tick().await;
+        self.read_last_list_chest()
+    }
+}

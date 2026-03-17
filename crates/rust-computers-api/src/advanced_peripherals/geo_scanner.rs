@@ -73,3 +73,25 @@ impl GeoScanner {
         peripheral::decode(&data)
     }
 }
+
+impl GeoScanner {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_cost(&mut self, radius: f64) -> Result<f64, PeripheralError> {
+        self.book_next_cost(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_cost()
+    }
+
+    pub async fn async_scan(&mut self, radius: f64) -> Result<Vec<GeoBlockEntry>, PeripheralError> {
+        self.book_next_scan(radius);
+        crate::wait_for_next_tick().await;
+        self.read_last_scan()
+    }
+
+    pub async fn async_chunk_analyze(&mut self) -> Result<msgpack::Value, PeripheralError> {
+        self.book_next_chunk_analyze();
+        crate::wait_for_next_tick().await;
+        self.read_last_chunk_analyze()
+    }
+}

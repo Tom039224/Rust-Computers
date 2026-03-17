@@ -74,3 +74,13 @@ impl Speedometer {
         }
     }
 }
+
+impl Speedometer {
+    // ─── async_* バリアント ──────────────────────────────────
+
+    pub async fn async_get_speed(&mut self) -> Result<f32, PeripheralError> {
+        self.book_next_get_speed();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_speed()
+    }
+}
