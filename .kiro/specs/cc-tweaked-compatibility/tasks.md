@@ -38,18 +38,18 @@
 
 - [x] 3.1 ペリフェラルラッパー生成フレームワーク設計
 - [x] 3.2 book_next/read_last/async マクロ実装
-- [ ] 3.3 CC:Tweaked Inventory Rust実装
-- [ ] 3.4 CC:Tweaked Modem Rust実装
-- [ ] 3.5 CC:Tweaked Monitor Rust実装
-- [ ] 3.6 CC:Tweaked Speaker Rust実装
-- [ ] 3.7 AdvancedPeripherals BlockReader Rust実装
-- [ ] 3.8 AdvancedPeripherals ChatBox Rust実装
-- [ ] 3.9 AdvancedPeripherals MEBridge Rust実装
-- [ ] 3.10 AdvancedPeripherals PlayerDetector Rust実装
-- [ ] 3.11 AdvancedPeripherals GeoScanner Rust実装
-- [ ] 3.12 Create DisplayLink Rust実装
-- [ ] 3.13 Create Station Rust実装
-- [ ] 3.14 その他優先度の高いペリフェラル Rust実装
+- [x] 3.3 CC:Tweaked Inventory Rust実装
+- [x] 3.4 CC:Tweaked Modem Rust実装
+- [x] 3.5 CC:Tweaked Monitor Rust実装
+- [x] 3.6 CC:Tweaked Speaker Rust実装
+- [x] 3.7 AdvancedPeripherals BlockReader Rust実装
+- [x] 3.8 AdvancedPeripherals ChatBox Rust実装
+- [x] 3.9 AdvancedPeripherals MEBridge Rust実装
+- [x] 3.10 AdvancedPeripherals PlayerDetector Rust実装
+- [x] 3.11 AdvancedPeripherals GeoScanner Rust実装
+- [x] 3.12 Create DisplayLink Rust実装
+- [x] 3.13 Create Station Rust実装
+- [x] 3.14 その他優先度の高いペリフェラル Rust実装
 
 ## Phase 4: Documentation
 
