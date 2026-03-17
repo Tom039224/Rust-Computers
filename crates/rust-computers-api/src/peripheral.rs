@@ -89,6 +89,19 @@ impl Direction {
     pub fn id(self) -> u32 {
         self as u32
     }
+
+    /// Lua に渡す方向文字列を返す。
+    /// Return the direction string passed to Lua.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Down  => "down",
+            Self::Up    => "up",
+            Self::North => "north",
+            Self::South => "south",
+            Self::West  => "west",
+            Self::East  => "east",
+        }
+    }
 }
 
 impl From<Direction> for PeriphAddr {

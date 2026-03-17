@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, PeriphAddr, Peripheral};
+use crate::peripheral::{self, Direction, PeriphAddr, Peripheral};
 
 /// DigitalAdapter ペリフェラル。
 pub struct DigitalAdapter {
@@ -96,8 +96,8 @@ impl DigitalAdapter {
     // ─── キネティック制御 ────────────────────────────────────
 
     /// 指定方向の機械の目標速度を設定する。
-    pub fn book_next_set_target_speed(&mut self, dir: &str, speed: f64) {
-        let args = msgpack::array(&[msgpack::str(dir), msgpack::float64(speed)]);
+    pub fn book_next_set_target_speed(&mut self, dir: Direction, speed: f64) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str()), msgpack::float64(speed)]);
         peripheral::book_action(self.addr, "setTargetSpeed", &args);
     }
     pub fn read_last_set_target_speed(&self) -> Vec<Result<(), PeripheralError>> {
@@ -108,8 +108,8 @@ impl DigitalAdapter {
     }
 
     /// 指定方向の目標速度を取得する。
-    pub fn book_next_get_target_speed(&mut self, dir: &str) {
-        let args = msgpack::array(&[msgpack::str(dir)]);
+    pub fn book_next_get_target_speed(&mut self, dir: Direction) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str())]);
         peripheral::book_request(self.addr, "getTargetSpeed", &args);
     }
     pub fn read_last_get_target_speed(&self) -> Result<f64, PeripheralError> {
@@ -118,8 +118,8 @@ impl DigitalAdapter {
     }
 
     /// 指定方向の応力 (SU) を取得する。
-    pub fn book_next_get_kinetic_stress(&mut self, dir: &str) {
-        let args = msgpack::array(&[msgpack::str(dir)]);
+    pub fn book_next_get_kinetic_stress(&mut self, dir: Direction) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str())]);
         peripheral::book_request(self.addr, "getKineticStress", &args);
     }
     pub fn read_last_get_kinetic_stress(&self) -> Result<f64, PeripheralError> {
@@ -128,8 +128,8 @@ impl DigitalAdapter {
     }
 
     /// 指定方向の応力容量 (SU) を取得する。
-    pub fn book_next_get_kinetic_capacity(&mut self, dir: &str) {
-        let args = msgpack::array(&[msgpack::str(dir)]);
+    pub fn book_next_get_kinetic_capacity(&mut self, dir: Direction) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str())]);
         peripheral::book_request(self.addr, "getKineticCapacity", &args);
     }
     pub fn read_last_get_kinetic_capacity(&self) -> Result<f64, PeripheralError> {
@@ -138,8 +138,8 @@ impl DigitalAdapter {
     }
 
     /// 指定方向の実際の速度 (RPM) を取得する。
-    pub fn book_next_get_kinetic_speed(&mut self, dir: &str) {
-        let args = msgpack::array(&[msgpack::str(dir)]);
+    pub fn book_next_get_kinetic_speed(&mut self, dir: Direction) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str())]);
         peripheral::book_request(self.addr, "getKineticSpeed", &args);
     }
     pub fn read_last_get_kinetic_speed(&self) -> Result<f64, PeripheralError> {
@@ -159,8 +159,8 @@ impl DigitalAdapter {
     // ─── 機械状態読み取り ────────────────────────────────────
 
     /// 指定方向のプーリーの伸長距離 (blocks) を返す。
-    pub fn book_next_get_pulley_distance(&mut self, dir: &str) {
-        let args = msgpack::array(&[msgpack::str(dir)]);
+    pub fn book_next_get_pulley_distance(&mut self, dir: Direction) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str())]);
         peripheral::book_request(self.addr, "getPulleyDistance", &args);
     }
     pub fn read_last_get_pulley_distance(&self) -> Result<f64, PeripheralError> {
@@ -169,8 +169,8 @@ impl DigitalAdapter {
     }
 
     /// 指定方向のピストンの伸長距離 (blocks) を返す。
-    pub fn book_next_get_piston_distance(&mut self, dir: &str) {
-        let args = msgpack::array(&[msgpack::str(dir)]);
+    pub fn book_next_get_piston_distance(&mut self, dir: Direction) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str())]);
         peripheral::book_request(self.addr, "getPistonDistance", &args);
     }
     pub fn read_last_get_piston_distance(&self) -> Result<f64, PeripheralError> {
@@ -179,8 +179,8 @@ impl DigitalAdapter {
     }
 
     /// 指定方向のベアリングの角度 (deg) を返す。
-    pub fn book_next_get_bearing_angle(&mut self, dir: &str) {
-        let args = msgpack::array(&[msgpack::str(dir)]);
+    pub fn book_next_get_bearing_angle(&mut self, dir: Direction) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str())]);
         peripheral::book_request(self.addr, "getBearingAngle", &args);
     }
     pub fn read_last_get_bearing_angle(&self) -> Result<f64, PeripheralError> {
@@ -189,8 +189,8 @@ impl DigitalAdapter {
     }
 
     /// 指定方向のエレベーターの現在フロア番号を返す。
-    pub fn book_next_get_elevator_floor(&mut self, dir: &str) {
-        let args = msgpack::array(&[msgpack::str(dir)]);
+    pub fn book_next_get_elevator_floor(&mut self, dir: Direction) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str())]);
         peripheral::book_request(self.addr, "getElevatorFloor", &args);
     }
     pub fn read_last_get_elevator_floor(&self) -> Result<i32, PeripheralError> {
@@ -199,8 +199,8 @@ impl DigitalAdapter {
     }
 
     /// 指定方向のエレベーターが目的フロアに到着したかを返す。
-    pub fn book_next_has_elevator_arrived(&mut self, dir: &str) {
-        let args = msgpack::array(&[msgpack::str(dir)]);
+    pub fn book_next_has_elevator_arrived(&mut self, dir: Direction) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str())]);
         peripheral::book_request(self.addr, "hasElevatorArrived", &args);
     }
     pub fn read_last_has_elevator_arrived(&self) -> Result<bool, PeripheralError> {
@@ -209,8 +209,8 @@ impl DigitalAdapter {
     }
 
     /// 指定方向のエレベーターの総フロア数を返す。
-    pub fn book_next_get_elevator_floors(&mut self, dir: &str) {
-        let args = msgpack::array(&[msgpack::str(dir)]);
+    pub fn book_next_get_elevator_floors(&mut self, dir: Direction) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str())]);
         peripheral::book_request(self.addr, "getElevatorFloors", &args);
     }
     pub fn read_last_get_elevator_floors(&self) -> Result<i32, PeripheralError> {
@@ -219,8 +219,8 @@ impl DigitalAdapter {
     }
 
     /// 指定フロアの名前を返す。
-    pub fn book_next_get_elevator_floor_name(&mut self, dir: &str, index: i32) {
-        let args = msgpack::array(&[msgpack::str(dir), msgpack::int(index)]);
+    pub fn book_next_get_elevator_floor_name(&mut self, dir: Direction, index: i32) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str()), msgpack::int(index)]);
         peripheral::book_request(self.addr, "getElevatorFloorName", &args);
     }
     pub fn read_last_get_elevator_floor_name(&self) -> Result<String, PeripheralError> {
@@ -229,8 +229,8 @@ impl DigitalAdapter {
     }
 
     /// 指定フロアへ移動し、Y 座標差分を返す。
-    pub fn book_next_goto_elevator_floor(&mut self, dir: &str, index: i32) {
-        let args = msgpack::array(&[msgpack::str(dir), msgpack::int(index)]);
+    pub fn book_next_goto_elevator_floor(&mut self, dir: Direction, index: i32) {
+        let args = msgpack::array(&[msgpack::str(dir.as_str()), msgpack::int(index)]);
         peripheral::book_action(self.addr, "gotoElevatorFloor", &args);
     }
     pub fn read_last_goto_elevator_floor(&self) -> Vec<Result<f64, PeripheralError>> {
