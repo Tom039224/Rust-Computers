@@ -82,17 +82,39 @@ public final class PeripheralRegistrations {
     // ==================================================================
 
     public static void registerCcTweaked() {
-        LOGGER.info("Registering CC:Tweaked peripherals (speaker, modem)");
+        LOGGER.info("Registering CC:Tweaked peripherals (speaker, modem, monitor, inventory)");
 
-        // Speaker
-        reg("computercraft", "speaker", "speaker",
-            new String[]{"playNote", "playSound", "stop"});
+        // Speaker - 専用実装を使用
+        Block speakerBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("computercraft", "speaker"));
+        if (speakerBlock != null && speakerBlock != Blocks.AIR) {
+            PeripheralProvider.register(speakerBlock, CcSpeakerPeripheral::new);
+            LOGGER.debug("Registered peripheral: computercraft:speaker -> speaker");
+        }
 
-        // Modem (3 block variants)
-        String[] modemMethods = {"open", "isOpen", "close", "closeAll", "transmit", "try_pull_modem_message"};
-        reg("computercraft", "wireless_modem_normal", "modem", modemMethods);
-        reg("computercraft", "wireless_modem_advanced", "modem", modemMethods);
-        reg("computercraft", "wired_modem_full", "modem", modemMethods);
+        // Modem (3 block variants) - 専用実装を使用
+        String[] modemBlocks = {"wireless_modem_normal", "wireless_modem_advanced", "wired_modem_full"};
+        for (String blockName : modemBlocks) {
+            Block modemBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("computercraft", blockName));
+            if (modemBlock != null && modemBlock != Blocks.AIR) {
+                PeripheralProvider.register(modemBlock, CcModemPeripheral::new);
+                LOGGER.debug("Registered peripheral: computercraft:{} -> modem", blockName);
+            }
+        }
+
+        // Monitor (2 block variants) - 専用実装を使用
+        String[] monitorBlocks = {"monitor_normal", "monitor_advanced"};
+        for (String blockName : monitorBlocks) {
+            Block monitorBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("computercraft", blockName));
+            if (monitorBlock != null && monitorBlock != Blocks.AIR) {
+                PeripheralProvider.register(monitorBlock, CcMonitorPeripheralExt::new);
+                LOGGER.debug("Registered peripheral: computercraft:{} -> monitor", blockName);
+            }
+        }
+
+        // Inventory - CC:Tweaked の GenericPeripheral として動的に付与されるため、
+        // ここでは登録しない（任意のインベントリブロックに自動的に付与される）
+        // Inventory is dynamically attached as CC:Tweaked's GenericPeripheral,
+        // so we don't register it here (automatically attached to any inventory block)
     }
 
     // ==================================================================
