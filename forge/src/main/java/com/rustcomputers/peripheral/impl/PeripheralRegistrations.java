@@ -549,8 +549,12 @@ public final class PeripheralRegistrations {
     public static void registerAdvancedPeripherals() {
         LOGGER.info("Registering Advanced Peripherals (12 types)");
 
-        reg("advancedperipherals", "block_reader", "block_reader",
-            new String[]{"getBlockName", "getBlockData", "getBlockStates", "isTileEntity"});
+        // BlockReader - 専用実装を使用
+        Block blockReaderBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("advancedperipherals", "block_reader"));
+        if (blockReaderBlock != null && blockReaderBlock != Blocks.AIR) {
+            PeripheralProvider.register(blockReaderBlock, ApBlockReaderPeripheral::new);
+            LOGGER.debug("Registered peripheral: advancedperipherals:block_reader -> block_reader");
+        }
 
         reg("advancedperipherals", "chat_box", "chat_box",
             new String[]{"sendMessage", "sendFormattedMessage", "sendMessageToPlayer", "sendToastToPlayer"});

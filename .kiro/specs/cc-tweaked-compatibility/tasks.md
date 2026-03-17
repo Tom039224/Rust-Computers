@@ -24,8 +24,8 @@
 - [x] 2.4 CC:Tweaked Inventory実装
 - [x] 2.5 CC:Tweaked Modem実装（イベント対応）
 - [x] 2.6 CC:Tweaked Monitor実装（イベント対応）
-- [-] 2.7 CC:Tweaked Speaker実装
-- [ ] 2.8 AdvancedPeripherals BlockReader実装
+- [x] 2.7 CC:Tweaked Speaker実装
+- [-] 2.8 AdvancedPeripherals BlockReader実装
 - [ ] 2.9 AdvancedPeripherals ChatBox実装
 - [ ] 2.10 AdvancedPeripherals MEBridge実装
 - [ ] 2.11 AdvancedPeripherals PlayerDetector実装
@@ -97,3 +97,4 @@
 - Phase 1の完了後、Phase 2と3は並行実行可能
 - テストは各実装フェーズと並行して実施すること
 - ドキュメントは実装と同時に作成すること
+- 各タスクが終わったらv0.2.xとしてコミットすること
