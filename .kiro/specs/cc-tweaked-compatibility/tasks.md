@@ -19,7 +19,7 @@
 ## Phase 2: Java Side Implementation
 
 - [x] 2.1 PeripheralProvider拡張設計
-- [ ] 2.2 イベント監視フレームワーク実装
+- [-] 2.2 イベント監視フレームワーク実装
 - [ ] 2.3 複数リクエスト・複数回答対応
 - [ ] 2.4 CC:Tweaked Inventory実装
 - [ ] 2.5 CC:Tweaked Modem実装（イベント対応）
