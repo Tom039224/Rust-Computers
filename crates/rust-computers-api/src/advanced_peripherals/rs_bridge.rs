@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use crate::error::PeripheralError;
 use crate::msgpack;
-use crate::peripheral::{self, PeriphAddr, Peripheral};
+use crate::peripheral::{self, Direction, PeriphAddr, Peripheral};
 
 // 型は me_bridge モジュールから再利用する。
 pub use super::me_bridge::{MEChemicalEntry, MEFluidEntry, MEItemEntry};
@@ -50,8 +50,8 @@ impl RSBridge {
     }
 
     /// アイテムを外部インベントリに出力する。
-    pub fn book_next_export_item(&mut self, filter: &[u8], side: &str) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
+    pub fn book_next_export_item(&mut self, filter: &[u8], side: Direction) {
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(side.id() as i32)]);
         peripheral::book_action(self.addr, "exportItem", &args);
     }
     pub fn read_last_export_item(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -65,8 +65,8 @@ impl RSBridge {
     }
 
     /// 外部インベントリからアイテムを取り込む。
-    pub fn book_next_import_item(&mut self, filter: &[u8], side: &str) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
+    pub fn book_next_import_item(&mut self, filter: &[u8], side: Direction) {
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(side.id() as i32)]);
         peripheral::book_action(self.addr, "importItem", &args);
     }
     pub fn read_last_import_item(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -80,8 +80,8 @@ impl RSBridge {
     }
 
     /// 指定ペリフェラルへアイテムを出力する。
-    pub fn book_next_export_item_to_peripheral(&mut self, filter: &[u8], target_name: &str) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
+    pub fn book_next_export_item_to_peripheral(&mut self, filter: &[u8], target: &impl Peripheral) {
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(target.periph_addr().raw() as i32)]);
         peripheral::book_action(self.addr, "exportItemToPeripheral", &args);
     }
     pub fn read_last_export_item_to_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -95,8 +95,8 @@ impl RSBridge {
     }
 
     /// 指定ペリフェラルからアイテムを取り込む。
-    pub fn book_next_import_item_from_peripheral(&mut self, filter: &[u8], target_name: &str) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
+    pub fn book_next_import_item_from_peripheral(&mut self, filter: &[u8], target: &impl Peripheral) {
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(target.periph_addr().raw() as i32)]);
         peripheral::book_action(self.addr, "importItemFromPeripheral", &args);
     }
     pub fn read_last_import_item_from_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -131,8 +131,8 @@ impl RSBridge {
     }
 
     /// 流体を出力する。
-    pub fn book_next_export_fluid(&mut self, filter: &[u8], side: &str) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
+    pub fn book_next_export_fluid(&mut self, filter: &[u8], side: Direction) {
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(side.id() as i32)]);
         peripheral::book_action(self.addr, "exportFluid", &args);
     }
     pub fn read_last_export_fluid(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -146,8 +146,8 @@ impl RSBridge {
     }
 
     /// 外部から流体を取り込む。
-    pub fn book_next_import_fluid(&mut self, filter: &[u8], side: &str) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
+    pub fn book_next_import_fluid(&mut self, filter: &[u8], side: Direction) {
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(side.id() as i32)]);
         peripheral::book_action(self.addr, "importFluid", &args);
     }
     pub fn read_last_import_fluid(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -161,8 +161,8 @@ impl RSBridge {
     }
 
     /// 指定ペリフェラルへ流体を出力する。
-    pub fn book_next_export_fluid_to_peripheral(&mut self, filter: &[u8], target_name: &str) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
+    pub fn book_next_export_fluid_to_peripheral(&mut self, filter: &[u8], target: &impl Peripheral) {
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(target.periph_addr().raw() as i32)]);
         peripheral::book_action(self.addr, "exportFluidToPeripheral", &args);
     }
     pub fn read_last_export_fluid_to_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -176,8 +176,8 @@ impl RSBridge {
     }
 
     /// 指定ペリフェラルから流体を取り込む。
-    pub fn book_next_import_fluid_from_peripheral(&mut self, filter: &[u8], target_name: &str) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
+    pub fn book_next_import_fluid_from_peripheral(&mut self, filter: &[u8], target: &impl Peripheral) {
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(target.periph_addr().raw() as i32)]);
         peripheral::book_action(self.addr, "importFluidFromPeripheral", &args);
     }
     pub fn read_last_import_fluid_from_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -212,8 +212,8 @@ impl RSBridge {
     }
 
     /// ケミカルを出力する。
-    pub fn book_next_export_chemical(&mut self, filter: &[u8], side: &str) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
+    pub fn book_next_export_chemical(&mut self, filter: &[u8], side: Direction) {
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(side.id() as i32)]);
         peripheral::book_action(self.addr, "exportChemical", &args);
     }
     pub fn read_last_export_chemical(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -227,8 +227,8 @@ impl RSBridge {
     }
 
     /// 外部からケミカルを取り込む。
-    pub fn book_next_import_chemical(&mut self, filter: &[u8], side: &str) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(side)]);
+    pub fn book_next_import_chemical(&mut self, filter: &[u8], side: Direction) {
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(side.id() as i32)]);
         peripheral::book_action(self.addr, "importChemical", &args);
     }
     pub fn read_last_import_chemical(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -245,9 +245,9 @@ impl RSBridge {
     pub fn book_next_export_chemical_to_peripheral(
         &mut self,
         filter: &[u8],
-        target_name: &str,
+        target: &impl Peripheral,
     ) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(target.periph_addr().raw() as i32)]);
         peripheral::book_action(self.addr, "exportChemicalToPeripheral", &args);
     }
     pub fn read_last_export_chemical_to_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -264,9 +264,9 @@ impl RSBridge {
     pub fn book_next_import_chemical_from_peripheral(
         &mut self,
         filter: &[u8],
-        target_name: &str,
+        target: &impl Peripheral,
     ) {
-        let args = msgpack::array(&[filter.to_vec(), msgpack::str(target_name)]);
+        let args = msgpack::array(&[filter.to_vec(), msgpack::int(target.periph_addr().raw() as i32)]);
         peripheral::book_action(self.addr, "importChemicalFromPeripheral", &args);
     }
     pub fn read_last_import_chemical_from_peripheral(&self) -> Vec<Result<i64, PeripheralError>> {
@@ -493,26 +493,26 @@ impl RSBridge {
         self.read_last_get_item()
     }
 
-    pub async fn async_export_item(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+    pub async fn async_export_item(&mut self, filter: &[u8], side: Direction) -> Vec<Result<i64, PeripheralError>> {
         self.book_next_export_item(filter, side);
         crate::wait_for_next_tick().await;
         self.read_last_export_item()
     }
 
-    pub async fn async_import_item(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+    pub async fn async_import_item(&mut self, filter: &[u8], side: Direction) -> Vec<Result<i64, PeripheralError>> {
         self.book_next_import_item(filter, side);
         crate::wait_for_next_tick().await;
         self.read_last_import_item()
     }
 
-    pub async fn async_export_item_to_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
-        self.book_next_export_item_to_peripheral(filter, target_name);
+    pub async fn async_export_item_to_peripheral(&mut self, filter: &[u8], target: &impl Peripheral) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_export_item_to_peripheral(filter, target);
         crate::wait_for_next_tick().await;
         self.read_last_export_item_to_peripheral()
     }
 
-    pub async fn async_import_item_from_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
-        self.book_next_import_item_from_peripheral(filter, target_name);
+    pub async fn async_import_item_from_peripheral(&mut self, filter: &[u8], target: &impl Peripheral) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_import_item_from_peripheral(filter, target);
         crate::wait_for_next_tick().await;
         self.read_last_import_item_from_peripheral()
     }
@@ -529,26 +529,26 @@ impl RSBridge {
         self.read_last_get_fluid()
     }
 
-    pub async fn async_export_fluid(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+    pub async fn async_export_fluid(&mut self, filter: &[u8], side: Direction) -> Vec<Result<i64, PeripheralError>> {
         self.book_next_export_fluid(filter, side);
         crate::wait_for_next_tick().await;
         self.read_last_export_fluid()
     }
 
-    pub async fn async_import_fluid(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+    pub async fn async_import_fluid(&mut self, filter: &[u8], side: Direction) -> Vec<Result<i64, PeripheralError>> {
         self.book_next_import_fluid(filter, side);
         crate::wait_for_next_tick().await;
         self.read_last_import_fluid()
     }
 
-    pub async fn async_export_fluid_to_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
-        self.book_next_export_fluid_to_peripheral(filter, target_name);
+    pub async fn async_export_fluid_to_peripheral(&mut self, filter: &[u8], target: &impl Peripheral) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_export_fluid_to_peripheral(filter, target);
         crate::wait_for_next_tick().await;
         self.read_last_export_fluid_to_peripheral()
     }
 
-    pub async fn async_import_fluid_from_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
-        self.book_next_import_fluid_from_peripheral(filter, target_name);
+    pub async fn async_import_fluid_from_peripheral(&mut self, filter: &[u8], target: &impl Peripheral) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_import_fluid_from_peripheral(filter, target);
         crate::wait_for_next_tick().await;
         self.read_last_import_fluid_from_peripheral()
     }
@@ -565,26 +565,26 @@ impl RSBridge {
         self.read_last_get_chemical()
     }
 
-    pub async fn async_export_chemical(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+    pub async fn async_export_chemical(&mut self, filter: &[u8], side: Direction) -> Vec<Result<i64, PeripheralError>> {
         self.book_next_export_chemical(filter, side);
         crate::wait_for_next_tick().await;
         self.read_last_export_chemical()
     }
 
-    pub async fn async_import_chemical(&mut self, filter: &[u8], side: &str) -> Vec<Result<i64, PeripheralError>> {
+    pub async fn async_import_chemical(&mut self, filter: &[u8], side: Direction) -> Vec<Result<i64, PeripheralError>> {
         self.book_next_import_chemical(filter, side);
         crate::wait_for_next_tick().await;
         self.read_last_import_chemical()
     }
 
-    pub async fn async_export_chemical_to_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
-        self.book_next_export_chemical_to_peripheral(filter, target_name);
+    pub async fn async_export_chemical_to_peripheral(&mut self, filter: &[u8], target: &impl Peripheral) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_export_chemical_to_peripheral(filter, target);
         crate::wait_for_next_tick().await;
         self.read_last_export_chemical_to_peripheral()
     }
 
-    pub async fn async_import_chemical_from_peripheral(&mut self, filter: &[u8], target_name: &str) -> Vec<Result<i64, PeripheralError>> {
-        self.book_next_import_chemical_from_peripheral(filter, target_name);
+    pub async fn async_import_chemical_from_peripheral(&mut self, filter: &[u8], target: &impl Peripheral) -> Vec<Result<i64, PeripheralError>> {
+        self.book_next_import_chemical_from_peripheral(filter, target);
         crate::wait_for_next_tick().await;
         self.read_last_import_chemical_from_peripheral()
     }
