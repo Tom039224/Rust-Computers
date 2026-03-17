@@ -609,12 +609,12 @@ public final class PeripheralRegistrations {
         reg("advancedperipherals", "nbt_storage", "nbt_storage",
             new String[]{"read", "writeJson", "writeTable"});
 
-        reg("advancedperipherals", "player_detector", "player_detector",
-            new String[]{
-                "getOnlinePlayers", "getPlayersInRange", "getPlayersInCoords", "getPlayersInCubic",
-                "isPlayersInRange", "isPlayersInCoords", "isPlayersInCubic", "isPlayerInRange",
-                "isPlayerInCoords", "isPlayerInCubic", "getPlayerPos", "getPlayer"
-            });
+        // PlayerDetector - 専用実装を使用
+        Block playerDetectorBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("advancedperipherals", "player_detector"));
+        if (playerDetectorBlock != null && playerDetectorBlock != Blocks.AIR) {
+            PeripheralProvider.register(playerDetectorBlock, ApPlayerDetectorPeripheral::new);
+            LOGGER.debug("Registered peripheral: advancedperipherals:player_detector -> player_detector");
+        }
 
         // RS Bridge (same methods as ME Bridge + chemical storage getters)
         reg("advancedperipherals", "rs_bridge", "rs_bridge",
