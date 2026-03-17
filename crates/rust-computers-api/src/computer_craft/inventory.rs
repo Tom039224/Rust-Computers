@@ -212,4 +212,23 @@ impl Inventory {
             .next()
             .unwrap_or(Ok(0))
     }
+
+    // 6. getItemLimit メソッド
+    /// 指定スロットの最大アイテム数を取得する（book-read パターン）。
+    /// Get the maximum item count for the specified slot (book-read pattern).
+    pub fn book_next_get_item_limit(&mut self, slot: u32) {
+        let args = peripheral::encode(&slot).unwrap_or_default();
+        peripheral::book_request(self.addr, "getItemLimit", &args);
+    }
+    
+    pub fn read_last_get_item_limit(&self) -> Result<u32, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getItemLimit")?;
+        peripheral::decode(&data)
+    }
+    
+    pub async fn async_get_item_limit(&mut self, slot: u32) -> Result<u32, PeripheralError> {
+        self.book_next_get_item_limit(slot);
+        crate::wait_for_next_tick().await;
+        self.read_last_get_item_limit()
+    }
 }

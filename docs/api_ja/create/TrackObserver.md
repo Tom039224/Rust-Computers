@@ -33,6 +33,17 @@ pub fn read_last_get_passing_train_name(&self) -> Result<Option<String>, Periphe
 
 **戻り値:** `Option<String>` — 列車名。列車がない場合は `None`。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 即時メソッド (Immediate)
 
 ### `is_train_passing_imm`

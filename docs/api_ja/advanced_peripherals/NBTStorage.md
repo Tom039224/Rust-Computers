@@ -41,6 +41,17 @@ pub fn read_last_write_table(&self) -> Result<bool, PeripheralError>
 
 **戻り値:** `bool` — 成功ステータス
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## イミディエイトメソッド
 
 なし。

@@ -66,6 +66,17 @@ pub fn read_last_toggle(&self) -> Result<bool, PeripheralError>
 
 **戻り値:** `bool` — 切り替えに成功した場合 `true`。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 即時メソッド (Immediate)
 
 ### `is_extended_imm`

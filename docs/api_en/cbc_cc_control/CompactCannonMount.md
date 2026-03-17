@@ -20,6 +20,17 @@ All of the following use the `book_read_imm!` macro pattern, providing `book_nex
 
 ---
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Action Methods
 
 ### `book_next_assemble` / `read_last_assemble`

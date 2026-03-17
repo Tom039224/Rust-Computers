@@ -51,6 +51,14 @@ impl Modem {
             .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
             .collect()
     }
+    pub async fn async_open(&mut self, channel: u32) -> Result<(), PeripheralError> {
+        self.book_next_open(channel);
+        crate::wait_for_next_tick().await;
+        self.read_last_open()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
 
     /// チャンネルが開いているか確認する。
     /// Check if a channel is open.
@@ -61,6 +69,11 @@ impl Modem {
     pub fn read_last_is_open(&self) -> Result<bool, PeripheralError> {
         let data = peripheral::read_result(self.addr, "isOpen")?;
         peripheral::decode(&data)
+    }
+    pub async fn async_is_open(&mut self, channel: u32) -> Result<bool, PeripheralError> {
+        self.book_next_is_open(channel);
+        crate::wait_for_next_tick().await;
+        self.read_last_is_open()
     }
 
     /// チャンネルを閉じる。
@@ -75,6 +88,14 @@ impl Modem {
             .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
             .collect()
     }
+    pub async fn async_close(&mut self, channel: u32) -> Result<(), PeripheralError> {
+        self.book_next_close(channel);
+        crate::wait_for_next_tick().await;
+        self.read_last_close()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
 
     /// 全チャンネルを閉じる。
     /// Close all channels.
@@ -86,6 +107,14 @@ impl Modem {
             .into_iter()
             .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
             .collect()
+    }
+    pub async fn async_close_all(&mut self) -> Result<(), PeripheralError> {
+        self.book_next_close_all();
+        crate::wait_for_next_tick().await;
+        self.read_last_close_all()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
     }
 
     /// serde でシリアライズ可能なペイロードを送信する。
@@ -106,6 +135,14 @@ impl Modem {
             .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
             .collect()
     }
+    pub async fn async_transmit<T: Serialize>(&mut self, channel: u32, reply_channel: u32, payload: &T) -> Result<(), PeripheralError> {
+        self.book_next_transmit(channel, reply_channel, payload);
+        crate::wait_for_next_tick().await;
+        self.read_last_transmit()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
 
     /// 生文字列ペイロードを送信する。
     /// Transmit a raw string payload.
@@ -123,6 +160,14 @@ impl Modem {
             .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
             .collect()
     }
+    pub async fn async_transmit_raw(&mut self, channel: u32, reply_channel: u32, payload: &str) -> Result<(), PeripheralError> {
+        self.book_next_transmit_raw(channel, reply_channel, payload);
+        crate::wait_for_next_tick().await;
+        self.read_last_transmit_raw()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
 
     /// 1tick 待機してメッセージを受信する。来なければ None。
     /// Try to receive a message within 1 tick. Returns None if nothing arrives.
@@ -132,6 +177,11 @@ impl Modem {
     pub fn read_last_try_receive_raw(&self) -> Result<Option<ReceiveData<String>>, PeripheralError> {
         let data = peripheral::read_result(self.addr, "try_pull_modem_message")?;
         peripheral::decode(&data)
+    }
+    pub async fn async_try_receive_raw(&mut self) -> Result<Option<ReceiveData<String>>, PeripheralError> {
+        self.book_next_try_receive_raw();
+        crate::wait_for_next_tick().await;
+        self.read_last_try_receive_raw()
     }
 
     /// メッセージ受信を待機する。
@@ -146,5 +196,35 @@ impl Modem {
                 return Ok(msg);
             }
         }
+    }
+
+    /// ワイヤレスモデムかどうかを確認する。
+    /// Check if this modem is wireless.
+    pub fn book_next_is_wireless(&mut self) {
+        peripheral::book_request(self.addr, "isWireless", &msgpack::array(&[]));
+    }
+    pub fn read_last_is_wireless(&self) -> Result<bool, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "isWireless")?;
+        peripheral::decode(&data)
+    }
+    pub async fn async_is_wireless(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_is_wireless();
+        crate::wait_for_next_tick().await;
+        self.read_last_is_wireless()
+    }
+
+    /// 有線ネットワーク上のペリフェラル名を取得する。
+    /// Get names of peripherals on the wired network.
+    pub fn book_next_get_names_remote(&mut self) {
+        peripheral::book_request(self.addr, "getNamesRemote", &msgpack::array(&[]));
+    }
+    pub fn read_last_get_names_remote(&self) -> Result<Vec<String>, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "getNamesRemote")?;
+        peripheral::decode(&data)
+    }
+    pub async fn async_get_names_remote(&mut self) -> Result<Vec<String>, PeripheralError> {
+        self.book_next_get_names_remote();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_names_remote()
     }
 }

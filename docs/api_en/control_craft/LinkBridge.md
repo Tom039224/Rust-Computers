@@ -38,6 +38,17 @@ pub fn get_output_imm(&self, index: f64) -> Result<f64, PeripheralError> { ... }
 **Parameters:** `index: f64` — Output index  
 **Returns:** `f64`
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Usage Example
 
 ```rust

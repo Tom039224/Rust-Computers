@@ -33,6 +33,17 @@ pub fn read_last_get_passing_train_name(&self) -> Result<Option<String>, Periphe
 
 **Returns:** `Option<String>` — the train name, or `None` if no train is passing.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 ### `is_train_passing_imm`

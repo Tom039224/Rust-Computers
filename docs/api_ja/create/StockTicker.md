@@ -76,6 +76,17 @@ pub fn read_last_get_item_detail(&self) -> Result<Option<CRItemDetail>, Peripher
 
 **戻り値:** `Option<CRItemDetail>` — アイテム詳細。スロットが空の場合は `None`。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 型定義
 
 ### `CRSlotInfo`

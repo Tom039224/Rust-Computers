@@ -146,6 +146,17 @@ pub fn read_last_list_chest(&self) -> Result<Vec<ADItemEntry>, PeripheralError> 
 ```
 **Returns:** `Vec<ADItemEntry>`
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 ### `get_owner_imm`

@@ -5,6 +5,17 @@
 
 Some-Peripherals BallisticAccelerator peripheral. Provides ballistic trajectory computation methods for calculating pitch angles, flight times, and drag coefficients. All computation methods have both async and immediate (`_imm`) variants.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Methods
 
 ### Async Methods

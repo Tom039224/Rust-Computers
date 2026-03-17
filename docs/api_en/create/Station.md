@@ -199,6 +199,17 @@ pub fn read_last_distance_to(&self) -> Result<(Option<f64>, Option<String>), Per
 
 **Returns:** `(Option<f64>, Option<String>)` — tuple of (distance, reason). Distance is `None` if unreachable.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 ### `is_in_assembly_mode_imm`

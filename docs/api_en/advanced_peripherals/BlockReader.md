@@ -18,26 +18,57 @@ The BlockReader API uses the three-function pattern for all methods:
 
 ### Pattern Explanation
 
-```lua
--- Method 1: book_next / read_last pattern
-reader.book_next_get_block_name()
-wait_for_next_tick()
-local name = reader.read_last_get_block_name()
+```rust
+use rust_computers_api::advanced_peripherals::BlockReader;
+use rust_computers_api::peripheral::find_imm;
 
--- Method 2: async pattern (recommended)
-local name = reader.async_get_block_name()
+// Example using the three-function pattern
+async fn example_block_reader() -> Result<(), rust_computers_api::error::PeripheralError> {
+    // Find the BlockReader peripheral
+    let mut block_reader = find_imm::<BlockReader>()?;
+    
+    // Method 1: Using book_next + read_last pattern (manual control)
+    block_reader.book_next_get_block_name();
+    rust_computers_api::wait_for_next_tick().await;
+    let block_name = block_reader.read_last_get_block_name()?;
+    println!("Block name: {}", block_name);
+    
+    // Method 2: Using async_* convenience method
+    let block_data = block_reader.async_get_block_data().await?;
+    println!("Block data: {:?}", block_data);
+    
+    // Method 3: Batch multiple operations
+    block_reader.book_next_get_block_states();
+    block_reader.book_next_is_tile_entity();
+    rust_computers_api::wait_for_next_tick().await;
+    
+    let block_states = block_reader.read_last_get_block_states()?;
+    let is_tile_entity = block_reader.read_last_is_tile_entity()?;
+    
+    println!("Block states: {:?}", block_states);
+    println!("Is tile entity: {}", is_tile_entity);
+    
+    Ok(())
+}
 ```
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
 
 ## Methods
 
-### `getBlockName()` / `book_next_get_block_name()` / `read_last_get_block_name()` / `async_get_block_name()`
+### Block Information
+
+#### `getBlockName()` / `book_next_get_block_name()` / `read_last_get_block_name()` / `async_get_block_name()`
 
 Get the registry name of the block in front of the peripheral.
-
-**Lua Signature:**
-```lua
-function getBlockName() -> string
-```
 
 **Rust Signatures:**
 ```rust
@@ -49,22 +80,230 @@ pub async fn async_get_block_name(&self) -> Result<String, PeripheralError>
 **Returns:** `string` — Block registry name (e.g., `"minecraft:stone"`, `"minecraft:chest"`)
 
 **Example:**
-```lua
-local reader = peripheral.find("advancedPeripherals:block_reader")
-local name = reader.async_get_block_name()
-print("Block: " .. name)
+```rust
+use rust_computers_api::advanced_peripherals::BlockReader;
+use rust_computers_api::peripheral::find_imm;
+
+async fn example() -> Result<(), rust_computers_api::error::PeripheralError> {
+    let mut block_reader = find_imm::<BlockReader>()?;
+    
+    // Using the async convenience method
+    let block_name = block_reader.async_get_block_name().await?;
+    println!("Block name: {}", block_name);
+    
+    // Or using the manual pattern
+    block_reader.book_next_get_block_name();
+    rust_computers_api::wait_for_next_tick().await;
+    let block_name = block_reader.read_last_get_block_name()?;
+    println!("Block name: {}", block_name);
+    
+    Ok(())
+}
+```
+---
+
+#### `getBlockState()` / `book_next_get_block_state()` / `read_last_get_block_state()` / `async_get_block_state()`
+
+Get the block state properties of the block in front.
+
+**Rust Signatures:**
+```rust
+pub fn book_next_get_block_state(&mut self)
+pub fn read_last_get_block_state(&self) -> Result<BlockState, PeripheralError>
+pub async fn async_get_block_state(&self) -> Result<BlockState, PeripheralError>
 ```
 
+**Returns:** `table` — Block state properties (e.g., `{facing: "north", powered: true}`)
+
+**Example:**
+```rust
+use rust_computers_api::advanced_peripherals::BlockReader;
+use rust_computers_api::peripheral::find_imm;
+
+async fn example() -> Result<(), rust_computers_api::error::PeripheralError> {
+    let mut block_reader = find_imm::<BlockReader>()?;
+    
+    // Get block state properties
+    let block_state = block_reader.async_get_block_state().await?;
+    
+    // BlockState is a msgpack::Value that can be inspected
+    if let Some(facing) = block_state.get("facing") {
+        println!("Block is facing: {}", facing);
+    }
+    
+    if let Some(powered) = block_state.get("powered") {
+        println!("Block is powered: {}", powered);
+    }
+    
+    Ok(())
+}
+```
+---
+
+#### `getBlockTags()` / `book_next_get_block_tags()` / `read_last_get_block_tags()` / `async_get_block_tags()`
+
+Get the tags associated with the block.
+
+**Rust Signatures:**
+```rust
+pub fn book_next_get_block_tags(&mut self)
+pub fn read_last_get_block_tags(&self) -> Result<Vec<String>, PeripheralError>
+pub async fn async_get_block_tags(&self) -> Result<Vec<String>, PeripheralError>
+```
+
+**Returns:** `table` — Array of tag strings
+
+**Example:**
+```rust
+// Rust example to be added
+```
+---
+
+#### `getBlockNBT()` / `book_next_get_block_nbt()` / `read_last_get_block_nbt()` / `async_get_block_nbt()`
+
+Get the NBT data of the block (if it's a tile entity).
+
+**Rust Signatures:**
+```rust
+pub fn book_next_get_block_nbt(&mut self)
+pub fn read_last_get_block_nbt(&self) -> Result<Option<NBTData>, PeripheralError>
+pub async fn async_get_block_nbt(&self) -> Result<Option<NBTData>, PeripheralError>
+```
+
+**Returns:** `table | nil` — NBT data or `nil` if not a tile entity
+
+**Example:**
+```rust
+// Rust example to be added
+```
+---
+
+#### `isTileEntity()` / `book_next_is_tile_entity()` / `read_last_is_tile_entity()` / `async_is_tile_entity()`
+
+Check if the block is a tile entity (block entity).
+
+**Rust Signatures:**
+```rust
+pub fn book_next_is_tile_entity(&mut self)
+pub fn read_last_is_tile_entity(&self) -> Result<bool, PeripheralError>
+pub async fn async_is_tile_entity(&self) -> Result<bool, PeripheralError>
+```
+
+**Returns:** `boolean` — `true` if the block is a tile entity
+
+**Example:**
+```rust
+// Rust example to be added
+```
+---
+
+#### `getBlockInfo()` / `book_next_get_block_info()` / `read_last_get_block_info()` / `async_get_block_info()`
+
+Get complete information about the block.
+
+**Rust Signatures:**
+```rust
+pub fn book_next_get_block_info(&mut self)
+pub fn read_last_get_block_info(&self) -> Result<BlockInfo, PeripheralError>
+pub async fn async_get_block_info(&self) -> Result<BlockInfo, PeripheralError>
+```
+
+**Returns:** `table` — Complete block information
+
+**Example:**
+```rust
+// Rust example to be added
+```
+---
+
+## Events
+
+The BlockReader peripheral does not generate events.
+
+---
+
+## Usage Examples
+
+### Example 1: Identify Block Type
+
+```rust
+// Rust example to be added
+```
+### Example 2: Check for Specific Block
+
+```rust
+// Rust example to be added
+```
+### Example 3: Read Chest NBT Data
+
+```rust
+// Rust example to be added
+```
+### Example 4: Monitor Block State Changes
+
+```rust
+// Rust example to be added
+```
+### Example 5: Automated Block Detection System
+
+```rust
+// Rust example to be added
+```
+---
+
+## Error Handling
+
+All methods may throw errors in the following cases:
+
+- **No block in front**: There is no block directly in front of the reader
+- **Peripheral disconnected**: The BlockReader is no longer accessible
+- **Invalid NBT data**: NBT data cannot be parsed
+
+**Example Error Handling:**
+```rust
+// Rust example to be added
+```
+---
+
+## Type Definitions
+
+### BlockInfo
+```rust
+// Rust example to be added
+```
+### BlockState
+```rust
+// Rust example to be added
+```
+---
+
+## Notes
+
+- The BlockReader reads the block directly in front of it
+- Tile entities include chests, furnaces, hoppers, etc.
+- NBT data is only available for tile entities
+- Block state properties vary by block type
+- Tags help identify block categories
+- The three-function pattern allows for efficient batch operations
+- BlockReader requires line of sight to the block
+
+---
+
+## Related
+
+- [GeoScanner](./GeoScanner.md) — For scanning multiple blocks
+- [PlayerDetector](./PlayerDetector.md) — For detecting players
+- [AdvancedPeripherals Documentation](https://advancedperipherals.readthedocs.io/) — Official documentation
+
+**Example:**
+```rust
+// Rust example to be added
+```
 ---
 
 ### `getBlockData()` / `book_next_get_block_data()` / `read_last_get_block_data()` / `async_get_block_data()`
 
 Get the NBT data of the block in front of the peripheral.
-
-**Lua Signature:**
-```lua
-function getBlockData() -> table
-```
 
 **Rust Signatures:**
 ```rust
@@ -81,26 +320,14 @@ pub async fn async_get_block_data(&self) -> Result<Value, PeripheralError>
 - Custom blocks may have additional properties
 
 **Example:**
-```lua
-local reader = peripheral.find("advancedPeripherals:block_reader")
-local data = reader.async_get_block_data()
-
--- Check if it's a chest with items
-if data.Items then
-  print("Found " .. #data.Items .. " items in chest")
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `getBlockStates()` / `book_next_get_block_states()` / `read_last_get_block_states()` / `async_get_block_states()`
 
 Get the block state properties of the block in front of the peripheral.
-
-**Lua Signature:**
-```lua
-function getBlockStates() -> table
-```
 
 **Rust Signatures:**
 ```rust
@@ -118,28 +345,14 @@ pub async fn async_get_block_states(&self) -> Result<Value, PeripheralError>
 - Doors: `{facing = "north", half = "lower", hinge = "left", open = false, powered = false}`
 
 **Example:**
-```lua
-local reader = peripheral.find("advancedPeripherals:block_reader")
-local states = reader.async_get_block_states()
-
--- Check if a door is open
-if states.open then
-  print("Door is open")
-else
-  print("Door is closed")
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `isTileEntity()` / `book_next_is_tile_entity()` / `read_last_is_tile_entity()` / `async_is_tile_entity()`
 
 Check if the block in front of the peripheral is a tile entity (block entity).
-
-**Lua Signature:**
-```lua
-function isTileEntity() -> boolean
-```
 
 **Rust Signatures:**
 ```rust
@@ -159,19 +372,9 @@ pub async fn async_is_tile_entity(&self) -> Result<bool, PeripheralError>
 - Custom mod blocks with tile entities
 
 **Example:**
-```lua
-local reader = peripheral.find("advancedPeripherals:block_reader")
-local is_te = reader.async_is_tile_entity()
-
-if is_te then
-  print("Block has tile entity data")
-  local data = reader.async_get_block_data()
-  print("NBT: " .. textutils.serialize(data))
-else
-  print("Block is a simple block")
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Events
@@ -184,96 +387,98 @@ The BlockReader peripheral does not generate events.
 
 ### Example 1: Identify Block Type
 
-```lua
-local reader = peripheral.find("advancedPeripherals:block_reader")
+```rust
+use rust_computers_api::advanced_peripherals::BlockReader;
+use rust_computers_api::peripheral::find_imm;
 
-local name = reader.async_get_block_name()
-local states = reader.async_get_block_states()
-
-print("Block: " .. name)
-print("States: " .. textutils.serialize(states))
+async fn identify_block_type() -> Result<(), rust_computers_api::error::PeripheralError> {
+    let mut block_reader = find_imm::<BlockReader>()?;
+    
+    // Get block name
+    let block_name = block_reader.async_get_block_name().await?;
+    println!("Block type: {}", block_name);
+    
+    // Check if it's a tile entity
+    let is_tile_entity = block_reader.async_is_tile_entity().await?;
+    println!("Is tile entity: {}", is_tile_entity);
+    
+    // Get block tags
+    let tags = block_reader.async_get_block_tags().await?;
+    println!("Block tags: {:?}", tags);
+    
+    // Check for specific block types
+    if block_name == "minecraft:chest" {
+        println!("Found a chest!");
+    } else if block_name == "minecraft:furnace" {
+        println!("Found a furnace!");
+    } else if tags.contains(&"minecraft:logs".to_string()) {
+        println!("Found a log!");
+    }
+    
+    Ok(())
+}
 ```
 
 ### Example 2: Check Chest Contents
 
-```lua
-local reader = peripheral.find("advancedPeripherals:block_reader")
+```rust
+use rust_computers_api::advanced_peripherals::BlockReader;
+use rust_computers_api::peripheral::find_imm;
 
-local name = reader.async_get_block_name()
-if name == "minecraft:chest" then
-  local data = reader.async_get_block_data()
-  if data.Items then
-    print("Chest contains " .. #data.Items .. " stacks")
-    for i, item in ipairs(data.Items) do
-      print(("  Slot %d: %d x %s"):format(item.Slot, item.Count, item.id))
-    end
-  else
-    print("Chest is empty")
-  end
-else
-  print("Not a chest: " .. name)
-end
+async fn check_chest_contents() -> Result<(), rust_computers_api::error::PeripheralError> {
+    let mut block_reader = find_imm::<BlockReader>()?;
+    
+    // First check if it's a chest
+    let block_name = block_reader.async_get_block_name().await?;
+    
+    if block_name == "minecraft:chest" {
+        println!("Found a chest, checking contents...");
+        
+        // Get NBT data
+        let nbt_data = block_reader.async_get_block_data().await?;
+        
+        // Check for items in the chest
+        if let Some(items) = nbt_data.get("Items") {
+            if let Some(items_array) = items.as_array() {
+                println!("Chest contains {} items:", items_array.len());
+                
+                for (i, item) in items_array.iter().enumerate() {
+                    if let Some(item_map) = item.as_map() {
+                        let slot = item_map.get("Slot").and_then(|v| v.as_u64());
+                        let id = item_map.get("id").and_then(|v| v.as_str());
+                        let count = item_map.get("Count").and_then(|v| v.as_u64());
+                        
+                        if let (Some(slot), Some(id), Some(count)) = (slot, id, count) {
+                            println!("  Slot {}: {} x{}", slot, id, count);
+                        }
+                    }
+                }
+            }
+        } else {
+            println!("Chest is empty");
+        }
+    } else {
+        println!("Not a chest, found: {}", block_name);
+    }
+    
+    Ok(())
+}
 ```
-
 ### Example 3: Monitor Block State Changes
 
-```lua
-local reader = peripheral.find("advancedPeripherals:block_reader")
-
-local last_state = nil
-
-while true do
-  local states = reader.async_get_block_states()
-  
-  if last_state and last_state.open ~= states.open then
-    if states.open then
-      print("Door opened!")
-    else
-      print("Door closed!")
-    end
-  end
-  
-  last_state = states
-  sleep(0.5)
-end
+```rust
+// Rust example to be added
 ```
-
 ### Example 4: Detect Redstone Signal
 
-```lua
-local reader = peripheral.find("advancedPeripherals:block_reader")
-
-local name = reader.async_get_block_name()
-if name == "minecraft:redstone_wire" then
-  local states = reader.async_get_block_states()
-  local power = tonumber(states.power) or 0
-  print("Redstone power level: " .. power)
-end
+```rust
+// Rust example to be added
 ```
-
 ### Example 5: Inventory Monitoring
 
-```lua
-local reader = peripheral.find("advancedPeripherals:block_reader")
-
-local function get_inventory_size()
-  local data = reader.async_get_block_data()
-  if data.Items then
-    local max_slot = 0
-    for _, item in ipairs(data.Items) do
-      if item.Slot > max_slot then
-        max_slot = item.Slot
-      end
-    end
-    return max_slot
-  end
-  return 0
-end
-
-local size = get_inventory_size()
-print("Inventory has " .. size .. " slots")
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Error Handling
@@ -285,52 +490,78 @@ All methods may throw errors in the following cases:
 - **Invalid state**: The block state cannot be read
 
 **Example Error Handling:**
-```lua
-local reader = peripheral.find("advancedPeripherals:block_reader")
-if not reader then
-  error("BlockReader not found")
-end
-
-local success, result = pcall(function()
-  return reader.async_get_block_name()
-end)
-
-if not success then
-  print("Error: " .. result)
-else
-  print("Block: " .. result)
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Type Definitions
 
 ### BlockState
-```lua
-{
-  [key: string]: string | number | boolean,
-  -- Examples:
-  -- facing = "north"
-  -- half = "bottom"
-  -- open = false
-  -- power = 15
+```rust
+// BlockState is represented as a msgpack::Value (dynamic map)
+use rust_computers_api::msgpack;
+
+// Example of working with BlockState
+fn process_block_state(state: msgpack::Value) {
+    // Check if block has specific properties
+    if let Some(facing) = state.get("facing") {
+        println!("Facing direction: {}", facing);
+    }
+    
+    if let Some(powered) = state.get("powered") {
+        let is_powered: bool = powered.as_bool().unwrap_or(false);
+        println!("Powered: {}", is_powered);
+    }
+    
+    // Common block state properties:
+    // - facing: "north", "south", "east", "west", "up", "down"
+    // - powered: true/false
+    // - open: true/false (doors, gates)
+    // - half: "top", "bottom" (stairs, slabs)
+    // - axis: "x", "y", "z" (logs, pillars)
+    // - waterlogged: true/false
 }
 ```
 
 ### NBTData
-```lua
-{
-  -- Varies by block type
-  -- Common properties:
-  id?: string,           -- Block ID
-  Items?: table,         -- Inventory items (if applicable)
-  BurnTime?: number,     -- Furnace burn time (if applicable)
-  CookTime?: number,     -- Furnace cook time (if applicable)
-  -- ... other block-specific properties
+```rust
+// NBTData is also represented as msgpack::Value
+// The structure varies by block type
+
+// Example for a chest
+fn process_chest_nbt(nbt: msgpack::Value) {
+    if let Some(items) = nbt.get("Items") {
+        println!("Chest contains items");
+        
+        // Items is typically an array of item entries
+        if let Some(items_array) = items.as_array() {
+            for item in items_array {
+                if let Some(item_map) = item.as_map() {
+                    let slot = item_map.get("Slot").and_then(|v| v.as_u64());
+                    let id = item_map.get("id").and_then(|v| v.as_str());
+                    let count = item_map.get("Count").and_then(|v| v.as_u64());
+                    
+                    if let (Some(slot), Some(id), Some(count)) = (slot, id, count) {
+                        println!("  Slot {}: {} x{}", slot, id, count);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Example for a furnace
+fn process_furnace_nbt(nbt: msgpack::Value) {
+    if let Some(burn_time) = nbt.get("BurnTime") {
+        println!("Burn time remaining: {}", burn_time);
+    }
+    
+    if let Some(cook_time) = nbt.get("CookTime") {
+        println!("Cook time: {}", cook_time);
+    }
 }
 ```
-
 ---
 
 ## Notes

@@ -183,6 +183,17 @@ pub fn read_last_get_conversions(&self) -> Result<Vec<ConversionInfo>, Periphera
 
 [GasNetwork](GasNetwork.md) を参照: `getTemperature`、`getPressure`、`getHeatEnergy`、`getGasMass`、`getPosition`、`getNetworkInfo`。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## イミディエイトメソッド
 
 すべてのimm_getterメソッドには `_imm` バリアントがあります：

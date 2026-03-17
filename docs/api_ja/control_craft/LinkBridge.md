@@ -38,6 +38,17 @@ pub fn get_output_imm(&self, index: f64) -> Result<f64, PeripheralError> { ... }
 **パラメータ:** `index: f64` — 出力インデックス  
 **戻り値:** `f64`
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 使用例
 
 ```rust

@@ -77,6 +77,17 @@ pub fn book_next_cycle_signal_type(&mut self)
 pub fn read_last_cycle_signal_type(&self) -> Result<(), PeripheralError>
 ```
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 ### `get_state_imm`

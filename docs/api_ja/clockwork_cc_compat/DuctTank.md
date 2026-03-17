@@ -89,6 +89,17 @@ pub fn read_last_get_network_info(&self) -> Result<Value, PeripheralError>
 ```
 **戻り値:** `Value`（動的テーブル）
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## イミディエイトメソッド
 
 - `get_height_imm(&self) -> Result<f64, PeripheralError>`

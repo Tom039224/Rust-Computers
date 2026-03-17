@@ -27,6 +27,17 @@ pub struct TMWindow {
 ```
 GPU ウィンドウ領域を表す構造体。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## Book-Read メソッド
 
 ### `book_next_set_size` / `read_last_set_size`

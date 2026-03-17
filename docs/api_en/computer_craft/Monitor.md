@@ -18,31 +18,34 @@ The Monitor API uses the three-function pattern for all methods:
 
 ### Pattern Explanation
 
-```lua
--- Method 1: book_next / read_last pattern
-monitor.book_next_clear()
-wait_for_next_tick()
-monitor.read_last_clear()
-
--- Method 2: async pattern (recommended)
-monitor.async_clear()
+```rust
+// Rust example to be added
 ```
-
 ## Monitor Types
 
 - **Normal Monitor** — Monochrome display
 - **Advanced Monitor** — Color display with touch support
+
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+- *_imm() methods (immediate execution variants)
+- poll_touch() (async) - for touch events
+- book_next_try_poll_touch / read_last_try_poll_touch
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods (except poll_touch)
+- monitor_resize event
+
 
 ## Methods
 
 ### `setTextScale(scale)` / `book_next_set_text_scale(scale)` / `read_last_set_text_scale()` / `async_set_text_scale(scale)`
 
 Set the text scale of the monitor.
-
-**Lua Signature:**
-```lua
-function setTextScale(scale: number) -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -61,21 +64,14 @@ pub async fn async_set_text_scale(&self, scale: f32) -> Result<(), PeripheralErr
 - Valid values: 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0
 
 **Example:**
-```lua
-local monitor = peripheral.find("monitor")
-monitor.async_set_text_scale(2.0)
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `getTextScale()` / `book_next_get_text_scale()` / `read_last_get_text_scale()` / `async_get_text_scale()`
 
 Get the current text scale.
-
-**Lua Signature:**
-```lua
-function getTextScale() -> number
-```
 
 **Rust Signatures:**
 ```rust
@@ -87,22 +83,14 @@ pub async fn async_get_text_scale(&self) -> Result<f32, PeripheralError>
 **Returns:** `number` — Current text scale
 
 **Example:**
-```lua
-local monitor = peripheral.find("monitor")
-local scale = monitor.async_get_text_scale()
-print("Current scale: " .. scale)
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `write(text)` / `book_next_write(text)` / `read_last_write()` / `async_write(text)`
 
 Write text at the current cursor position.
-
-**Lua Signature:**
-```lua
-function write(text: string) -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -117,21 +105,14 @@ pub async fn async_write(&self, text: &str) -> Result<(), PeripheralError>
 **Returns:** `nil`
 
 **Example:**
-```lua
-local monitor = peripheral.find("monitor")
-monitor.async_write("Hello, World!")
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `clear()` / `book_next_clear()` / `read_last_clear()` / `async_clear()`
 
 Clear the entire monitor screen.
-
-**Lua Signature:**
-```lua
-function clear() -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -143,21 +124,14 @@ pub async fn async_clear(&self) -> Result<(), PeripheralError>
 **Returns:** `nil`
 
 **Example:**
-```lua
-local monitor = peripheral.find("monitor")
-monitor.async_clear()
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `clearLine()` / `book_next_clear_line()` / `read_last_clear_line()` / `async_clear_line()`
 
 Clear the current line.
-
-**Lua Signature:**
-```lua
-function clearLine() -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -173,11 +147,6 @@ pub async fn async_clear_line(&self) -> Result<(), PeripheralError>
 ### `scroll(lines)` / `book_next_scroll(lines)` / `read_last_scroll()` / `async_scroll(lines)`
 
 Scroll the screen vertically.
-
-**Lua Signature:**
-```lua
-function scroll(lines: number) -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -197,11 +166,6 @@ pub async fn async_scroll(&self, lines: u32) -> Result<(), PeripheralError>
 
 Get the current cursor position.
 
-**Lua Signature:**
-```lua
-function getCursorPos() -> number, number
-```
-
 **Rust Signatures:**
 ```rust
 pub fn book_next_get_cursor_pos(&mut self)
@@ -212,22 +176,14 @@ pub async fn async_get_cursor_pos(&self) -> Result<(u32, u32), PeripheralError>
 **Returns:** `number, number` — X and Y coordinates (1-based)
 
 **Example:**
-```lua
-local monitor = peripheral.find("monitor")
-local x, y = monitor.async_get_cursor_pos()
-print(("Cursor at (%d, %d)"):format(x, y))
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `setCursorPos(x, y)` / `book_next_set_cursor_pos(x, y)` / `read_last_set_cursor_pos()` / `async_set_cursor_pos(x, y)`
 
 Set the cursor position.
-
-**Lua Signature:**
-```lua
-function setCursorPos(x: number, y: number) -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -243,21 +199,14 @@ pub async fn async_set_cursor_pos(&self, x: u32, y: u32) -> Result<(), Periphera
 **Returns:** `nil`
 
 **Example:**
-```lua
-local monitor = peripheral.find("monitor")
-monitor.async_set_cursor_pos(1, 1)
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `getCursorBlink()` / `book_next_get_cursor_blink()` / `read_last_get_cursor_blink()` / `async_get_cursor_blink()`
 
 Get the cursor blink state.
-
-**Lua Signature:**
-```lua
-function getCursorBlink() -> boolean
-```
 
 **Rust Signatures:**
 ```rust
@@ -273,11 +222,6 @@ pub async fn async_get_cursor_blink(&self) -> Result<bool, PeripheralError>
 ### `setCursorBlink(blink)` / `book_next_set_cursor_blink(blink)` / `read_last_set_cursor_blink()` / `async_set_cursor_blink(blink)`
 
 Set the cursor blink state.
-
-**Lua Signature:**
-```lua
-function setCursorBlink(blink: boolean) -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -297,11 +241,6 @@ pub async fn async_set_cursor_blink(&self, blink: bool) -> Result<(), Peripheral
 
 Get the monitor size in characters.
 
-**Lua Signature:**
-```lua
-function getSize() -> number, number
-```
-
 **Rust Signatures:**
 ```rust
 pub fn book_next_get_size(&mut self)
@@ -312,22 +251,14 @@ pub async fn async_get_size(&self) -> Result<(u32, u32), PeripheralError>
 **Returns:** `number, number` — Width and height in characters
 
 **Example:**
-```lua
-local monitor = peripheral.find("monitor")
-local width, height = monitor.async_get_size()
-print(("Monitor size: %d x %d"):format(width, height))
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `setTextColor(color)` / `book_next_set_text_color(color)` / `read_last_set_text_color()` / `async_set_text_color(color)`
 
 Set the text color (advanced monitors only).
-
-**Lua Signature:**
-```lua
-function setTextColor(color: number) -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -357,11 +288,6 @@ pub async fn async_set_text_color(&self, color: u32) -> Result<(), PeripheralErr
 
 Get the current text color.
 
-**Lua Signature:**
-```lua
-function getTextColor() -> number
-```
-
 **Rust Signatures:**
 ```rust
 pub fn book_next_get_text_color(&mut self)
@@ -376,11 +302,6 @@ pub async fn async_get_text_color(&self) -> Result<u32, PeripheralError>
 ### `setBackgroundColor(color)` / `book_next_set_background_color(color)` / `read_last_set_background_color()` / `async_set_background_color(color)`
 
 Set the background color (advanced monitors only).
-
-**Lua Signature:**
-```lua
-function setBackgroundColor(color: number) -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -400,11 +321,6 @@ pub async fn async_set_background_color(&self, color: u32) -> Result<(), Periphe
 
 Get the current background color.
 
-**Lua Signature:**
-```lua
-function getBackgroundColor() -> number
-```
-
 **Rust Signatures:**
 ```rust
 pub fn book_next_get_background_color(&mut self)
@@ -419,11 +335,6 @@ pub async fn async_get_background_color(&self) -> Result<u32, PeripheralError>
 ### `blit(text, textColor, backgroundColor)` / `book_next_blit(...)` / `read_last_blit()` / `async_blit(...)`
 
 Write text with specified colors using blit.
-
-**Lua Signature:**
-```lua
-function blit(text: string, textColor: string, backgroundColor: string) -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -449,7 +360,7 @@ pub async fn async_blit(&self, text: &str, text_color: &str, bg_color: &str) -> 
 
 ## Events
 
-### `monitor_resize`
+### `monitor_resize` 🚧
 
 Fired when the monitor size changes.
 
@@ -458,16 +369,9 @@ Fired when the monitor size changes.
 2. `string` — Monitor side or network ID
 
 **Example:**
-```lua
-local monitor = peripheral.find("monitor")
-
-while true do
-  local event, side = os.pullEvent("monitor_resize")
-  local width, height = monitor.async_get_size()
-  print(("Monitor resized to %d x %d"):format(width, height))
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `monitor_touch`
@@ -481,110 +385,38 @@ Fired when an advanced monitor is right-clicked.
 4. `number` — Y coordinate (1-based)
 
 **Example:**
-```lua
-local monitor = peripheral.find("monitor")
-
-while true do
-  local event, side, x, y = os.pullEvent("monitor_touch")
-  print(("Touched at (%d, %d)"):format(x, y))
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Usage Examples
 
 ### Example 1: Basic Text Display
 
-```lua
-local monitor = peripheral.find("monitor")
-
-monitor.async_clear()
-monitor.async_set_cursor_pos(1, 1)
-monitor.async_write("Hello, World!")
+```rust
+// Rust example to be added
 ```
-
 ### Example 2: Colored Text (Advanced Monitor)
 
-```lua
-local monitor = peripheral.find("monitor")
-
-monitor.async_clear()
-monitor.async_set_cursor_pos(1, 1)
-
-monitor.async_set_text_color(0xFF0000)  -- Red
-monitor.async_write("Red Text")
-
-monitor.async_set_cursor_pos(1, 2)
-monitor.async_set_text_color(0x00FF00)  -- Green
-monitor.async_write("Green Text")
+```rust
+// Rust example to be added
 ```
-
 ### Example 3: Terminal Redirection
 
-```lua
-local monitor = peripheral.find("monitor")
-
--- Redirect all output to monitor
-term.redirect(monitor)
-
-print("This appears on the monitor")
-print("And this too!")
-
--- Restore normal output
-term.restore()
+```rust
+// Rust example to be added
 ```
-
 ### Example 4: Touch Button
 
-```lua
-local monitor = peripheral.find("monitor")
-
-local function draw_button(x, y, text, color)
-  monitor.async_set_cursor_pos(x, y)
-  monitor.async_set_background_color(color)
-  monitor.async_write(" " .. text .. " ")
-  monitor.async_set_background_color(0x000000)
-end
-
-monitor.async_clear()
-draw_button(2, 2, "Button 1", 0xFF0000)
-draw_button(2, 4, "Button 2", 0x00FF00)
-
-while true do
-  local event, side, x, y = os.pullEvent("monitor_touch")
-  
-  if y == 2 then
-    print("Button 1 pressed")
-  elseif y == 4 then
-    print("Button 2 pressed")
-  end
-end
+```rust
+// Rust example to be added
 ```
-
 ### Example 5: Dynamic Scaling
 
-```lua
-local monitor = peripheral.find("monitor")
-local scale = 0.5
-
-while true do
-  monitor.async_set_text_scale(scale)
-  monitor.async_clear()
-  monitor.async_set_cursor_pos(1, 1)
-  monitor.async_write("Scale: " .. scale)
-  
-  local w, h = monitor.async_get_size()
-  monitor.async_set_cursor_pos(1, 2)
-  monitor.async_write(("Size: %d x %d"):format(w, h))
-  
-  scale = scale + 0.5
-  if scale > 5.0 then scale = 0.5 end
-  
-  sleep(2)
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Error Handling
@@ -597,45 +429,25 @@ All methods may throw errors in the following cases:
 - **Invalid position**: Cursor position is out of bounds
 
 **Example Error Handling:**
-```lua
-local monitor = peripheral.find("monitor")
-if not monitor then
-  error("No monitor found")
-end
-
-local success, result = pcall(function()
-  monitor.async_set_text_scale(2.0)
-end)
-
-if not success then
-  print("Error: " .. result)
-else
-  print("Scale set successfully")
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Type Definitions
 
 ### Color
-```lua
--- RGB color value (0x000000 to 0xFFFFFF)
-type Color = number
+```rust
+// Rust example to be added
 ```
-
 ### Position
-```lua
--- (x, y) coordinates (1-based)
-type Position = (number, number)
+```rust
+// Rust example to be added
 ```
-
 ### Size
-```lua
--- (width, height) in characters
-type Size = (number, number)
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Notes

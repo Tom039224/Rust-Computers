@@ -5,6 +5,17 @@
 
 Toms-Peripherals Redstone Port peripheral providing per-side redstone I/O including analog and bundled signals.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Methods
 
 ### Immediate Methods

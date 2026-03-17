@@ -26,6 +26,17 @@ pub fn read_last_get_total_efficiency(&self) -> Result<f64, PeripheralError>
 **パラメータ:** なし。  
 **戻り値:** 全体効率 (`f64`)。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## Immediate メソッド
 
 ### `get_attached_engines_imm`

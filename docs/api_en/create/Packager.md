@@ -80,6 +80,17 @@ pub fn read_last_get_package(&self) -> Result<Option<CRPackage>, PeripheralError
 
 **Returns:** `Option<CRPackage>` — current package info, or `None` if no package.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Event Methods
 
 ### `book_next_try_pull_package_received` / `read_last_try_pull_package_received`

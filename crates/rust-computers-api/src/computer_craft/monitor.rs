@@ -351,6 +351,166 @@ impl Monitor {
             .collect()
     }
 
+    // ====== Async variants / 非同期バリアント ======
+
+    /// テキストスケールを設定する（非同期）。
+    /// Set text scale (async).
+    pub async fn async_set_text_scale(&mut self, scale: MonitorTextScale) -> Result<(), PeripheralError> {
+        self.book_next_set_text_scale(scale);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_text_scale()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
+
+    /// テキストスケールを取得する（非同期）。
+    /// Get text scale (async).
+    pub async fn async_get_text_scale(&mut self) -> Result<MonitorTextScale, PeripheralError> {
+        self.book_next_get_text_scale();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_text_scale()
+    }
+
+    /// テキストを書き込む（非同期）。
+    /// Write text (async).
+    pub async fn async_write(&mut self, text: &str) -> Result<(), PeripheralError> {
+        self.book_next_write(text);
+        crate::wait_for_next_tick().await;
+        self.read_last_write()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
+
+    /// 画面をクリアする（非同期）。
+    /// Clear screen (async).
+    pub async fn async_clear(&mut self) -> Result<(), PeripheralError> {
+        self.book_next_clear();
+        crate::wait_for_next_tick().await;
+        self.read_last_clear()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
+
+    /// 現在行をクリアする（非同期）。
+    /// Clear current line (async).
+    pub async fn async_clear_line(&mut self) -> Result<(), PeripheralError> {
+        self.book_next_clear_line();
+        crate::wait_for_next_tick().await;
+        self.read_last_clear_line()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
+
+    /// 画面をスクロールする（非同期）。
+    /// Scroll screen (async).
+    pub async fn async_scroll(&mut self, y: u32) -> Result<(), PeripheralError> {
+        self.book_next_scroll(y);
+        crate::wait_for_next_tick().await;
+        self.read_last_scroll()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
+
+    /// カーソル位置を取得する（非同期）。
+    /// Get cursor position (async).
+    pub async fn async_get_cursor_pos(&mut self) -> Result<MonitorPosition, PeripheralError> {
+        self.book_next_get_cursor_pos();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_cursor_pos()
+    }
+
+    /// カーソル位置を設定する（非同期）。
+    /// Set cursor position (async).
+    pub async fn async_set_cursor_pos(&mut self, pos: MonitorPosition) -> Result<(), PeripheralError> {
+        self.book_next_set_cursor_pos(pos);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_cursor_pos()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
+
+    /// カーソル点滅状態を取得する（非同期）。
+    /// Get cursor blink state (async).
+    pub async fn async_get_cursor_blink(&mut self) -> Result<bool, PeripheralError> {
+        self.book_next_get_cursor_blink();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_cursor_blink()
+    }
+
+    /// カーソル点滅を設定する（非同期）。
+    /// Set cursor blink (async).
+    pub async fn async_set_cursor_blink(&mut self, blink: bool) -> Result<(), PeripheralError> {
+        self.book_next_set_cursor_blink(blink);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_cursor_blink()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
+
+    /// モニターサイズを取得する（非同期）。
+    /// Get monitor size (async).
+    pub async fn async_get_size(&mut self) -> Result<MonitorSize, PeripheralError> {
+        self.book_next_get_size();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_size()
+    }
+
+    /// テキスト色を設定する（非同期）。
+    /// Set text color (async).
+    pub async fn async_set_text_color(&mut self, color: MonitorColor) -> Result<(), PeripheralError> {
+        self.book_next_set_text_color(color);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_text_color()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
+
+    /// テキスト色を取得する（非同期）。
+    /// Get text color (async).
+    pub async fn async_get_text_color(&mut self) -> Result<MonitorColor, PeripheralError> {
+        self.book_next_get_text_color();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_text_color()
+    }
+
+    /// 背景色を設定する（非同期）。
+    /// Set background color (async).
+    pub async fn async_set_background_color(&mut self, color: MonitorColor) -> Result<(), PeripheralError> {
+        self.book_next_set_background_color(color);
+        crate::wait_for_next_tick().await;
+        self.read_last_set_background_color()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
+
+    /// 背景色を取得する（非同期）。
+    /// Get background color (async).
+    pub async fn async_get_background_color(&mut self) -> Result<MonitorColor, PeripheralError> {
+        self.book_next_get_background_color();
+        crate::wait_for_next_tick().await;
+        self.read_last_get_background_color()
+    }
+
+    /// blit で文字列を描画する（非同期）。
+    /// Draw text with blit (async).
+    pub async fn async_blit(&mut self, text: &str, text_color: MonitorColor, background_color: MonitorColor) -> Result<(), PeripheralError> {
+        self.book_next_blit(text, text_color, background_color);
+        crate::wait_for_next_tick().await;
+        self.read_last_blit()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
+
     // ====== アドバンスドモニター判定 / Advanced monitor check ======
 
     /// アドバンスドモニター（colored）かどうかを即時返す。

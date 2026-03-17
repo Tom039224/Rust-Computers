@@ -5,6 +5,17 @@
 
 Toms-Peripherals Keyboard peripheral for handling keyboard input events.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Methods
 
 ### Async Action Methods

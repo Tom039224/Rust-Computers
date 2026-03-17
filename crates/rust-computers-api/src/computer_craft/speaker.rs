@@ -98,6 +98,19 @@ impl Speaker {
             .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
             .collect()
     }
+    pub async fn async_play_note(
+        &mut self,
+        instrument: SpeakerInstrument,
+        volume: Option<f32>,
+        pitch: Option<f32>,
+    ) -> Result<(), PeripheralError> {
+        self.book_next_play_note(instrument, volume, pitch);
+        crate::wait_for_next_tick().await;
+        self.read_last_play_note()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
 
     /// サウンドを再生する。
     /// Play a sound.
@@ -125,6 +138,19 @@ impl Speaker {
             .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
             .collect()
     }
+    pub async fn async_play_sound(
+        &mut self,
+        name: &str,
+        volume: Option<f32>,
+        pitch: Option<f32>,
+    ) -> Result<(), PeripheralError> {
+        self.book_next_play_sound(name, volume, pitch);
+        crate::wait_for_next_tick().await;
+        self.read_last_play_sound()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
+    }
 
     /// 再生を停止する。
     /// Stop playback.
@@ -136,5 +162,13 @@ impl Speaker {
             .into_iter()
             .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
             .collect()
+    }
+    pub async fn async_stop(&mut self) -> Result<(), PeripheralError> {
+        self.book_next_stop();
+        crate::wait_for_next_tick().await;
+        self.read_last_stop()
+            .into_iter()
+            .next()
+            .unwrap_or(Ok(()))
     }
 }

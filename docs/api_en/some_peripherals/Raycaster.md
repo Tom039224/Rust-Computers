@@ -5,6 +5,17 @@
 
 Some-Peripherals Raycaster peripheral. Casts rays into the world to detect blocks, entities, and Valkyrien Skies ships. Also provides configuration and facing direction queries.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Methods
 
 ### Async Methods

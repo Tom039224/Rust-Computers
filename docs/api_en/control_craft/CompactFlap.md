@@ -36,6 +36,17 @@ pub fn read_last_set_tilt(&self) -> Result<(), PeripheralError> { ... }
 ```
 **Parameters:** `tilt: f64` — Tilt angle in degrees
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Usage Example
 
 ```rust

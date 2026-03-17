@@ -5,6 +5,17 @@
 
 Some-Peripherals Radar peripheral. Scans for entities, players, and Valkyrien Skies ships within a given radius.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Methods
 
 ### Async Methods

@@ -66,6 +66,17 @@ pub fn read_last_toggle(&self) -> Result<bool, PeripheralError>
 
 **Returns:** `bool` — `true` if the toggle succeeded.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 ### `is_extended_imm`

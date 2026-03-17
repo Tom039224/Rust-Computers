@@ -132,6 +132,17 @@ pub fn read_last_get_item_limit_in_slot(&self) -> Result<u32, PeripheralError> {
 
 **戻り値:** `Result<u32, PeripheralError>` — 最大スタック数
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 型定義
 
 ### `SPItemData`

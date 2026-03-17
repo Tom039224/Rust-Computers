@@ -84,6 +84,17 @@ pub fn read_last_get_item_detail(&self) -> Result<Option<CRItemDetail>, Peripher
 
 **Returns:** `Option<CRItemDetail>` — item details, or `None` if slot is empty.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Event Methods
 
 ### `book_next_try_pull_package_received` / `read_last_try_pull_package_received`

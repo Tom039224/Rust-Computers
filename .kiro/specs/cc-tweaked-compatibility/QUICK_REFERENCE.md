@@ -1,5 +1,7 @@
 # Quick Reference: API Design Pattern
 
+> **⚠️ Implementation Status Note**: This document describes the intended API design pattern. Currently, most peripherals have `book_next_*` and `read_last_*` methods implemented, but `async_*` variants are only partially implemented. See the [Implementation Status](#implementation-status) section below for details.
+
 ## Three-Function Pair Pattern
 
 ### Pattern Structure
@@ -429,6 +431,83 @@ fn prop_event_termination() {
 pub async fn async_get_data(&self) -> Result<Data, PeripheralError> {
     // Implementation
 }
+```
+
+---
+
+## Implementation Status
+
+### ✅ Fully Implemented Peripherals
+
+The following peripherals have all three function variants (`book_next_*`, `read_last_*`, and `async_*`) implemented:
+
+**CC:Tweaked - Inventory**:
+- `size()`, `list()`, `get_item_detail()`, `push_items()`, `pull_items()`
+- ⚠️ Missing: `get_item_limit()`
+
+### 🟡 Partially Implemented Peripherals
+
+The following peripherals have `book_next_*` and `read_last_*` implemented, but are missing `async_*` variants:
+
+**CC:Tweaked**:
+- Modem (also missing: `is_wireless()`, `get_names_remote()`, event system)
+- Monitor (also missing: `monitor_resize` event)
+- Speaker (also missing: `speaker_audio_empty` event)
+
+**AdvancedPeripherals** (all have `book_next_*` / `read_last_*` only):
+- MEBridge (~60 methods)
+- PlayerDetector (also missing: `playerJoin`/`playerLeave` events)
+- ChatBox (also missing: `chat` event)
+- BlockReader
+- GeoScanner
+- EnvironmentDetector
+- EnergyDetector
+- And others...
+
+**Other Mods** (all have `book_next_*` / `read_last_*` only):
+- Create peripherals
+- Control-Craft peripherals
+- Clockwork CC Compat peripherals
+- Some-Peripherals
+- Toms-Peripherals
+- CBC CC Control
+
+### 🚧 Event System Status
+
+Event handling is currently **not fully implemented**. The following events are documented but not yet functional:
+- `modem_message` (Modem)
+- `monitor_resize` (Monitor)
+- `monitor_touch` (Monitor) - partially implemented via `poll_touch()`
+- `chat` (ChatBox)
+- `playerJoin` / `playerLeave` (PlayerDetector)
+- `speaker_audio_empty` (Speaker)
+
+### Recommended Usage
+
+Until `async_*` variants are fully implemented, use the `book_next_*` / `read_last_*` pattern:
+
+```rust
+// Current recommended pattern
+let mut sensor = find_imm::<Sensor>().unwrap();
+
+sensor.book_next_get_data();
+wait_for_next_tick().await;
+
+loop {
+    let data = sensor.read_last_get_data()?;
+    process(&data);
+    
+    sensor.book_next_get_data();
+    wait_for_next_tick().await;
+}
+```
+
+For peripherals with `async_*` implemented (like Inventory), you can use:
+
+```rust
+// For fully implemented peripherals
+let inventory = find_imm::<Inventory>().unwrap();
+let items = inventory.async_list().await?;
 ```
 
 ---

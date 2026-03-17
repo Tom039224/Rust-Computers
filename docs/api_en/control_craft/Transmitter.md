@@ -56,6 +56,17 @@ pub fn read_last_set_protocol(&self) -> Result<(), PeripheralError> { ... }
 ```
 **Parameters:** `protocol: i64` — Protocol number
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Usage Example
 
 ```rust

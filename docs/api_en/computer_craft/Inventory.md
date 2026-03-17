@@ -18,26 +18,29 @@ The Inventory API uses the three-function pattern for all methods:
 
 ### Pattern Explanation
 
-```lua
--- Method 1: book_next / read_last pattern
-inventory.book_next_list()
-wait_for_next_tick()
-local items = inventory.read_last_list()
-
--- Method 2: async pattern (recommended)
-local items = inventory.async_list()
+```rust
+// Rust example to be added
 ```
+## Implementation Status
+
+### ✅ Implemented
+
+- book_next_size / read_last_size / async_size
+- book_next_list / read_last_list / async_list
+- book_next_get_item_detail / read_last_get_item_detail / async_get_item_detail
+- book_next_push_items / read_last_push_items / async_push_items
+- book_next_pull_items / read_last_pull_items / async_pull_items
+
+### 🚧 Not Yet Implemented
+
+- get_item_limit() method (all variants)
+
 
 ## Methods
 
 ### `size()` / `book_next_size()` / `read_last_size()` / `async_size()`
 
 Get the number of slots in the inventory.
-
-**Lua Signature:**
-```lua
-function size() -> number
-```
 
 **Rust Signatures:**
 ```rust
@@ -49,22 +52,14 @@ pub async fn async_size(&self) -> Result<u32, PeripheralError>
 **Returns:** `number` — Total number of slots
 
 **Example:**
-```lua
-local inventory = peripheral.find("inventory")
-local slot_count = inventory.async_size()
-print("Inventory has " .. slot_count .. " slots")
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `list()` / `book_next_list()` / `read_last_list()` / `async_list()`
 
 List all items in the inventory with summary information.
-
-**Lua Signature:**
-```lua
-function list() -> table
-```
 
 **Rust Signatures:**
 ```rust
@@ -76,33 +71,18 @@ pub async fn async_list(&self) -> Result<BTreeMap<u32, SlotInfo>, PeripheralErro
 **Returns:** `table` — Sparse table mapping slot numbers to item info
 
 **Item Info Structure:**
-```lua
-{
-  name = "minecraft:diamond",  -- Item registry name
-  count = 5,                    -- Stack size
-}
+```rust
+// Rust example to be added
 ```
-
 **Example:**
-```lua
-local inventory = peripheral.find("inventory")
-local items = inventory.async_list()
-
-for slot, item in pairs(items) do
-  print(("Slot %d: %d x %s"):format(slot, item.count, item.name))
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `getItemDetail(slot)` / `book_next_get_item_detail(slot)` / `read_last_get_item_detail()` / `async_get_item_detail(slot)`
 
 Get detailed information about an item in a specific slot.
-
-**Lua Signature:**
-```lua
-function getItemDetail(slot: number) -> table | nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -117,48 +97,21 @@ pub async fn async_get_item_detail(&self, slot: u32) -> Result<Option<ItemDetail
 **Returns:** `table | nil` — Item detail table or `nil` if slot is empty
 
 **Item Detail Structure:**
-```lua
-{
-  name = "minecraft:diamond",      -- Item registry name
-  count = 5,                        -- Stack size
-  displayName = "Diamond",          -- Display name
-  maxCount = 64,                    -- Maximum stack size
-  damage = 10,                      -- Durability damage (optional)
-  maxDamage = 100,                  -- Maximum durability (optional)
-  tags = {                          -- Item tags
-    ["minecraft:gems"] = true,
-  },
-}
+```rust
+// Rust example to be added
 ```
-
 **Example:**
-```lua
-local inventory = peripheral.find("inventory")
-local item = inventory.async_get_item_detail(1)
-
-if item then
-  print(("Slot 1: %d x %s"):format(item.count, item.displayName))
-  if item.damage then
-    print(("Durability: %d/%d"):format(item.damage, item.maxDamage))
-  end
-else
-  print("Slot 1 is empty")
-end
+```rust
+// Rust example to be added
 ```
-
 **Error Handling:**
 - Throws error if slot number is out of range
 
 ---
 
-### `getItemLimit(slot)` / `book_next_get_item_limit(slot)` / `read_last_get_item_limit()` / `async_get_item_limit(slot)`
+### `getItemLimit(slot)` 🚧 / `book_next_get_item_limit(slot)` / `read_last_get_item_limit()` / `async_get_item_limit(slot)`
 
 Get the maximum number of items that can be stored in a slot.
-
-**Lua Signature:**
-```lua
-function getItemLimit(slot: number) -> number
-```
 
 **Rust Signatures:**
 ```rust
@@ -173,22 +126,14 @@ pub async fn async_get_item_limit(&self, slot: u32) -> Result<u32, PeripheralErr
 **Returns:** `number` — Maximum item count for this slot (usually 64, but can be higher for special inventories)
 
 **Example:**
-```lua
-local inventory = peripheral.find("inventory")
-local limit = inventory.async_get_item_limit(1)
-print("Slot 1 can hold up to " .. limit .. " items")
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `pushItems(toName, fromSlot, limit?, toSlot?)` / `book_next_push_items(...)` / `read_last_push_items()` / `async_push_items(...)`
 
 Transfer items from this inventory to another connected inventory.
-
-**Lua Signature:**
-```lua
-function pushItems(toName: string, fromSlot: number, limit?: number, toSlot?: number) -> number
-```
 
 **Rust Signatures:**
 ```rust
@@ -210,15 +155,9 @@ pub async fn async_push_items(&self, to_name: &str, from_slot: u32, limit: Optio
 - Destination inventory must exist and be accessible
 
 **Example:**
-```lua
-local source = peripheral.find("minecraft:chest_0")
-local dest_name = "minecraft:chest_1"
-
--- Transfer 32 diamonds from slot 1 to destination
-local moved = source.async_push_items(dest_name, 1, 32)
-print("Moved " .. moved .. " items")
+```rust
+// Rust example to be added
 ```
-
 **Error Handling:**
 - Throws error if destination inventory doesn't exist
 - Throws error if slot is out of range
@@ -228,11 +167,6 @@ print("Moved " .. moved .. " items")
 ### `pullItems(fromName, fromSlot, limit?, toSlot?)` / `book_next_pull_items(...)` / `read_last_pull_items()` / `async_pull_items(...)`
 
 Transfer items from another connected inventory into this one.
-
-**Lua Signature:**
-```lua
-function pullItems(fromName: string, fromSlot: number, limit?: number, toSlot?: number) -> number
-```
 
 **Rust Signatures:**
 ```rust
@@ -254,15 +188,9 @@ pub async fn async_pull_items(&self, from_name: &str, from_slot: u32, limit: Opt
 - Source inventory must exist and be accessible
 
 **Example:**
-```lua
-local dest = peripheral.find("minecraft:chest_0")
-local source_name = "minecraft:chest_1"
-
--- Pull 32 diamonds from source slot 1
-local moved = dest.async_pull_items(source_name, 1, 32)
-print("Pulled " .. moved .. " items")
+```rust
+// Rust example to be added
 ```
-
 **Error Handling:**
 - Throws error if source inventory doesn't exist
 - Throws error if slot is out of range
@@ -279,84 +207,29 @@ The Inventory peripheral does not generate events.
 
 ### Example 1: List All Items
 
-```lua
-local inventory = peripheral.find("minecraft:chest")
-
-local items = inventory.async_list()
-for slot, item in pairs(items) do
-  print(("Slot %d: %d x %s"):format(slot, item.count, item.name))
-end
+```rust
+// Rust example to be added
 ```
-
 ### Example 2: Find Item by Name
 
-```lua
-local inventory = peripheral.find("minecraft:chest")
-
-local function find_item(name)
-  local items = inventory.async_list()
-  for slot, item in pairs(items) do
-    if item.name == name then
-      return slot, item
-    end
-  end
-  return nil
-end
-
-local slot, item = find_item("minecraft:diamond")
-if slot then
-  print(("Found %d diamonds in slot %d"):format(item.count, slot))
-end
+```rust
+// Rust example to be added
 ```
-
 ### Example 3: Transfer Items Between Chests
 
-```lua
-local source = peripheral.find("minecraft:chest_0")
-local dest_name = "minecraft:chest_1"
-
--- Transfer all items from source to destination
-local items = source.async_list()
-for slot, item in pairs(items) do
-  local moved = source.async_push_items(dest_name, slot)
-  print(("Moved %d items from slot %d"):format(moved, slot))
-end
+```rust
+// Rust example to be added
 ```
-
 ### Example 4: Calculate Total Capacity
 
-```lua
-local inventory = peripheral.find("minecraft:chest")
-
-local total_capacity = 0
-for i = 1, inventory.async_size() do
-  total_capacity = total_capacity + inventory.async_get_item_limit(i)
-end
-
-print("Total capacity: " .. total_capacity)
+```rust
+// Rust example to be added
 ```
-
 ### Example 5: Inventory Sorting
 
-```lua
-local inventory = peripheral.find("minecraft:chest")
-
--- Sort items by name
-local items = inventory.async_list()
-local sorted = {}
-for slot, item in pairs(items) do
-  table.insert(sorted, {slot = slot, item = item})
-end
-
-table.sort(sorted, function(a, b)
-  return a.item.name < b.item.name
-end)
-
-for _, entry in ipairs(sorted) do
-  print(("Slot %d: %s"):format(entry.slot, entry.item.name))
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Error Handling
@@ -369,48 +242,21 @@ All methods may throw errors in the following cases:
 - **Destination not found**: Target inventory doesn't exist or isn't accessible
 
 **Example Error Handling:**
-```lua
-local inventory = peripheral.find("minecraft:chest")
-if not inventory then
-  error("No inventory found")
-end
-
-local success, result = pcall(function()
-  return inventory.async_list()
-end)
-
-if not success then
-  print("Error: " .. result)
-else
-  print("Got " .. #result .. " items")
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Type Definitions
 
 ### ItemDetail
-```lua
-{
-  name: string,           -- Registry name (e.g., "minecraft:diamond")
-  count: number,          -- Stack size
-  displayName: string,    -- Display name
-  maxCount: number,       -- Maximum stack size
-  damage?: number,        -- Durability damage (optional)
-  maxDamage?: number,     -- Maximum durability (optional)
-  tags?: table,           -- Item tags (optional)
-}
+```rust
+// Rust example to be added
 ```
-
 ### SlotInfo
-```lua
-{
-  name: string,   -- Registry name
-  count: number,  -- Stack size
-}
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Notes

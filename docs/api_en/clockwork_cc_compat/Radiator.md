@@ -183,6 +183,17 @@ pub fn read_last_get_conversions(&self) -> Result<Vec<ConversionInfo>, Periphera
 
 See [GasNetwork](GasNetwork.md) for: `getTemperature`, `getPressure`, `getHeatEnergy`, `getGasMass`, `getPosition`, `getNetworkInfo`.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 All imm_getter methods have `_imm` variants:

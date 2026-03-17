@@ -18,26 +18,28 @@ The ChatBox API uses the three-function pattern for all methods:
 
 ### Pattern Explanation
 
-```lua
--- Method 1: book_next / read_last pattern
-chat.book_next_send_message("Hello!")
-wait_for_next_tick()
-local ok = chat.read_last_send_message()
-
--- Method 2: async pattern (recommended)
-local ok = chat.async_send_message("Hello!")
+```rust
+// Rust example to be added
 ```
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+- chat event
+
 
 ## Methods
 
-### `sendMessage(message, prefix?, brackets?, color?)` / `book_next_send_message(...)` / `read_last_send_message()` / `async_send_message(...)`
+### Message Sending
+
+#### `sendMessage(message, prefix?, brackets?, color?)` / `book_next_send_message(...)` / `read_last_send_message()` / `async_send_message(...)`
 
 Send a plain text message to all players on the server.
-
-**Lua Signature:**
-```lua
-function sendMessage(message: string, prefix?: string, brackets?: string, color?: string) -> boolean
-```
 
 **Rust Signatures:**
 ```rust
@@ -48,6 +50,195 @@ pub async fn async_send_message(&self, message: &str, prefix: Option<&str>, brac
 
 **Parameters:**
 - `message: string` — Message text to send
+- `prefix?: string` — Optional prefix (e.g., "[Server]")
+- `brackets?: string` — Optional bracket style (e.g., "[]", "<>")
+- `color?: string` — Optional color code (e.g., "red", "blue")
+
+**Returns:** `boolean` — `true` if message was sent successfully
+
+**Example:**
+```rust
+// Rust example to be added
+```
+---
+
+#### `sendMessageToPlayer(message, player, prefix?, brackets?, color?)` / `book_next_send_message_to_player(...)` / `read_last_send_message_to_player()` / `async_send_message_to_player(...)`
+
+Send a message to a specific player.
+
+**Rust Signatures:**
+```rust
+pub fn book_next_send_message_to_player(&mut self, message: &str, player: &str, prefix: Option<&str>, brackets: Option<&str>, color: Option<&str>)
+pub fn read_last_send_message_to_player(&self) -> Result<bool, PeripheralError>
+pub async fn async_send_message_to_player(&self, message: &str, player: &str, prefix: Option<&str>, brackets: Option<&str>, color: Option<&str>) -> Result<bool, PeripheralError>
+```
+
+**Parameters:**
+- `message: string` — Message text
+- `player: string` — Player name
+- `prefix?: string` — Optional prefix
+- `brackets?: string` — Optional bracket style
+- `color?: string` — Optional color code
+
+**Returns:** `boolean` — `true` if message was sent
+
+**Example:**
+```rust
+// Rust example to be added
+```
+---
+
+#### `sendJsonMessage(json)` / `book_next_send_json_message(json)` / `read_last_send_json_message()` / `async_send_json_message(json)`
+
+Send a JSON-formatted message to all players.
+
+**Rust Signatures:**
+```rust
+pub fn book_next_send_json_message(&mut self, json: &str)
+pub fn read_last_send_json_message(&self) -> Result<bool, PeripheralError>
+pub async fn async_send_json_message(&self, json: &str) -> Result<bool, PeripheralError>
+```
+
+**Parameters:**
+- `json: string` — JSON text component string
+
+**Returns:** `boolean` — `true` if message was sent
+
+**Example:**
+```rust
+// Rust example to be added
+```
+---
+
+#### `sendJsonMessageToPlayer(json, player)` / `book_next_send_json_message_to_player(json, player)` / `read_last_send_json_message_to_player()` / `async_send_json_message_to_player(json, player)`
+
+Send a JSON-formatted message to a specific player.
+
+**Rust Signatures:**
+```rust
+pub fn book_next_send_json_message_to_player(&mut self, json: &str, player: &str)
+pub fn read_last_send_json_message_to_player(&self) -> Result<bool, PeripheralError>
+pub async fn async_send_json_message_to_player(&self, json: &str, player: &str) -> Result<bool, PeripheralError>
+```
+
+**Parameters / Returns:** Same as `sendJsonMessage`
+
+---
+
+### Toast Notifications
+
+#### `sendToast(title, description?, icon?)` / `book_next_send_toast(...)` / `read_last_send_toast()` / `async_send_toast(...)`
+
+Send a toast notification to all players.
+
+**Rust Signatures:**
+```rust
+pub fn book_next_send_toast(&mut self, title: &str, description: Option<&str>, icon: Option<&str>)
+pub fn read_last_send_toast(&self) -> Result<bool, PeripheralError>
+pub async fn async_send_toast(&self, title: &str, description: Option<&str>, icon: Option<&str>) -> Result<bool, PeripheralError>
+```
+
+**Parameters:**
+- `title: string` — Toast title
+- `description?: string` — Optional description text
+- `icon?: string` — Optional icon item (e.g., "minecraft:diamond")
+
+**Returns:** `boolean` — `true` if toast was sent
+
+**Example:**
+```rust
+// Rust example to be added
+```
+---
+
+#### `sendToastToPlayer(title, player, description?, icon?)` / `book_next_send_toast_to_player(...)` / `read_last_send_toast_to_player()` / `async_send_toast_to_player(...)`
+
+Send a toast notification to a specific player.
+
+**Rust Signatures:**
+```rust
+pub fn book_next_send_toast_to_player(&mut self, title: &str, player: &str, description: Option<&str>, icon: Option<&str>)
+pub fn read_last_send_toast_to_player(&self) -> Result<bool, PeripheralError>
+pub async fn async_send_toast_to_player(&self, title: &str, player: &str, description: Option<&str>, icon: Option<&str>) -> Result<bool, PeripheralError>
+```
+
+**Parameters / Returns:** Same as `sendToast`
+
+---
+
+## Events
+
+The ChatBox peripheral does not generate events.
+
+---
+
+## Usage Examples
+
+### Example 1: Server Announcement
+
+```rust
+// Rust example to be added
+```
+### Example 2: Welcome New Players
+
+```rust
+// Rust example to be added
+```
+### Example 3: Colored Messages
+
+```rust
+// Rust example to be added
+```
+### Example 4: JSON Formatted Messages
+
+```rust
+// Rust example to be added
+```
+### Example 5: Achievement System
+
+```rust
+// Rust example to be added
+```
+---
+
+## Error Handling
+
+All methods may throw errors in the following cases:
+
+- **Player not found**: Target player is not online
+- **Invalid JSON**: JSON message is malformed
+- **Peripheral disconnected**: The ChatBox is no longer accessible
+
+**Example Error Handling:**
+```rust
+// Rust example to be added
+```
+---
+
+## Type Definitions
+
+### TextComponent
+```rust
+// Rust example to be added
+```
+---
+
+## Notes
+
+- Messages are sent to all players or specific players
+- JSON messages support advanced formatting and interactions
+- Toast notifications appear in the top-right corner
+- Color codes include: black, dark_blue, dark_green, dark_aqua, dark_red, dark_purple, gold, gray, dark_gray, blue, green, aqua, red, light_purple, yellow, white
+- The three-function pattern allows for efficient batch operations
+- ChatBox requires network connectivity to reach players
+
+---
+
+## Related
+
+- [PlayerDetector](./PlayerDetector.md) — For detecting players
+- [MEBridge](./MEBridge.md) — For inventory management
+- [AdvancedPeripherals Documentation](https://advancedperipherals.readthedocs.io/) — Official documentation
 - `prefix?: string` — Optional prefix (e.g., `"[Server]"`)
 - `brackets?: string` — Optional bracket style (e.g., `"<>"`, `"[]"`)
 - `color?: string` — Optional color code (e.g., `"red"`, `"#FF0000"`)
@@ -55,22 +246,14 @@ pub async fn async_send_message(&self, message: &str, prefix: Option<&str>, brac
 **Returns:** `boolean` — `true` if message was sent successfully
 
 **Example:**
-```lua
-local chat = peripheral.find("advancedPeripherals:chat_box")
-local ok = chat.async_send_message("Server is restarting!", "[Server]", "[]", "red")
-print("Message sent: " .. tostring(ok))
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `sendFormattedMessage(json, prefix?, brackets?, color?)` / `book_next_send_formatted_message(...)` / `read_last_send_formatted_message()` / `async_send_formatted_message(...)`
 
 Send a JSON-formatted text component message to all players.
-
-**Lua Signature:**
-```lua
-function sendFormattedMessage(json: string, prefix?: string, brackets?: string, color?: string) -> boolean
-```
 
 **Rust Signatures:**
 ```rust
@@ -100,22 +283,14 @@ pub async fn async_send_formatted_message(&self, json: &str, prefix: Option<&str
 ```
 
 **Example:**
-```lua
-local chat = peripheral.find("advancedPeripherals:chat_box")
-local json = '{"text":"Important!","color":"red","bold":true}'
-local ok = chat.async_send_formatted_message(json, "[Alert]")
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `sendMessageToPlayer(message, player, prefix?, brackets?, color?)` / `book_next_send_message_to_player(...)` / `read_last_send_message_to_player()` / `async_send_message_to_player(...)`
 
 Send a plain text message to a specific player.
-
-**Lua Signature:**
-```lua
-function sendMessageToPlayer(message: string, player: string, prefix?: string, brackets?: string, color?: string) -> boolean
-```
 
 **Rust Signatures:**
 ```rust
@@ -134,21 +309,14 @@ pub async fn async_send_message_to_player(&self, message: &str, player: &str, pr
 **Returns:** `boolean` — `true` if message was sent successfully
 
 **Example:**
-```lua
-local chat = peripheral.find("advancedPeripherals:chat_box")
-local ok = chat.async_send_message_to_player("Welcome!", "Steve", "[Server]")
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `sendFormattedMessageToPlayer(json, player, prefix?, brackets?, color?)` / `book_next_send_formatted_message_to_player(...)` / `read_last_send_formatted_message_to_player()` / `async_send_formatted_message_to_player(...)`
 
 Send a JSON-formatted text component message to a specific player.
-
-**Lua Signature:**
-```lua
-function sendFormattedMessageToPlayer(json: string, player: string, prefix?: string, brackets?: string, color?: string) -> boolean
-```
 
 **Rust Signatures:**
 ```rust
@@ -172,11 +340,6 @@ pub async fn async_send_formatted_message_to_player(&self, json: &str, player: &
 
 Send a toast notification to a specific player.
 
-**Lua Signature:**
-```lua
-function sendToastToPlayer(title: string, subtitle: string, player: string, prefix?: string, brackets?: string, color?: string) -> boolean
-```
-
 **Rust Signatures:**
 ```rust
 pub fn book_next_send_toast_to_player(&mut self, title: &str, subtitle: &str, player: &str, prefix: Option<&str>, brackets: Option<&str>, color: Option<&str>)
@@ -195,21 +358,14 @@ pub async fn async_send_toast_to_player(&self, title: &str, subtitle: &str, play
 **Returns:** `boolean` — `true` if toast was sent successfully
 
 **Example:**
-```lua
-local chat = peripheral.find("advancedPeripherals:chat_box")
-local ok = chat.async_send_toast_to_player("Achievement!", "You found diamonds!", "Steve")
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `sendFormattedToastToPlayer(jsonTitle, jsonSubtitle, player, prefix?, brackets?, color?)` / `book_next_send_formatted_toast_to_player(...)` / `read_last_send_formatted_toast_to_player()` / `async_send_formatted_toast_to_player(...)`
 
 Send a JSON-formatted toast notification to a specific player.
-
-**Lua Signature:**
-```lua
-function sendFormattedToastToPlayer(jsonTitle: string, jsonSubtitle: string, player: string, prefix?: string, brackets?: string, color?: string) -> boolean
-```
 
 **Rust Signatures:**
 ```rust
@@ -240,79 +396,29 @@ The ChatBox peripheral does not generate events.
 
 ### Example 1: Server Announcement
 
-```lua
-local chat = peripheral.find("advancedPeripherals:chat_box")
-
-chat.async_send_message("Server maintenance in 5 minutes!", "[Server]", "[]", "red")
-sleep(5)
-chat.async_send_message("Server is restarting now!", "[Server]", "[]", "red")
+```rust
+// Rust example to be added
 ```
-
 ### Example 2: Welcome Message
 
-```lua
-local chat = peripheral.find("advancedPeripherals:chat_box")
-
-local function welcome_player(name)
-  chat.async_send_message_to_player("Welcome to the server!", name, "[Server]", "[]", "green")
-  chat.async_send_toast_to_player("Welcome!", "Enjoy your stay!", name)
-end
-
-welcome_player("Steve")
+```rust
+// Rust example to be added
 ```
-
 ### Example 3: Formatted Message with Hover Text
 
-```lua
-local chat = peripheral.find("advancedPeripherals:chat_box")
-
-local json = {
-  text = "Click for info",
-  color = "blue",
-  underlined = true,
-  hoverEvent = {
-    action = "show_text",
-    contents = "This is a tooltip"
-  }
-}
-
-local json_str = textutils.serialiseJSON(json)
-chat.async_send_formatted_message(json_str, "[Info]")
+```rust
+// Rust example to be added
 ```
-
 ### Example 4: Batch Notifications
 
-```lua
-local chat = peripheral.find("advancedPeripherals:chat_box")
-
-local players = {"Steve", "Alex", "Notch"}
-for _, player in ipairs(players) do
-  chat.async_send_message_to_player("Hello " .. player .. "!", player, "[Server]")
-end
+```rust
+// Rust example to be added
 ```
-
 ### Example 5: Status Updates
 
-```lua
-local chat = peripheral.find("advancedPeripherals:chat_box")
-
-local function send_status(status, color)
-  local json = {
-    text = "Status: " .. status,
-    color = color,
-    bold = true
-  }
-  local json_str = textutils.serialiseJSON(json)
-  chat.async_send_formatted_message(json_str, "[System]")
-end
-
-send_status("Online", "green")
-sleep(2)
-send_status("Busy", "yellow")
-sleep(2)
-send_status("Offline", "red")
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Error Handling
@@ -325,48 +431,17 @@ All methods may throw errors in the following cases:
 - **Message too long**: Message exceeds character limit
 
 **Example Error Handling:**
-```lua
-local chat = peripheral.find("advancedPeripherals:chat_box")
-if not chat then
-  error("ChatBox not found")
-end
-
-local success, result = pcall(function()
-  return chat.async_send_message("Hello!")
-end)
-
-if not success then
-  print("Error: " .. result)
-else
-  print("Message sent: " .. tostring(result))
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Type Definitions
 
 ### TextComponent (JSON)
-```lua
-{
-  text: string,                    -- Display text
-  color?: string,                  -- Color name or hex (#RRGGBB)
-  bold?: boolean,                  -- Bold text
-  italic?: boolean,                -- Italic text
-  underlined?: boolean,            -- Underlined text
-  strikethrough?: boolean,         -- Strikethrough text
-  obfuscated?: boolean,            -- Obfuscated text
-  clickEvent?: {
-    action: string,                -- "open_url", "run_command", "suggest_command", "copy_to_clipboard"
-    value: string                  -- Action value
-  },
-  hoverEvent?: {
-    action: string,                -- "show_text", "show_item", "show_entity"
-    contents: string | table       -- Event contents
-  }
-}
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Notes

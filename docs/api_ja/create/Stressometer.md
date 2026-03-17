@@ -33,6 +33,17 @@ pub fn read_last_get_stress_capacity(&self) -> Result<f32, PeripheralError>
 
 **戻り値:** `f32` — ストレス容量 (SU)。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 即時メソッド (Immediate)
 
 ### `get_stress_imm`

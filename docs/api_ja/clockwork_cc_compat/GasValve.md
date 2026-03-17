@@ -33,6 +33,17 @@ pub fn read_last_get_facing(&self) -> Result<String, PeripheralError>
 
 [GasNetwork](GasNetwork.md) を参照: `getTemperature`、`getPressure`、`getHeatEnergy`、`getGasMass`、`getPosition`、`getNetworkInfo`。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## イミディエイトメソッド
 
 - `get_aperture_imm(&self) -> Result<f64, PeripheralError>`

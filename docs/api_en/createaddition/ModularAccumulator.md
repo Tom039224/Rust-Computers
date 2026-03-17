@@ -75,6 +75,17 @@ pub fn read_last_get_width(&self) -> Result<i32, PeripheralError>
 ```
 **Returns:** `i32`
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 None.

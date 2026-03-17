@@ -71,6 +71,17 @@ pub fn read_last_get_network_info(&self) -> Result<Value, PeripheralError>
 ```
 **Returns:** `Value` (dynamic table)
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Types
 
 ```rust

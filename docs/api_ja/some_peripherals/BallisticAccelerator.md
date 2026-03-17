@@ -172,6 +172,17 @@ pub fn read_last_get_drag(&self) -> Result<f64, PeripheralError> { ... }
 
 **戻り値:** `Result<f64, PeripheralError>` — 計算された抗力係数
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## Immediate メソッド
 
 ### `time_in_air_imm`

@@ -118,6 +118,17 @@ pub fn read_last_set_wares(&self) -> Result<(), PeripheralError>
 |-----------|------|-------------|
 | `item_name` | `&str` | The item name for the wares |
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Types
 
 ### `CRItemDetail`

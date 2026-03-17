@@ -199,6 +199,17 @@ pub fn read_last_distance_to(&self) -> Result<(Option<f64>, Option<String>), Per
 
 **戻り値:** `(Option<f64>, Option<String>)` — (距離, 理由) のタプル。到達不可の場合、距離は `None`。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 即時メソッド (Immediate)
 
 ### `is_in_assembly_mode_imm`

@@ -41,6 +41,17 @@ pub fn read_last_write_table(&self) -> Result<bool, PeripheralError>
 
 **Returns:** `bool` — Success status
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 None.

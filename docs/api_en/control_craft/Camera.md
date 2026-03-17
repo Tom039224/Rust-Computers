@@ -155,6 +155,17 @@ pub fn book_next_reset(&mut self) { ... }
 pub fn read_last_reset(&self) -> Result<(), PeripheralError> { ... }
 ```
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Types
 
 ### `CTLTransform`

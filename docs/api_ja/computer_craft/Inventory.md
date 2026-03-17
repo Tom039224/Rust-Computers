@@ -18,15 +18,23 @@ Inventory APIは、すべてのメソッドに対して3つの関数パターン
 
 ### パターンの説明
 
-```lua
--- 方法1: book_next / read_last パターン
-inventory.book_next_list()
-wait_for_next_tick()
-local items = inventory.read_last_list()
-
--- 方法2: async パターン（推奨）
-local items = inventory.async_list()
+```rust
+// Rust example to be added
 ```
+## 実装状況
+
+### ✅ 実装済み
+
+- book_next_size / read_last_size / async_size
+- book_next_list / read_last_list / async_list
+- book_next_get_item_detail / read_last_get_item_detail / async_get_item_detail
+- book_next_push_items / read_last_push_items / async_push_items
+- book_next_pull_items / read_last_pull_items / async_pull_items
+
+### 🚧 未実装
+
+- get_item_limit() method (all variants)
+
 
 ## メソッド
 
@@ -35,10 +43,9 @@ local items = inventory.async_list()
 インベントリのスロット数を取得します。
 
 **Lua署名:**
-```lua
-function size() -> number
+```rust
+// Rust example to be added
 ```
-
 **Rust署名:**
 ```rust
 pub fn book_next_size(&mut self)
@@ -49,12 +56,9 @@ pub async fn async_size(&self) -> Result<u32, PeripheralError>
 **戻り値:** `number` — スロットの総数
 
 **例:**
-```lua
-local inventory = peripheral.find("inventory")
-local slot_count = inventory.async_size()
-print("インベントリは " .. slot_count .. " スロットあります")
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `list()` / `book_next_list()` / `read_last_list()` / `async_list()`
@@ -62,10 +66,9 @@ print("インベントリは " .. slot_count .. " スロットあります")
 インベントリ内のすべてのアイテムを概要情報とともにリストアップします。
 
 **Lua署名:**
-```lua
-function list() -> table
+```rust
+// Rust example to be added
 ```
-
 **Rust署名:**
 ```rust
 pub fn book_next_list(&mut self)
@@ -76,23 +79,13 @@ pub async fn async_list(&self) -> Result<BTreeMap<u32, SlotInfo>, PeripheralErro
 **戻り値:** `table` — スロット番号をアイテム情報にマッピングするスパーステーブル
 
 **アイテム情報構造:**
-```lua
-{
-  name = "minecraft:diamond",  -- アイテムレジストリ名
-  count = 5,                    -- スタックサイズ
-}
+```rust
+// Rust example to be added
 ```
-
 **例:**
-```lua
-local inventory = peripheral.find("inventory")
-local items = inventory.async_list()
-
-for slot, item in pairs(items) do
-  print(("スロット %d: %d x %s"):format(slot, item.count, item.name))
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `getItemDetail(slot)` / `book_next_get_item_detail(slot)` / `read_last_get_item_detail()` / `async_get_item_detail(slot)`
@@ -100,10 +93,9 @@ end
 特定のスロット内のアイテムの詳細情報を取得します。
 
 **Lua署名:**
-```lua
-function getItemDetail(slot: number) -> table | nil
+```rust
+// Rust example to be added
 ```
-
 **Rust署名:**
 ```rust
 pub fn book_next_get_item_detail(&mut self, slot: u32)
@@ -117,35 +109,13 @@ pub async fn async_get_item_detail(&self, slot: u32) -> Result<Option<ItemDetail
 **戻り値:** `table | nil` — アイテム詳細テーブルまたはスロットが空の場合は`nil`
 
 **アイテム詳細構造:**
-```lua
-{
-  name = "minecraft:diamond",      -- アイテムレジストリ名
-  count = 5,                        -- スタックサイズ
-  displayName = "Diamond",          -- 表示名
-  maxCount = 64,                    -- 最大スタックサイズ
-  damage = 10,                      -- 耐久度ダメージ（オプション）
-  maxDamage = 100,                  -- 最大耐久度（オプション）
-  tags = {                          -- アイテムタグ
-    ["minecraft:gems"] = true,
-  },
-}
+```rust
+// Rust example to be added
 ```
-
 **例:**
-```lua
-local inventory = peripheral.find("inventory")
-local item = inventory.async_get_item_detail(1)
-
-if item then
-  print(("スロット 1: %d x %s"):format(item.count, item.displayName))
-  if item.damage then
-    print(("耐久度: %d/%d"):format(item.damage, item.maxDamage))
-  end
-else
-  print("スロット 1 は空です")
-end
+```rust
+// Rust example to be added
 ```
-
 **エラーハンドリング:**
 - スロット番号が範囲外の場合、エラーをスロー
 
@@ -156,10 +126,9 @@ end
 このインベントリから別の接続されたインベントリにアイテムを転送します。
 
 **Lua署名:**
-```lua
-function pushItems(toName: string, fromSlot: number, limit?: number, toSlot?: number) -> number
+```rust
+// Rust example to be added
 ```
-
 **Rust署名:**
 ```rust
 pub fn book_next_push_items(&mut self, to_name: &str, from_slot: u32, limit: Option<u32>, to_slot: Option<u32>)
@@ -180,15 +149,9 @@ pub async fn async_push_items(&self, to_name: &str, from_slot: u32, limit: Optio
 - 宛先インベントリが存在し、アクセス可能である必要があります
 
 **例:**
-```lua
-local source = peripheral.find("minecraft:chest_0")
-local dest_name = "minecraft:chest_1"
-
--- スロット 1 から 32 個のダイヤモンドを転送
-local moved = source.async_push_items(dest_name, 1, 32)
-print("移動したアイテム数: " .. moved)
+```rust
+// Rust example to be added
 ```
-
 **エラーハンドリング:**
 - 宛先インベントリが存在しない場合、エラーをスロー
 - スロットが範囲外の場合、エラーをスロー
@@ -200,10 +163,9 @@ print("移動したアイテム数: " .. moved)
 別の接続されたインベントリからこのインベントリにアイテムを転送します。
 
 **Lua署名:**
-```lua
-function pullItems(fromName: string, fromSlot: number, limit?: number, toSlot?: number) -> number
+```rust
+// Rust example to be added
 ```
-
 **Rust署名:**
 ```rust
 pub fn book_next_pull_items(&mut self, from_name: &str, from_slot: u32, limit: Option<u32>, to_slot: Option<u32>)
@@ -224,15 +186,9 @@ pub async fn async_pull_items(&self, from_name: &str, from_slot: u32, limit: Opt
 - ソースインベントリが存在し、アクセス可能である必要があります
 
 **例:**
-```lua
-local dest = peripheral.find("minecraft:chest_0")
-local source_name = "minecraft:chest_1"
-
--- ソーススロット 1 から 32 個のダイヤモンドを引き出す
-local moved = dest.async_pull_items(source_name, 1, 32)
-print("引き出したアイテム数: " .. moved)
+```rust
+// Rust example to be added
 ```
-
 **エラーハンドリング:**
 - ソースインベントリが存在しない場合、エラーをスロー
 - スロットが範囲外の場合、エラーをスロー
@@ -249,84 +205,29 @@ Inventoryペリフェラルはイベントを生成しません。
 
 ### 例1: すべてのアイテムをリストアップ
 
-```lua
-local inventory = peripheral.find("minecraft:chest")
-
-local items = inventory.async_list()
-for slot, item in pairs(items) do
-  print(("スロット %d: %d x %s"):format(slot, item.count, item.name))
-end
+```rust
+// Rust example to be added
 ```
-
 ### 例2: 名前でアイテムを検索
 
-```lua
-local inventory = peripheral.find("minecraft:chest")
-
-local function find_item(name)
-  local items = inventory.async_list()
-  for slot, item in pairs(items) do
-    if item.name == name then
-      return slot, item
-    end
-  end
-  return nil
-end
-
-local slot, item = find_item("minecraft:diamond")
-if slot then
-  print(("スロット %d にダイヤモンド %d 個を発見"):format(slot, item.count))
-end
+```rust
+// Rust example to be added
 ```
-
 ### 例3: チェスト間でアイテムを転送
 
-```lua
-local source = peripheral.find("minecraft:chest_0")
-local dest_name = "minecraft:chest_1"
-
--- ソースから宛先にすべてのアイテムを転送
-local items = source.async_list()
-for slot, item in pairs(items) do
-  local moved = source.async_push_items(dest_name, slot)
-  print(("スロット %d から %d 個のアイテムを移動"):format(slot, moved))
-end
+```rust
+// Rust example to be added
 ```
-
 ### 例4: 総容量を計算
 
-```lua
-local inventory = peripheral.find("minecraft:chest")
-
-local total_capacity = 0
-for i = 1, inventory.async_size() do
-  total_capacity = total_capacity + inventory.async_get_item_limit(i)
-end
-
-print("総容量: " .. total_capacity)
+```rust
+// Rust example to be added
 ```
-
 ### 例5: インベントリをソート
 
-```lua
-local inventory = peripheral.find("minecraft:chest")
-
--- アイテムを名前でソート
-local items = inventory.async_list()
-local sorted = {}
-for slot, item in pairs(items) do
-  table.insert(sorted, {slot = slot, item = item})
-end
-
-table.sort(sorted, function(a, b)
-  return a.item.name < b.item.name
-end)
-
-for _, entry in ipairs(sorted) do
-  print(("スロット %d: %s"):format(entry.slot, entry.item.name))
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## エラーハンドリング
@@ -339,48 +240,21 @@ end
 - **宛先が見つからない**: ターゲットインベントリが存在しないか、アクセスできない
 
 **エラーハンドリングの例:**
-```lua
-local inventory = peripheral.find("minecraft:chest")
-if not inventory then
-  error("インベントリが見つかりません")
-end
-
-local success, result = pcall(function()
-  return inventory.async_list()
-end)
-
-if not success then
-  print("エラー: " .. result)
-else
-  print("取得したアイテム数: " .. #result)
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## 型定義
 
 ### ItemDetail
-```lua
-{
-  name: string,           -- レジストリ名（例："minecraft:diamond"）
-  count: number,          -- スタックサイズ
-  displayName: string,    -- 表示名
-  maxCount: number,       -- 最大スタックサイズ
-  damage?: number,        -- 耐久度ダメージ（オプション）
-  maxDamage?: number,     -- 最大耐久度（オプション）
-  tags?: table,           -- アイテムタグ（オプション）
-}
+```rust
+// Rust example to be added
 ```
-
 ### SlotInfo
-```lua
-{
-  name: string,   -- レジストリ名
-  count: number,  -- スタックサイズ
-}
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## 注記

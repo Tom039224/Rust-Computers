@@ -36,6 +36,17 @@ pub fn read_last_set_tilt(&self) -> Result<(), PeripheralError> { ... }
 ```
 **パラメータ:** `tilt: f64` — チルト角度（度）
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 使用例
 
 ```rust

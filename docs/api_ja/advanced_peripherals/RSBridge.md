@@ -272,6 +272,17 @@ pub fn read_last_get_avg_power_injection(&self) -> Result<f64, PeripheralError>
 - `book_next_get_used_chemical_storage` / `read_last_get_used_chemical_storage` → `i64`
 - `book_next_get_available_chemical_storage` / `read_last_get_available_chemical_storage` → `i64`
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## イミディエイトメソッド
 
 なし。

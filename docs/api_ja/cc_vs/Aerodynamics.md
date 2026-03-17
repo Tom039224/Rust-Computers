@@ -45,6 +45,17 @@ pub fn universal_gas_constant_imm(&self) -> Result<f64, PeripheralError> { ... }
 pub fn air_molar_mass_imm(&self) -> Result<f64, PeripheralError> { ... }
 ```
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## Book-Read メソッド
 
 ### `book_next_get_atmospheric_parameters` / `read_last_get_atmospheric_parameters`

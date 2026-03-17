@@ -27,6 +27,17 @@ pub fn read_last_set_ratio(&self) -> Result<(), PeripheralError> { ... }
 ```
 **Parameters:** `ratio: f64` — Resistance ratio
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Usage Example
 
 ```rust

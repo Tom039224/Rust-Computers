@@ -163,6 +163,17 @@ pub fn read_last_try_pull_physics_ticks(&self) -> Result<Option<VSPhysicsTickDat
 ```
 **Returns:** `Option<VSPhysicsTickData>`
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 ### `transform_position_to_world_imm`

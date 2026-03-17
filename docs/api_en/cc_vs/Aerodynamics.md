@@ -45,6 +45,17 @@ Get the air molar mass.
 pub fn air_molar_mass_imm(&self) -> Result<f64, PeripheralError> { ... }
 ```
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Book-Read Methods
 
 ### `book_next_get_atmospheric_parameters` / `read_last_get_atmospheric_parameters`

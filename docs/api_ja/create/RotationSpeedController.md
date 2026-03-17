@@ -34,6 +34,17 @@ pub fn read_last_get_target_speed(&self) -> Result<f32, PeripheralError>
 
 **戻り値:** `f32` — 現在のターゲット速度 (RPM)。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 即時メソッド (Immediate)
 
 ### `get_target_speed_imm`

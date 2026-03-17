@@ -26,6 +26,17 @@ pub struct CLPosition {
 ```
 3D ブロック座標。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## Book-Read メソッド
 
 以下のすべてのメソッドには `_imm` Immediate バリアントもあります（Immediate メソッドセクションを参照）。

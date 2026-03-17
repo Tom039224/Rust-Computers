@@ -5,6 +5,17 @@
 
 Clockwork CC Compat Gas Engine peripheral. Provides read access to attached engine count and efficiency.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Methods
 
 ### book/read Methods

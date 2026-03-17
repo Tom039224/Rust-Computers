@@ -60,6 +60,17 @@ pub fn read_last_apply_rot_dependent_torque(&self) -> Result<(), PeripheralError
 ```
 **Parameters:** `x: f64`, `y: f64`, `z: f64` — Torque vector in ship-local space
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Types
 
 ### `CTLQuaternion`

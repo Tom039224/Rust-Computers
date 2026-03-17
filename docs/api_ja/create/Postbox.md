@@ -84,6 +84,17 @@ pub fn read_last_set_configuration(&self) -> Result<(), PeripheralError>
 |-----------|------|-------------|
 | `config` | `&CRPackage` | 設定する構成情報 |
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## イベントメソッド
 
 ### `book_next_try_pull_package_received` / `read_last_try_pull_package_received`

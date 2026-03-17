@@ -27,6 +27,17 @@ pub fn read_last_set_target_speed(&self) -> Result<(), PeripheralError> { ... }
 ```
 **パラメータ:** `speed: f64` — 目標速度（RPM）
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 使用例
 
 ```rust

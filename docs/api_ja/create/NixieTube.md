@@ -51,6 +51,17 @@ pub fn read_last_set_signal(&self) -> Result<(), PeripheralError>
 | `front` | `&CRSignalParams` | 前面シグナルパラメータ |
 | `back` | `Option<&CRSignalParams>` | オプションの背面シグナルパラメータ |
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 型定義
 
 ### `CRSignalParams`

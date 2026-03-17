@@ -60,6 +60,17 @@ pub fn read_last_apply_rot_dependent_torque(&self) -> Result<(), PeripheralError
 ```
 **パラメータ:** `x: f64`, `y: f64`, `z: f64` — 船ローカル空間でのトルクベクトル
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 型定義
 
 ### `CTLQuaternion`

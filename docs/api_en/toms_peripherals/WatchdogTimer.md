@@ -5,6 +5,17 @@
 
 Toms-Peripherals Watchdog Timer peripheral. Emits a redstone signal if not reset within the configured timeout.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Methods
 
 ### Async Methods (with imm variants)

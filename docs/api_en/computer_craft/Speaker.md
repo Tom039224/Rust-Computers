@@ -18,26 +18,28 @@ The Speaker API uses the three-function pattern for all methods:
 
 ### Pattern Explanation
 
-```lua
--- Method 1: book_next / read_last pattern
-speaker.book_next_play_note("harp", 1.0, 12)
-wait_for_next_tick()
-speaker.read_last_play_note()
-
--- Method 2: async pattern (recommended)
-speaker.async_play_note("harp", 1.0, 12)
+```rust
+// Rust example to be added
 ```
+## Implementation Status
+
+### ✅ Implemented
+
+- book_next_play_note / read_last_play_note
+- book_next_play_sound / read_last_play_sound
+- book_next_stop / read_last_stop
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+- speaker_audio_empty event
+
 
 ## Methods
 
 ### `playNote(instrument, volume?, pitch?)` / `book_next_play_note(...)` / `read_last_play_note()` / `async_play_note(...)`
 
 Play a note block note.
-
-**Lua Signature:**
-```lua
-function playNote(instrument: string, volume?: number, pitch?: number) -> boolean
-```
 
 **Rust Signatures:**
 ```rust
@@ -80,26 +82,14 @@ pub async fn async_play_note(&self, instrument: &str, volume: Option<f32>, pitch
 - Maximum 8 notes per tick per speaker
 
 **Example:**
-```lua
-local speaker = peripheral.find("speaker")
-
--- Play a harp note
-speaker.async_play_note("harp", 1.0, 12)
-
--- Play a bass note at high volume
-speaker.async_play_note("bass", 3.0, 0)
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `playSound(name, volume?, pitch?)` / `book_next_play_sound(...)` / `read_last_play_sound()` / `async_play_sound(...)`
 
 Play a Minecraft sound event.
-
-**Lua Signature:**
-```lua
-function playSound(name: string, volume?: number, pitch?: number) -> boolean
-```
 
 **Rust Signatures:**
 ```rust
@@ -128,26 +118,14 @@ pub async fn async_play_sound(&self, name: &str, volume: Option<f32>, pitch: Opt
 - Cannot play while `playAudio` is active
 
 **Example:**
-```lua
-local speaker = peripheral.find("speaker")
-
--- Play a creeper hiss
-speaker.async_play_sound("minecraft:entity.creeper.primed", 1.0, 1.0)
-
--- Play an explosion at high volume
-speaker.async_play_sound("minecraft:entity.generic.explode", 3.0, 1.0)
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ### `stop()` / `book_next_stop()` / `read_last_stop()` / `async_stop()`
 
 Stop all audio playback.
-
-**Lua Signature:**
-```lua
-function stop() -> nil
-```
 
 **Rust Signatures:**
 ```rust
@@ -159,22 +137,14 @@ pub async fn async_stop(&self) -> Result<(), PeripheralError>
 **Returns:** `nil`
 
 **Example:**
-```lua
-local speaker = peripheral.find("speaker")
-
--- Play a sound
-speaker.async_play_sound("minecraft:entity.creeper.primed")
-
--- Stop after 1 second
-sleep(1)
-speaker.async_stop()
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Events
 
-### `speaker_audio_empty`
+### `speaker_audio_empty` 🚧
 
 Fired when the speaker's audio buffer becomes empty and is ready for more audio data.
 
@@ -183,114 +153,43 @@ Fired when the speaker's audio buffer becomes empty and is ready for more audio 
 2. `string` — Speaker name
 
 **Example:**
-```lua
-local speaker = peripheral.find("speaker")
-
--- Play audio data
-local success = speaker.playAudio(audioData)
-
-if not success then
-  -- Buffer is full, wait for it to empty
-  os.pullEvent("speaker_audio_empty")
-  speaker.playAudio(audioData)
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Usage Examples
 
 ### Example 1: Simple Melody
 
-```lua
-local speaker = peripheral.find("speaker")
-
-local notes = {0, 2, 4, 5, 7, 9, 11, 12}  -- C major scale
-
-for _, pitch in ipairs(notes) do
-  speaker.async_play_note("harp", 1.0, pitch)
-  sleep(0.5)
-end
+```rust
+// Rust example to be added
 ```
-
 ### Example 2: Sound Effects
 
-```lua
-local speaker = peripheral.find("speaker")
-
--- Explosion
-speaker.async_play_sound("minecraft:entity.generic.explode", 3.0, 1.0)
-sleep(1)
-
--- Bell
-speaker.async_play_sound("minecraft:block.note_block.bell", 2.0, 1.5)
-sleep(1)
-
--- Click
-speaker.async_play_sound("minecraft:ui.button.click", 1.0, 1.0)
+```rust
+// Rust example to be added
 ```
-
 ### Example 3: Chord
 
-```lua
-local speaker = peripheral.find("speaker")
-
--- Play C major chord (C, E, G)
-speaker.async_play_note("harp", 1.0, 0)   -- C
-speaker.async_play_note("harp", 1.0, 4)   -- E
-speaker.async_play_note("harp", 1.0, 7)   -- G
-
-sleep(2)
-
--- Play F major chord (F, A, C)
-speaker.async_play_note("harp", 1.0, 5)   -- F
-speaker.async_play_note("harp", 1.0, 9)   -- A
-speaker.async_play_note("harp", 1.0, 12)  -- C
+```rust
+// Rust example to be added
 ```
-
 ### Example 4: Alarm
 
-```lua
-local speaker = peripheral.find("speaker")
-
-for i = 1, 10 do
-  speaker.async_play_note("bell", 3.0, 12)
-  sleep(0.2)
-  speaker.async_play_note("bell", 3.0, 0)
-  sleep(0.2)
-end
+```rust
+// Rust example to be added
 ```
-
 ### Example 5: Pitch Sweep
 
-```lua
-local speaker = peripheral.find("speaker")
-
--- Sweep from low to high
-for pitch = 0, 24 do
-  speaker.async_play_note("flute", 1.0, pitch)
-  sleep(0.1)
-end
+```rust
+// Rust example to be added
 ```
-
 ### Example 6: Volume Fade
 
-```lua
-local speaker = peripheral.find("speaker")
-
--- Fade in
-for volume = 0, 10 do
-  speaker.async_play_note("harp", volume / 10, 12)
-  sleep(0.1)
-end
-
--- Fade out
-for volume = 10, 0, -1 do
-  speaker.async_play_note("harp", volume / 10, 12)
-  sleep(0.1)
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Error Handling
@@ -303,60 +202,25 @@ All methods may throw errors in the following cases:
 - **Invalid parameters**: Volume or pitch values are out of range
 
 **Example Error Handling:**
-```lua
-local speaker = peripheral.find("speaker")
-if not speaker then
-  error("No speaker found")
-end
-
-local success, result = pcall(function()
-  return speaker.async_play_note("harp", 1.0, 12)
-end)
-
-if not success then
-  print("Error: " .. result)
-else
-  print("Note played successfully")
-end
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Type Definitions
 
 ### Instrument
-```lua
-type Instrument = 
-  | "harp"
-  | "basedrum"
-  | "snare"
-  | "hat"
-  | "bass"
-  | "flute"
-  | "bell"
-  | "guitar"
-  | "chime"
-  | "xylophone"
-  | "iron_xylophone"
-  | "cow_bell"
-  | "didgeridoo"
-  | "bit"
-  | "banjo"
-  | "pling"
+```rust
+// Rust example to be added
 ```
-
 ### Volume
-```lua
--- Range: 0.0 to 3.0
-type Volume = number
+```rust
+// Rust example to be added
 ```
-
 ### Pitch
-```lua
--- Range: 0 to 24 (semitones)
-type Pitch = number
+```rust
+// Rust example to be added
 ```
-
 ---
 
 ## Notes

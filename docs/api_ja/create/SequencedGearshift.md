@@ -50,6 +50,17 @@ pub fn read_last_is_running(&self) -> Result<bool, PeripheralError>
 
 **戻り値:** `bool` — 動作中の場合 `true`。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 即時メソッド (Immediate)
 
 ### `is_running_imm`

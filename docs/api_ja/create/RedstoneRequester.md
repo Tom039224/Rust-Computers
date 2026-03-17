@@ -114,6 +114,17 @@ pub fn read_last_get_address(&self) -> Result<String, PeripheralError>
 
 **戻り値:** `String` — 現在のアドレス。
 
+## 実装状況
+
+### ✅ 実装済み
+
+- All book_next_* / read_last_* methods
+
+### 🚧 未実装
+
+- async_* variants for all methods
+
+
 ## 型定義
 
 ### `CROrderItem`

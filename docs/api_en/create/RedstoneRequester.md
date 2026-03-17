@@ -114,6 +114,17 @@ pub fn read_last_get_address(&self) -> Result<String, PeripheralError>
 
 **Returns:** `String` — the current address.
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Types
 
 ### `CROrderItem`

@@ -47,6 +47,17 @@ pub fn read_last_set_is_forcing_angle(&self) -> Result<(), PeripheralError> { ..
 ```
 **Parameters:** `enabled: bool` — Whether force angle mode is enabled
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Usage Example
 
 ```rust

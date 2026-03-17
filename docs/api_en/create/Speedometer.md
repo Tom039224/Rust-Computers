@@ -22,6 +22,17 @@ pub fn read_last_get_speed(&self) -> Result<f32, PeripheralError>
 
 **Returns:** `f32` — current rotation speed (RPM).
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 ### `get_speed_imm`

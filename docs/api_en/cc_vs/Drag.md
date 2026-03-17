@@ -125,6 +125,17 @@ pub fn read_last_apply_wind_impulse(&self) -> Result<(), PeripheralError> { ... 
 
 **Returns:** `()`
 
+## Implementation Status
+
+### ✅ Implemented
+
+- All book_next_* / read_last_* methods
+
+### 🚧 Not Yet Implemented
+
+- async_* variants for all methods
+
+
 ## Immediate Methods
 
 ### `get_drag_force_imm`
