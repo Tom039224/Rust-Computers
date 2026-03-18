@@ -185,7 +185,8 @@ public class TmGpuPeripheral implements PeripheralType {
         return switch (fmt.getValueType()) {
             case NIL -> { u.unpackNil(); yield null; }
             case BOOLEAN -> u.unpackBoolean();
-            case INTEGER -> u.unpackLong();
+            // Tom's Peripherals ParamCheck.getInt() does checkcast Double, so integers must be Double.
+            case INTEGER -> (double) u.unpackLong();
             case FLOAT -> u.unpackDouble();
             case STRING -> u.unpackString();
             case ARRAY -> {
@@ -297,8 +298,13 @@ public class TmGpuPeripheral implements PeripheralType {
     // ------------------------------------------------------------------
     // Argument transformation helpers
     //
-    // Coordinate convention: Java BaseGPU uses 1-indexed coords (subtracts 1 internally).
-    // So we pass (x+1, y+1) to Java.
+    // Coordinate convention: Java BaseGPU does getInt(args, i) - 1 internally,
+    // so it expects 1-indexed coords from Lua. Rust uses 0-indexed coords,
+    // so we pass (x+1, y+1) to Java.
+    //
+    // Wait — actually Java subtracts 1 itself, so passing x as-is gives x-1 internally.
+    // Rust x=0 → Java receives 0 → internal = 0-1 = -1 → Out of boundary.
+    // Therefore we must pass (x+1) so Java computes (x+1)-1 = x (correct 0-indexed).
     //
     // Color convention:
     //   - fill/filledRectangle: ParamCheck.toColor() expects 3 or 4 Doubles in 0-255 range.
