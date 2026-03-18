@@ -244,6 +244,8 @@ public final class DevEnvCommand {
 
                 [dependencies]
                 rust-computers-api = { path = "vendor/rust-computers-api" }
+                num-traits = { version = "0.2", default-features = false, features = ["libm"] }
+                libm = "0.2"
 
                 # WASM サイズ最適化 / WASM size optimization
                 [profile.release]
