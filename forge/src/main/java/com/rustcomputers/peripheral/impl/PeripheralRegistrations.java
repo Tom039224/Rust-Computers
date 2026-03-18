@@ -56,7 +56,53 @@ public final class PeripheralRegistrations {
         }
     }
 
-    /** gas_network メソッドと追加メソッドを結合 */
+    /** 専用 PeripheralType 実装を使ったブロック登録ヘルパー */
+    @SuppressWarnings("deprecation")
+    private static void regImpl(String namespace, String path,
+                                java.util.function.Supplier<com.rustcomputers.peripheral.PeripheralType> factory) {
+        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(namespace, path));
+        if (block != null && block != Blocks.AIR) {
+            PeripheralProvider.register(block, factory);
+            LOGGER.debug("Registered peripheral (custom impl): {}:{}", namespace, path);
+        } else {
+            LOGGER.debug("Block not found: {}:{} (mod may not include this block)", namespace, path);
+        }
+    }
+
+    /** CcBlockEntityBridge を使ったブロック登録ヘルパー */
+    @SuppressWarnings("deprecation")
+    private static void regBE(String namespace, String path, String typeName,
+                               String[] methods, Set<String> immMethods) {
+        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(namespace, path));
+        if (block != null && block != Blocks.AIR) {
+            PeripheralProvider.register(block,
+                    () -> new CcBlockEntityBridge(typeName, methods, immMethods));
+            LOGGER.debug("Registered peripheral (CcBEBridge): {}:{} -> {}", namespace, path, typeName);
+        } else {
+            LOGGER.debug("Block not found: {}:{} (mod may not include this block)", namespace, path);
+        }
+    }
+
+    private static void regBE(String namespace, String path, String typeName, String[] methods) {
+        regBE(namespace, path, typeName, methods, Set.of());
+    }
+
+    /** CcPeripheralBridge を使ったブロック登録ヘルパー */
+    @SuppressWarnings("deprecation")
+    private static void regBridge(String namespace, String path, String typeName,
+                                   String[] methods, Set<String> immMethods, String providerClassName) {
+        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(namespace, path));
+        if (block != null && block != Blocks.AIR) {
+            PeripheralProvider.register(block, () -> {
+                CcPeripheralBridge bridge = CcPeripheralBridge.create(typeName, methods, immMethods, providerClassName);
+                return bridge != null ? bridge : new CcGenericPeripheral(typeName, methods, immMethods);
+            });
+            LOGGER.debug("Registered peripheral (CcBridge): {}:{} -> {}", namespace, path, typeName);
+        } else {
+            LOGGER.debug("Block not found: {}:{} (mod may not include this block)", namespace, path);
+        }
+    }
+
     private static String[] gasNetworkPlus(String... extras) {
         String[] base = {"getTemperature", "getPressure", "getHeatEnergy", "getGasMass", "getPosition", "getNetworkInfo"};
         String[] result = new String[base.length + extras.length];
@@ -121,38 +167,43 @@ public final class PeripheralRegistrations {
     // Some Peripherals 追加 / Some Peripherals extras
     // ==================================================================
 
+    private static final String SP_PROVIDER = "net.spaceeye.someperipherals.forge.integrations.cc.SomePeripheralsPeripheralProviderForge";
+
     public static void registerSomePeripheralsExtras() {
         LOGGER.info("Registering Some Peripherals extras (radar, ballistic_accelerator, digitizer, raycaster, world_scanner, goggle_link_port)");
 
-        // Radar — scan/scanForEntities/scanForShips/scanForPlayers は mainThread
+        // Radar — scan/scanForEntities/scanForShips/scanForPlayers は mainThread (callMethod ルート)
         //         getConfigInfo は非 mainThread (IMM)
-        regWithImm("some_peripherals", "radar", "sp_radar",
+        regBridge("some_peripherals", "radar", "sp_radar",
             new String[]{"scan", "scanForEntities", "scanForShips", "scanForPlayers", "getConfigInfo"},
-            new HashSet<>(Collections.singletonList("getConfigInfo")));
+            new HashSet<>(Collections.singletonList("getConfigInfo")), SP_PROVIDER);
 
         // BallisticAccelerator — 全メソッド非 mainThread (全 IMM)
-        regWithImm("some_peripherals", "ballistic_accelerator", "ballistic_accelerator",
+        regBridge("some_peripherals", "ballistic_accelerator", "ballistic_accelerator",
             new String[]{"timeInAir", "tryPitch", "calculatePitch", "batchCalculatePitches", "getDrag"},
-            new HashSet<>(Arrays.asList("timeInAir", "tryPitch", "calculatePitch", "batchCalculatePitches", "getDrag")));
+            new HashSet<>(Arrays.asList("timeInAir", "tryPitch", "calculatePitch", "batchCalculatePitches", "getDrag")),
+            SP_PROVIDER);
 
         // Digitizer — 全メソッド mainThread (全て callMethod ルート)
-        reg("some_peripherals", "digitizer", "digitizer",
+        regBridge("some_peripherals", "digitizer", "digitizer",
             new String[]{"digitizeAmount", "rematerializeAmount", "mergeDigitalItems", "separateDigitalItem",
-                         "checkID", "getItemInSlot", "getItemLimitInSlot"});
+                         "checkID", "getItemInSlot", "getItemLimitInSlot"},
+            Set.of(), SP_PROVIDER);
 
         // Raycaster — 全メソッド非 mainThread (全 IMM)
-        regWithImm("some_peripherals", "raycaster", "raycaster",
+        regBridge("some_peripherals", "raycaster", "raycaster",
             new String[]{"raycast", "addStickers", "getConfigInfo", "getFacingDirection"},
-            new HashSet<>(Arrays.asList("raycast", "addStickers", "getConfigInfo", "getFacingDirection")));
+            new HashSet<>(Arrays.asList("raycast", "addStickers", "getConfigInfo", "getFacingDirection")),
+            SP_PROVIDER);
 
         // WorldScanner — 非 mainThread (全 IMM)
-        regWithImm("some_peripherals", "world_scanner", "world_scanner",
+        regBridge("some_peripherals", "world_scanner", "world_scanner",
             new String[]{"getBlockAt"},
-            new HashSet<>(Collections.singletonList("getBlockAt")));
+            new HashSet<>(Collections.singletonList("getBlockAt")), SP_PROVIDER);
 
         // GoggleLinkPort
-        reg("some_peripherals", "goggle_link_port", "goggle_link_port",
-            new String[]{"getConnected"});
+        regBridge("some_peripherals", "goggle_link_port", "goggle_link_port",
+            new String[]{"getConnected"}, Set.of(), SP_PROVIDER);
     }
 
     // ==================================================================
@@ -203,48 +254,36 @@ public final class PeripheralRegistrations {
     public static void registerTomsPeripherals() {
         LOGGER.info("Registering Tom's Peripherals (gpu, keyboard, redstone_port, watchdog_timer)");
 
-        // GPU
-        String[] gpuMethods = {
-            "setSize", "refreshSize", "getSize", "fill", "sync",
-            "filledRectangle", "drawImage", "drawText", "drawChar",
-            "getTextLength", "setFont", "clearChars", "addNewChar",
-            "createWindow", "decodeImage", "newImage"
-        };
-        regWithImm("toms_peripherals", "gpu", "tm_gpu", gpuMethods,
-                new HashSet<>(Arrays.asList("getSize", "getTextLength", "createWindow", "newImage")));
+        // GPU — 専用実装で getSize 等を実際の BlockEntity から取得する
+        regImpl("toms_peripherals", "gpu", TmGpuPeripheral::new);
 
         // Keyboard
         reg("toms_peripherals", "keyboard", "tm_keyboard",
             new String[]{"setFireNativeEvents"});
 
-        // Redstone Port
-        String[] rsPortMethods = {
-            "getInput", "getAnalogInput", "getBundledInput",
-            "getOutput", "getAnalogOutput", "getBundledOutput",
-            "setOutput", "setAnalogOutput", "setBundledOutput", "testBundledInput"
-        };
-        regWithImm("toms_peripherals", "redstone_port", "tm_rsPort", rsPortMethods,
-                new HashSet<>(Arrays.asList("getInput", "getOutput", "getAnalogOutput", "getBundledOutput")));
+        // Redstone Port — 専用実装で実際の BlockEntity から値を読む
+        regImpl("toms_peripherals", "redstone_port", TmRedstonePortPeripheral::new);
 
-        // Watchdog Timer
-        String[] wdtMethods = {"isEnabled", "getTimeout", "setEnabled", "setTimeout", "reset"};
-        regWithImm("toms_peripherals", "wdt", "tm_wdt", wdtMethods,
-                new HashSet<>(Arrays.asList("isEnabled", "getTimeout")));
+        // Watchdog Timer — 専用実装で実際の BlockEntity から値を読む
+        regImpl("toms_peripherals", "wdt", TmWatchdogTimerPeripheral::new);
     }
 
     // ==================================================================
     // Clockwork CC Compat / Clockwork CC Compat
     // ==================================================================
 
+    private static final String DUCT_PROVIDER = "com.tom039224.clockworkcccompat.peripheral.DuctPeripheralProvider";
+    private static final String BOILER_PROVIDER = "com.tom039224.clockworkcccompat.peripheral.BoilerPeripheralProvider";
+
     public static void registerClockworkCcCompat() {
-        LOGGER.info("Registering Clockwork CC Compat peripherals (12 types)");
+        LOGGER.info("Registering Clockwork CC Compat peripherals (12 types) via CcPeripheralBridge");
 
         // Air Compressor (gas_network + unique)
         String[] airCompMethods = gasNetworkPlus("getFacing", "getStatus", "getSpeed");
-        regWithImm("clockwork_cc_compat", "air_compressor", "cw_air_compressor",
-                airCompMethods, gasNetworkImmPlus("getFacing", "getStatus", "getSpeed"));
+        regBridge("clockwork_cc_compat", "air_compressor", "cw_air_compressor",
+                airCompMethods, gasNetworkImmPlus("getFacing", "getStatus", "getSpeed"), DUCT_PROVIDER);
 
-        // Boiler (NO gas_network!)
+        // Boiler (NO gas_network! — uses BoilerPeripheralProvider)
         String[] boilerMethods = {
             "isActive", "getHeatLevel", "getActiveHeat", "isPassiveHeat",
             "getWaterSupply", "getAttachedEngines", "getAttachedWhistles",
@@ -252,28 +291,28 @@ public final class PeripheralRegistrations {
             "getMaxHeatForSize", "getMaxHeatForWater", "getFillState",
             "getFluidContents", "getControllerPos"
         };
-        regWithImm("clockwork_cc_compat", "boiler", "Create_Boiler",
-                boilerMethods, new HashSet<>(Arrays.asList(boilerMethods)));
+        regBridge("create", "fluid_tank", "Create_Boiler",
+                boilerMethods, new HashSet<>(Arrays.asList(boilerMethods)), BOILER_PROVIDER);
 
         // Coal Burner (gas_network + unique)
         String[] coalBurnerMethods = gasNetworkPlus("getFuelTicks", "getMaxBurnTime", "isBurning");
-        regWithImm("clockwork_cc_compat", "coal_burner", "cw_coal_burner",
-                coalBurnerMethods, gasNetworkImmPlus("getFuelTicks", "getMaxBurnTime", "isBurning"));
+        regBridge("clockwork_cc_compat", "coal_burner", "cw_coal_burner",
+                coalBurnerMethods, gasNetworkImmPlus("getFuelTicks", "getMaxBurnTime", "isBurning"), DUCT_PROVIDER);
 
         // Duct Tank (gas_network + unique)
         String[] ductTankMethods = gasNetworkPlus("getHeight", "getWidth");
-        regWithImm("clockwork_cc_compat", "duct_tank", "cw_duct_tank",
-                ductTankMethods, gasNetworkImmPlus("getHeight", "getWidth"));
+        regBridge("clockwork_cc_compat", "duct_tank", "cw_duct_tank",
+                ductTankMethods, gasNetworkImmPlus("getHeight", "getWidth"), DUCT_PROVIDER);
 
         // Exhaust (gas_network + unique)
         String[] exhaustMethods = gasNetworkPlus("getFacing");
-        regWithImm("clockwork_cc_compat", "exhaust", "cw_exhaust",
-                exhaustMethods, gasNetworkImmPlus("getFacing"));
+        regBridge("clockwork_cc_compat", "exhaust", "cw_exhaust",
+                exhaustMethods, gasNetworkImmPlus("getFacing"), DUCT_PROVIDER);
 
         // Gas Engine (NO gas_network!)
         String[] gasEngineMethods = {"getAttachedEngines", "getTotalEfficiency"};
-        regWithImm("clockwork_cc_compat", "gas_engine", "cw_gas_engine",
-                gasEngineMethods, new HashSet<>(Arrays.asList(gasEngineMethods)));
+        regBridge("clockwork_cc_compat", "gas_engine", "cw_gas_engine",
+                gasEngineMethods, new HashSet<>(Arrays.asList(gasEngineMethods)), DUCT_PROVIDER);
 
         // Gas Nozzle (gas_network + many unique)
         String[] gasNozzleMethods = gasNetworkPlus(
@@ -284,25 +323,27 @@ public final class PeripheralRegistrations {
             "getInflowRate", "getMissingPositions", "getTotalGasMass", "getLeakIntegrity",
             "getMaxLeaks", "getInternalDensity"
         );
-        regWithImm("clockwork_cc_compat", "gas_nozzle", "cw_gas_nozzle",
+        regBridge("clockwork_cc_compat", "gas_nozzle", "cw_gas_nozzle",
                 gasNozzleMethods, gasNetworkImmPlus(
                     "getPointer", "getPointerSpeed", "getPocketTemperature", "getDuctTemperature",
-                    "getTargetTemperature", "getBalloonVolume", "getLeaks", "getTemperatureDelta", "hasBalloon"));
+                    "getTargetTemperature", "getBalloonVolume", "getLeaks", "getTemperatureDelta", "hasBalloon"),
+                DUCT_PROVIDER);
 
         // Gas Pump (gas_network + unique)
         String[] gasPumpMethods = gasNetworkPlus("getPumpPressure", "getSpeed", "getFacing");
-        regWithImm("clockwork_cc_compat", "gas_pump", "cw_gas_pump",
-                gasPumpMethods, gasNetworkImmPlus("getPumpPressure", "getSpeed", "getFacing"));
+        regBridge("clockwork_cc_compat", "gas_pump", "cw_gas_pump",
+                gasPumpMethods, gasNetworkImmPlus("getPumpPressure", "getSpeed", "getFacing"), DUCT_PROVIDER);
 
         // Gas Thruster (gas_network + unique)
         String[] gasThrusterMethods = gasNetworkPlus("getThrust", "getFlowRate", "getGasMassFlow", "getFacing");
-        regWithImm("clockwork_cc_compat", "gas_thruster", "cw_gas_thruster",
-                gasThrusterMethods, gasNetworkImmPlus("getThrust", "getFlowRate", "getGasMassFlow", "getFacing"));
+        regBridge("clockwork_cc_compat", "gas_thruster", "cw_gas_thruster",
+                gasThrusterMethods, gasNetworkImmPlus("getThrust", "getFlowRate", "getGasMassFlow", "getFacing"),
+                DUCT_PROVIDER);
 
         // Gas Valve (gas_network + unique)
         String[] gasValveMethods = gasNetworkPlus("getAperture", "getFacing");
-        regWithImm("clockwork_cc_compat", "gas_valve", "cw_gas_valve",
-                gasValveMethods, gasNetworkImmPlus("getAperture", "getFacing"));
+        regBridge("clockwork_cc_compat", "gas_valve", "cw_gas_valve",
+                gasValveMethods, gasNetworkImmPlus("getAperture", "getFacing"), DUCT_PROVIDER);
 
         // Radiator (gas_network + many unique)
         String[] radiatorMethods = gasNetworkPlus(
@@ -312,18 +353,19 @@ public final class PeripheralRegistrations {
             "getAtmosphericPressure", "getPressureScale", "getThermalPower",
             "getStatus", "getConversionRate", "getConversions"
         );
-        regWithImm("clockwork_cc_compat", "radiator", "cw_radiator",
+        regBridge("clockwork_cc_compat", "radiator", "cw_radiator",
                 radiatorMethods, gasNetworkImmPlus(
                     "getFanType", "getFanRPM", "getFanCount", "getFans",
                     "isActive", "isCooling", "isHeating", "getTargetTemp",
                     "getInputTemperature", "getOutputTemperature", "getThermalFactor",
                     "getAtmosphericPressure", "getPressureScale", "getThermalPower",
-                    "getStatus", "getConversionRate", "getConversions"));
+                    "getStatus", "getConversionRate", "getConversions"),
+                DUCT_PROVIDER);
 
         // Redstone Duct (gas_network + unique)
         String[] redstoneDuctMethods = gasNetworkPlus("getPower", "getConditional");
-        regWithImm("clockwork_cc_compat", "redstone_duct", "cw_redstone_duct",
-                redstoneDuctMethods, gasNetworkImmPlus("getPower", "getConditional"));
+        regBridge("clockwork_cc_compat", "redstone_duct", "cw_redstone_duct",
+                redstoneDuctMethods, gasNetworkImmPlus("getPower", "getConditional"), DUCT_PROVIDER);
     }
 
     // ==================================================================
@@ -375,8 +417,9 @@ public final class PeripheralRegistrations {
         reg("create", "signal", "Create_Signal",
             new String[]{"setForcedRed", "cycleSignalType", "try_pull_train_signal_state_change"});
 
-        reg("create", "speedometer", "Create_Speedometer",
-            new String[]{"try_pull_speed_change"});
+        // Speedometer — getSpeed() は BlockEntity から直接読む (CcBlockEntityBridge)
+        regBE("create", "speedometer", "Create_Speedometer",
+            new String[]{"getSpeed", "try_pull_speed_change"});
 
         // Station - 専用実装を使用
         Block stationBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("create", "station"));
@@ -391,8 +434,9 @@ public final class PeripheralRegistrations {
         reg("create", "stock_ticker", "Create_StockTicker",
             new String[]{"getStockItemDetail", "requestFiltered", "getItemDetail"});
 
-        reg("create", "stressometer", "Create_Stressometer",
-            new String[]{"try_pull_overstressed", "try_pull_stress_change"});
+        // Stressometer — getStress()/getStressCapacity() は BlockEntity から直接読む (CcBlockEntityBridge)
+        regBE("create", "stressometer", "Create_Stressometer",
+            new String[]{"getStress", "getStressCapacity", "try_pull_overstressed", "try_pull_stress_change"});
 
         reg("create", "tablecloth_shop", "Create_TableClothShop",
             new String[]{"setAddress", "setPriceTagItem", "setPriceTagCount", "setWares"});
@@ -441,7 +485,7 @@ public final class PeripheralRegistrations {
     // ==================================================================
 
     public static void registerControlCraft() {
-        LOGGER.info("Registering Control-Craft peripherals (14 types)");
+        LOGGER.info("Registering Control-Craft peripherals (14 types) via CcBlockEntityBridge");
 
         // Camera
         String[] cameraMethods = {
@@ -457,16 +501,16 @@ public final class PeripheralRegistrations {
             "getClipDistance", "latestShip", "latestPlayer", "latestEntity", "latestBlock",
             "getCameraPosition", "getAbsViewForward", "isBeingUsed", "getDirection"
         ));
-        regWithImm("controlcraft", "camera", "camera", cameraMethods, cameraImm);
+        regBE("controlcraft", "camera", "camera", cameraMethods, cameraImm);
 
         // Cannon Mount
         String[] cannonMountMethods = {"getPitch", "getYaw", "setPitch", "setYaw", "assemble", "disassemble"};
-        regWithImm("controlcraft", "cannon_mount", "controlcraft\\$cannon_mount",
+        regBE("controlcraft", "cannon_mount", "controlcraft\\$cannon_mount",
                 cannonMountMethods, new HashSet<>(Arrays.asList("getPitch", "getYaw")));
 
         // Compact Flap
         String[] compactFlapMethods = {"getAngle", "getTilt", "setAngle", "setTilt"};
-        regWithImm("controlcraft", "compact_flap", "compact_flap",
+        regBE("controlcraft", "compact_flap", "compact_flap",
                 compactFlapMethods, new HashSet<>(Arrays.asList("getAngle", "getTilt")));
 
         // Dynamic Motor
@@ -475,18 +519,18 @@ public final class PeripheralRegistrations {
             "getCurrentValue", "getRelative", "isLocked",
             "setPID", "setTargetValue", "setOutputTorque", "setIsAdjustingAngle", "lock", "unlock"
         };
-        regWithImm("controlcraft", "dynamic_motor", "servo",
+        regBE("controlcraft", "dynamic_motor", "servo",
                 dynMotorMethods, new HashSet<>(Arrays.asList(
                     "getTargetValue", "getPhysics", "getAngle", "getAngularVelocity",
                     "getCurrentValue", "getRelative", "isLocked")));
 
         // Flap Bearing
         String[] flapBearingMethods = {"getAngle", "setAngle", "assembleNextTick", "disassembleNextTick"};
-        regWithImm("controlcraft", "flap_bearing", "WingController",
+        regBE("controlcraft", "flap_bearing", "WingController",
                 flapBearingMethods, new HashSet<>(Arrays.asList("getAngle")));
 
         // Jet
-        reg("controlcraft", "jet", "attacker",
+        regBE("controlcraft", "jet", "attacker",
             new String[]{"setOutputThrust", "setHorizontalTilt", "setVerticalTilt"});
 
         // Kinematic Motor
@@ -494,23 +538,23 @@ public final class PeripheralRegistrations {
             "getTargetAngle", "getControlTarget", "getPhysics", "getAngle", "getRelative",
             "setTargetAngle", "setControlTarget", "setIsForcingAngle"
         };
-        regWithImm("controlcraft", "kinematic_motor", "servo",
+        regBE("controlcraft", "kinematic_motor", "servo",
                 kinMotorMethods, new HashSet<>(Arrays.asList(
                     "getTargetAngle", "getControlTarget", "getPhysics", "getAngle", "getRelative")));
 
         // Kinetic Resistor
         String[] kinResistorMethods = {"getRatio", "setRatio"};
-        regWithImm("controlcraft", "kinetic_resistor", "resistor",
+        regBE("controlcraft", "kinetic_resistor", "resistor",
                 kinResistorMethods, new HashSet<>(Arrays.asList("getRatio")));
 
         // Link Bridge
         String[] linkBridgeMethods = {"setInput", "getOutput"};
-        regWithImm("controlcraft", "link_bridge", "cc_link_bridge",
+        regBE("controlcraft", "link_bridge", "cc_link_bridge",
                 linkBridgeMethods, new HashSet<>(Arrays.asList("getOutput")));
 
         // Propeller Controller
         String[] propCtrlMethods = {"getTargetSpeed", "setTargetSpeed"};
-        regWithImm("controlcraft", "propeller_controller", "PropellerController",
+        regBE("controlcraft", "propeller_controller", "PropellerController",
                 propCtrlMethods, new HashSet<>(Arrays.asList("getTargetSpeed")));
 
         // Slider
@@ -518,12 +562,12 @@ public final class PeripheralRegistrations {
             "getDistance", "getCurrentValue", "getTargetValue", "getPhysics", "isLocked",
             "setOutputForce", "setPID", "setTargetValue", "lock", "unlock"
         };
-        regWithImm("controlcraft", "slider", "slider",
+        regBE("controlcraft", "slider", "slider",
                 sliderMethods, new HashSet<>(Arrays.asList(
                     "getDistance", "getCurrentValue", "getTargetValue", "getPhysics", "isLocked")));
 
         // Spatial Anchor
-        reg("controlcraft", "spatial_anchor", "spatial",
+        regBE("controlcraft", "spatial_anchor", "spatial",
             new String[]{"setStatic", "setRunning", "setOffset", "setPPID", "setQPID", "setChannel"});
 
         // Spinalyzer
@@ -533,14 +577,14 @@ public final class PeripheralRegistrations {
             "getSpinalyzerPosition", "getSpinalyzerVelocity", "getPhysics",
             "applyInvariantForce", "applyInvariantTorque", "applyRotDependentForce", "applyRotDependentTorque"
         };
-        regWithImm("controlcraft", "spinalyzer", "spinalyzer",
+        regBE("controlcraft", "spinalyzer", "spinalyzer",
                 spinalyzerMethods, new HashSet<>(Arrays.asList(
                     "getQuaternion", "getQuaternionJ", "getRotationMatrix", "getRotationMatrixT",
                     "getVelocity", "getAngularVelocity", "getPosition",
                     "getSpinalyzerPosition", "getSpinalyzerVelocity", "getPhysics")));
 
         // Transmitter
-        reg("controlcraft", "transmitter", "transmitter",
+        regBE("controlcraft", "transmitter", "transmitter",
             new String[]{"callRemote", "callRemoteAsync", "setProtocol"});
     }
 
