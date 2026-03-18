@@ -38,14 +38,29 @@ public class TmGpuPeripheral implements PeripheralType {
     private static final String TYPE_NAME = "tm_gpu";
 
     private static final String[] METHODS = {
-        "setSize", "refreshSize", "getSize", "fill", "sync",
-        "filledRectangle", "drawImage", "drawText", "drawChar",
-        "getTextLength", "setFont", "clearChars", "addNewChar",
-        "createWindow", "decodeImage", "newImage"
+        // setSize / size management
+        "setSize", "refreshSize", "getSize",
+        // 2D drawing
+        "fill", "filledRectangle", "rectangle", "line", "lineS",
+        "drawText", "drawTextSmart", "drawChar", "drawBuffer", "drawImage",
+        // sync
+        "sync",
+        // font
+        "getFont", "setFont", "getTextLength",
+        "addNewChar", "delChar", "freeChars", "clearChars",
+        "setFontDefaultCharID", "getFontDefaultCharID",
+        // image / buffer
+        "decodeImage", "imageFromBuffer", "newImage", "newBuffer",
+        // memory
+        "getUsedMemory", "getMaxMemory",
+        // window / misc
+        "createWindow", "createWindow3D", "getBounds",
     };
 
     private static final Set<String> IMM_METHODS = Set.of(
-        "getSize", "getTextLength", "createWindow", "newImage"
+        "getSize", "getTextLength", "getFont", "getFontDefaultCharID",
+        "freeChars", "getUsedMemory", "getMaxMemory", "getBounds",
+        "createWindow", "createWindow3D", "newImage", "getConstants"
     );    @Override
     public String getTypeName() { return TYPE_NAME; }
 
@@ -57,12 +72,14 @@ public class TmGpuPeripheral implements PeripheralType {
                              ServerLevel level, BlockPos pos) throws PeripheralException {
         try {
             return switch (methodName) {
-                // Methods requiring argument transformation before delegation
-                case "drawText", "drawChar"      -> delegateWithTextArgs(methodName, args, level, pos);
+                case "drawText", "drawChar", "drawTextSmart" -> delegateWithTextArgs(methodName, args, level, pos);
                 case "fill"                      -> delegateWithFillArgs(args, level, pos);
-                case "filledRectangle"           -> delegateWithFilledRectArgs(args, level, pos);
+                case "filledRectangle",
+                     "rectangle"                 -> delegateWithRectArgs(methodName, args, level, pos);
+                case "line", "lineS"             -> delegateWithLineArgs(methodName, args, level, pos);
                 case "drawImage"                 -> delegateWithDrawImageArgs(args, level, pos);
-                case "createWindow"              -> delegateWithCreateWindowArgs(args, level, pos);
+                case "createWindow",
+                     "createWindow3D"            -> delegateWithCreateWindowArgs(methodName, args, level, pos);
                 default                          -> delegateToTmPeripheral(methodName, args, level, pos);
             };
         } catch (IOException e) {
@@ -364,11 +381,11 @@ public class TmGpuPeripheral implements PeripheralType {
     }
 
     /**
-     * filledRectangle:
+     * filledRectangle / rectangle:
      *   Rust:  [x, y, w, h, r, g, b, a]  (x,y 0-indexed, rgba 0.0-1.0)
      *   Java:  [x+1, y+1, w, h, r, g, b, a]  (1-indexed, color 0-255 Double)
      */
-    private byte[] delegateWithFilledRectArgs(byte[] args, ServerLevel level, BlockPos pos) throws IOException {
+    private byte[] delegateWithRectArgs(String methodName, byte[] args, ServerLevel level, BlockPos pos) throws IOException {
         Object[] raw = decodeMsgpackToObjectArray(args);
         double x = raw.length > 0 ? toDouble(raw[0]) : 0;
         double y = raw.length > 1 ? toDouble(raw[1]) : 0;
@@ -379,23 +396,42 @@ public class TmGpuPeripheral implements PeripheralType {
         double b = raw.length > 6 ? toDouble(raw[6]) : 0;
         double a = raw.length > 7 ? toDouble(raw[7]) : 1;
         Object[] javaArgs = new Object[]{x + 1, y + 1, w, h, toColor255(r), toColor255(g), toColor255(b), toColor255(a)};
-        return delegateWithArgs("filledRectangle", javaArgs, level, pos);
+        return delegateWithArgs(methodName, javaArgs, level, pos);
     }
 
     /**
-     * createWindow:
+     * line / lineS:
+     *   Rust:  [x1, y1, x2, y2, r, g, b, a]  (0-indexed, rgba 0.0-1.0)
+     *   Java:  [x1+1, y1+1, x2+1, y2+1, color]  (1-indexed, color 0-255 Double x4)
+     */
+    private byte[] delegateWithLineArgs(String methodName, byte[] args, ServerLevel level, BlockPos pos) throws IOException {
+        Object[] raw = decodeMsgpackToObjectArray(args);
+        double x1 = raw.length > 0 ? toDouble(raw[0]) : 0;
+        double y1 = raw.length > 1 ? toDouble(raw[1]) : 0;
+        double x2 = raw.length > 2 ? toDouble(raw[2]) : 0;
+        double y2 = raw.length > 3 ? toDouble(raw[3]) : 0;
+        double r  = raw.length > 4 ? toDouble(raw[4]) : 0;
+        double g  = raw.length > 5 ? toDouble(raw[5]) : 0;
+        double b  = raw.length > 6 ? toDouble(raw[6]) : 0;
+        double a  = raw.length > 7 ? toDouble(raw[7]) : 1;
+        Object[] javaArgs = new Object[]{x1 + 1, y1 + 1, x2 + 1, y2 + 1, toColor255(r), toColor255(g), toColor255(b), toColor255(a)};
+        return delegateWithArgs(methodName, javaArgs, level, pos);
+    }
+
+    /**
+     * createWindow / createWindow3D:
      *   Rust:  [x, y, w, h]  (0-indexed)
      *   Java:  [x+1, y+1, w, h]  (1-indexed)
-     *   Returns: BaseGPU object (TMLuaObject) → encode as ref string
+     *   Returns: TMLuaObject ref string
      */
-    private byte[] delegateWithCreateWindowArgs(byte[] args, ServerLevel level, BlockPos pos) throws IOException {
+    private byte[] delegateWithCreateWindowArgs(String methodName, byte[] args, ServerLevel level, BlockPos pos) throws IOException {
         Object[] raw = decodeMsgpackToObjectArray(args);
         double x = raw.length > 0 ? toDouble(raw[0]) : 0;
         double y = raw.length > 1 ? toDouble(raw[1]) : 0;
         double w = raw.length > 2 ? toDouble(raw[2]) : 0;
         double h = raw.length > 3 ? toDouble(raw[3]) : 0;
         Object[] javaArgs = new Object[]{x + 1, y + 1, w, h};
-        return delegateWithArgs("createWindow", javaArgs, level, pos);
+        return delegateWithArgs(methodName, javaArgs, level, pos);
     }
 
     /**

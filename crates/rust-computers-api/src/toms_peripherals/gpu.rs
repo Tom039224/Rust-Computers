@@ -16,15 +16,6 @@ pub struct TMImage {
     pub data: Vec<u32>,
 }
 
-/// GPU ウィンドウ。
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub struct TMWindow {
-    pub x: f64,
-    pub y: f64,
-    pub width: u32,
-    pub height: u32,
-}
-
 /// GPU ペリフェラル。
 pub struct GPU {
     addr: PeriphAddr,
@@ -454,5 +445,195 @@ impl GPU {
         self.book_next_new_image(w, h);
         crate::wait_for_next_tick().await;
         self.read_last_new_image()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Sync-only helpers (book + read pattern for newly added methods)
+// ---------------------------------------------------------------------------
+
+impl GPU {
+    // --- rectangle ---
+    #[allow(clippy::too_many_arguments)]
+    pub fn book_next_rectangle(&mut self, x: u32, y: u32, w: u32, h: u32, r: f32, g: f32, b: f32, a: f32) {
+        let args = msgpack::array(&[
+            msgpack::int(x as i32), msgpack::int(y as i32),
+            msgpack::int(w as i32), msgpack::int(h as i32),
+            msgpack::float64(r as f64), msgpack::float64(g as f64),
+            msgpack::float64(b as f64), msgpack::float64(a as f64),
+        ]);
+        peripheral::book_action(self.addr, "rectangle", &args);
+    }
+    pub fn read_last_rectangle(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "rectangle")
+            .into_iter().map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge)).collect()
+    }
+
+    // --- line ---
+    #[allow(clippy::too_many_arguments)]
+    pub fn book_next_line(&mut self, x1: u32, y1: u32, x2: u32, y2: u32, r: f32, g: f32, b: f32, a: f32) {
+        let args = msgpack::array(&[
+            msgpack::int(x1 as i32), msgpack::int(y1 as i32),
+            msgpack::int(x2 as i32), msgpack::int(y2 as i32),
+            msgpack::float64(r as f64), msgpack::float64(g as f64),
+            msgpack::float64(b as f64), msgpack::float64(a as f64),
+        ]);
+        peripheral::book_action(self.addr, "line", &args);
+    }
+    pub fn read_last_line(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "line")
+            .into_iter().map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge)).collect()
+    }
+
+    // --- lineS (smooth line) ---
+    #[allow(clippy::too_many_arguments)]
+    pub fn book_next_line_s(&mut self, x1: u32, y1: u32, x2: u32, y2: u32, r: f32, g: f32, b: f32, a: f32) {
+        let args = msgpack::array(&[
+            msgpack::int(x1 as i32), msgpack::int(y1 as i32),
+            msgpack::int(x2 as i32), msgpack::int(y2 as i32),
+            msgpack::float64(r as f64), msgpack::float64(g as f64),
+            msgpack::float64(b as f64), msgpack::float64(a as f64),
+        ]);
+        peripheral::book_action(self.addr, "lineS", &args);
+    }
+    pub fn read_last_line_s(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "lineS")
+            .into_iter().map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge)).collect()
+    }
+
+    // --- drawTextSmart ---
+    #[allow(clippy::too_many_arguments)]
+    pub fn book_next_draw_text_smart(&mut self, text: &str, x: u32, y: u32, r: f32, g: f32, b: f32, a: f32) {
+        let args = msgpack::array(&[
+            msgpack::str(text),
+            msgpack::int(x as i32), msgpack::int(y as i32),
+            msgpack::float64(r as f64), msgpack::float64(g as f64),
+            msgpack::float64(b as f64), msgpack::float64(a as f64),
+        ]);
+        peripheral::book_action(self.addr, "drawTextSmart", &args);
+    }
+    pub fn read_last_draw_text_smart(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "drawTextSmart")
+            .into_iter().map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge)).collect()
+    }
+
+    // --- drawBuffer ---
+    /// x, y, w, scale, data (raw pixel ints)
+    pub fn book_next_draw_buffer(&mut self, x: u32, y: u32, w: u32, scale: u32, data: &[u32]) {
+        let mut elems: alloc::vec::Vec<alloc::vec::Vec<u8>> = alloc::vec::Vec::new();
+        elems.push(msgpack::int(x as i32));
+        elems.push(msgpack::int(y as i32));
+        elems.push(msgpack::int(w as i32));
+        elems.push(msgpack::int(scale as i32));
+        for &px in data {
+            elems.push(msgpack::int(px as i32));
+        }
+        peripheral::book_action(self.addr, "drawBuffer", &msgpack::array(&elems));
+    }
+    pub fn read_last_draw_buffer(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "drawBuffer")
+            .into_iter().map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge)).collect()
+    }
+
+    // --- imageFromBuffer ---
+    pub fn book_next_image_from_buffer(&mut self, buf_ref: &str, w: u32, h: u32) {
+        let args = msgpack::array(&[
+            msgpack::str(buf_ref),
+            msgpack::int(w as i32),
+            msgpack::int(h as i32),
+        ]);
+        peripheral::book_request(self.addr, "imageFromBuffer", &args);
+    }
+    pub fn read_last_image_from_buffer(&self) -> Result<alloc::string::String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "imageFromBuffer")?;
+        peripheral::decode(&data)
+    }
+
+    // --- newBuffer ---
+    pub fn book_next_new_buffer(&mut self, size: u32) {
+        let args = msgpack::array(&[msgpack::int(size as i32)]);
+        peripheral::book_request(self.addr, "newBuffer", &args);
+    }
+    pub fn read_last_new_buffer(&self) -> Result<alloc::string::String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "newBuffer")?;
+        peripheral::decode(&data)
+    }
+
+    // --- getFont ---
+    pub fn get_font_imm(&self) -> Result<alloc::string::String, PeripheralError> {
+        let data = peripheral::request_info_imm(self.addr, "getFont", &msgpack::array(&[]))?;
+        peripheral::decode(&data)
+    }
+
+    // --- getFontDefaultCharID ---
+    pub fn get_font_default_char_id_imm(&self) -> Result<u32, PeripheralError> {
+        let data = peripheral::request_info_imm(self.addr, "getFontDefaultCharID", &msgpack::array(&[]))?;
+        peripheral::decode(&data)
+    }
+
+    // --- setFontDefaultCharID ---
+    pub fn book_next_set_font_default_char_id(&mut self, id: u32) {
+        let args = msgpack::array(&[msgpack::int(id as i32)]);
+        peripheral::book_action(self.addr, "setFontDefaultCharID", &args);
+    }
+    pub fn read_last_set_font_default_char_id(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "setFontDefaultCharID")
+            .into_iter().map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge)).collect()
+    }
+
+    // --- delChar ---
+    pub fn book_next_del_char(&mut self, ch: char) {
+        let mut buf = [0u8; 4];
+        let s = ch.encode_utf8(&mut buf);
+        let args = msgpack::array(&[msgpack::str(s)]);
+        peripheral::book_action(self.addr, "delChar", &args);
+    }
+    pub fn read_last_del_char(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "delChar")
+            .into_iter().map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge)).collect()
+    }
+
+    // --- freeChars ---
+    pub fn free_chars_imm(&self) -> Result<u32, PeripheralError> {
+        let data = peripheral::request_info_imm(self.addr, "freeChars", &msgpack::array(&[]))?;
+        peripheral::decode(&data)
+    }
+
+    // --- getUsedMemory / getMaxMemory ---
+    pub fn get_used_memory_imm(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::request_info_imm(self.addr, "getUsedMemory", &msgpack::array(&[]))?;
+        peripheral::decode(&data)
+    }
+    pub fn get_max_memory_imm(&self) -> Result<f64, PeripheralError> {
+        let data = peripheral::request_info_imm(self.addr, "getMaxMemory", &msgpack::array(&[]))?;
+        peripheral::decode(&data)
+    }
+
+    // --- getBounds ---
+    pub fn get_bounds_imm(&self) -> Result<crate::msgpack::Value, PeripheralError> {
+        let data = peripheral::request_info_imm(self.addr, "getBounds", &msgpack::array(&[]))?;
+        peripheral::decode(&data)
+    }
+
+    // --- createWindow3D ---
+    /// Returns a ref string for the GPU3D window object.
+    pub fn book_next_create_window_3d(&mut self, x: u32, y: u32, w: u32, h: u32) {
+        let args = msgpack::array(&[
+            msgpack::int(x as i32), msgpack::int(y as i32),
+            msgpack::int(w as i32), msgpack::int(h as i32),
+        ]);
+        peripheral::book_request(self.addr, "createWindow3D", &args);
+    }
+    pub fn read_last_create_window_3d(&self) -> Result<alloc::string::String, PeripheralError> {
+        let data = peripheral::read_result(self.addr, "createWindow3D")?;
+        peripheral::decode(&data)
+    }
+    pub fn create_window_3d_imm(&self, x: u32, y: u32, w: u32, h: u32) -> Result<alloc::string::String, PeripheralError> {
+        let args = msgpack::array(&[
+            msgpack::int(x as i32), msgpack::int(y as i32),
+            msgpack::int(w as i32), msgpack::int(h as i32),
+        ]);
+        let data = peripheral::request_info_imm(self.addr, "createWindow3D", &args)?;
+        peripheral::decode(&data)
     }
 }
