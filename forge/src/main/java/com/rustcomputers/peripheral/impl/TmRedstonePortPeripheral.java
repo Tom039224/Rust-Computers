@@ -2,8 +2,6 @@ package com.rustcomputers.peripheral.impl;
 
 import com.rustcomputers.peripheral.PeripheralException;
 import com.rustcomputers.peripheral.PeripheralType;
-import dan200.computercraft.api.lua.LuaFunction;
-import dan200.computercraft.api.peripheral.IPeripheral;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -21,8 +19,9 @@ import java.util.*;
 /**
  * Tom's Peripherals RedstonePort peripheral implementation.
  *
- * <p>Delegates to {@code RedstonePortBlockEntity.getPeripheral()} (IPeripheral) via reflection
- * since Toms-Peripherals is not a compile-time dependency.</p>
+ * <p>Tom's Peripherals uses its own {@code ITMPeripheral} / {@code ObjectWrapper} API.
+ * We obtain the peripheral via {@code RedstonePortBlockEntity.getPeripheral()} and
+ * call {@code ITMPeripheral.call(null, methodName, args)} directly.</p>
  */
 public class TmRedstonePortPeripheral implements PeripheralType {
 
@@ -39,9 +38,6 @@ public class TmRedstonePortPeripheral implements PeripheralType {
         "getInput", "getOutput", "getAnalogOutput", "getBundledOutput"
     );
 
-    // Direction ordinals matching Minecraft's Direction enum
-    private static final String[] SIDE_NAMES = {"down", "up", "north", "south", "west", "east"};
-
     @Override
     public String getTypeName() { return TYPE_NAME; }
 
@@ -51,81 +47,73 @@ public class TmRedstonePortPeripheral implements PeripheralType {
     @Override
     public byte[] callMethod(String methodName, byte[] args,
                              ServerLevel level, BlockPos pos) throws PeripheralException {
-        try {
-            return switch (methodName) {
-                case "getInput"         -> encodeBool(readInput(level, pos, args) > 0);
-                case "getAnalogInput"   -> encodeInt(readInput(level, pos, args));
-                case "getBundledInput"  -> encodeInt(readBundledInput(level, pos, args));
-                case "getOutput"        -> encodeBool(readOutput(level, pos, args) > 0);
-                case "getAnalogOutput"  -> encodeInt(readOutput(level, pos, args));
-                case "getBundledOutput" -> encodeInt(readBundledOutput(level, pos, args));
-                case "testBundledInput" -> encodeBool(testBundledInput(level, pos, args));
-                // Delegate setters to actual peripheral
-                default -> delegateToPeripheral(methodName, args, level, pos);
-            };
-        } catch (IOException e) {
-            LOGGER.error("TmRedstonePortPeripheral: encode failed for '{}'", methodName, e);
-            throw new PeripheralException("Failed to encode result: " + e.getMessage());
+        return delegateToTmPeripheral(methodName, args, level, pos);
+    }
+
+    @Override
+    public byte[] callImmediate(String methodName, byte[] args,
+                                ServerLevel level, BlockPos pos) throws PeripheralException {
+        if (IMM_METHODS.contains(methodName)) {
+            return callMethod(methodName, args, level, pos);
         }
+        return null;
     }
 
     // ------------------------------------------------------------------
-    // Delegate to actual RedstonePort peripheral via reflection
+    // Delegate to ITMPeripheral.call() via reflection
     // ------------------------------------------------------------------
 
-    private byte[] delegateToPeripheral(String methodName, byte[] args,
-                                       ServerLevel level, BlockPos pos) throws IOException {
-        IPeripheral peripheral = getPeripheral(level, pos);
+    private byte[] delegateToTmPeripheral(String methodName, byte[] args,
+                                          ServerLevel level, BlockPos pos) {
+        Object peripheral = getTmPeripheral(level, pos);
         if (peripheral == null) {
             LOGGER.warn("TmRedstonePortPeripheral: no peripheral at {}", pos);
             return encodeNil();
         }
 
         try {
-            Method method = findLuaMethod(peripheral, methodName);
-            if (method == null) {
-                LOGGER.debug("TmRedstonePortPeripheral: @LuaFunction '{}' not found", methodName);
+            Method callMethod = findMethodByArity(peripheral.getClass(), "call", 3);
+            if (callMethod == null) {
+                LOGGER.warn("TmRedstonePortPeripheral: ITMPeripheral.call() not found on {}", peripheral.getClass());
                 return encodeNil();
             }
 
-            Object[] javaArgs = decodeMsgpackArgs(args, method);
-            Object result = method.invoke(peripheral, javaArgs);
+            Object[] javaArgs = decodeMsgpackToObjectArray(args);
+            Object result = callMethod.invoke(peripheral, null, methodName, javaArgs);
             return encodeResult(result);
         } catch (Exception e) {
-            LOGGER.warn("TmRedstonePortPeripheral: callMethod '{}' failed: {}", methodName, e.getMessage());
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            LOGGER.warn("TmRedstonePortPeripheral: '{}' failed: {}", methodName, cause.getMessage());
             return encodeNil();
         }
     }
 
     @Nullable
-    private IPeripheral getPeripheral(ServerLevel level, BlockPos pos) {
+    private Object getTmPeripheral(ServerLevel level, BlockPos pos) {
         BlockEntity be = level.getBlockEntity(pos);
         if (be == null) return null;
         try {
-            Method getPeripheral = be.getClass().getMethod("getPeripheral");
-            return (IPeripheral) getPeripheral.invoke(be);
+            Method getPeripheral = findMethodByArity(be.getClass(), "getPeripheral", 0);
+            if (getPeripheral == null) {
+                LOGGER.warn("TmRedstonePortPeripheral: getPeripheral() not found on {}", be.getClass());
+                return null;
+            }
+            return getPeripheral.invoke(be);
         } catch (Exception e) {
-            LOGGER.debug("TmRedstonePortPeripheral: getPeripheral() failed: {}", e.getMessage());
+            LOGGER.warn("TmRedstonePortPeripheral: getPeripheral() failed at {}: {}", pos, e.getMessage());
             return null;
         }
     }
 
     @Nullable
-    private Method findLuaMethod(IPeripheral peripheral, String methodName) {
-        Class<?> cls = peripheral.getClass();
+    private Method findMethodByArity(Class<?> cls, String name, int paramCount) {
+        for (Class<?> iface : cls.getInterfaces()) {
+            Method m = findMethodByArity(iface, name, paramCount);
+            if (m != null) return m;
+        }
         while (cls != null && cls != Object.class) {
             for (Method m : cls.getDeclaredMethods()) {
-                LuaFunction ann = m.getAnnotation(LuaFunction.class);
-                if (ann == null) continue;
-                String[] names = ann.value();
-                if (names.length > 0) {
-                    for (String name : names) {
-                        if (name.equals(methodName)) {
-                            m.setAccessible(true);
-                            return m;
-                        }
-                    }
-                } else if (m.getName().equals(methodName)) {
+                if (m.getName().equals(name) && m.getParameterCount() == paramCount) {
                     m.setAccessible(true);
                     return m;
                 }
@@ -135,23 +123,15 @@ public class TmRedstonePortPeripheral implements PeripheralType {
         return null;
     }
 
-    private Object[] decodeMsgpackArgs(byte[] data, Method method) {
-        Class<?>[] paramTypes = method.getParameterTypes();
-        if (paramTypes.length == 0) return new Object[0];
+    // ------------------------------------------------------------------
+    // Args decoding: msgpack → Object[]
+    // ------------------------------------------------------------------
 
-        List<Object> rawArgs = decodeMsgpackToList(data);
-        Object[] result = new Object[paramTypes.length];
-        for (int i = 0; i < paramTypes.length && i < rawArgs.size(); i++) {
-            result[i] = coerce(rawArgs.get(i), paramTypes[i]);
-        }
-        return result;
-    }
-
-    private List<Object> decodeMsgpackToList(byte[] data) {
+    private Object[] decodeMsgpackToObjectArray(byte[] data) {
+        if (data == null || data.length == 0) return new Object[0];
         List<Object> list = new ArrayList<>();
-        if (data == null || data.length == 0) return list;
         try (MessageUnpacker u = MessagePack.newDefaultUnpacker(data)) {
-            if (!u.hasNext()) return list;
+            if (!u.hasNext()) return new Object[0];
             var fmt = u.getNextFormat();
             if (fmt.getValueType().isArrayType()) {
                 int count = u.unpackArrayHeader();
@@ -164,7 +144,7 @@ public class TmRedstonePortPeripheral implements PeripheralType {
         } catch (IOException e) {
             LOGGER.debug("TmRedstonePortPeripheral: failed to decode args: {}", e.getMessage());
         }
-        return list;
+        return list.toArray();
     }
 
     private Object unpackValue(MessageUnpacker u) throws IOException {
@@ -182,7 +162,7 @@ public class TmRedstonePortPeripheral implements PeripheralType {
                 int n = u.unpackArrayHeader();
                 List<Object> arr = new ArrayList<>(n);
                 for (int i = 0; i < n; i++) arr.add(unpackValue(u));
-                yield arr;
+                yield arr.toArray();
             }
             case MAP -> {
                 int n = u.unpackMapHeader();
@@ -198,30 +178,25 @@ public class TmRedstonePortPeripheral implements PeripheralType {
         };
     }
 
-    @Nullable
-    private Object coerce(@Nullable Object value, Class<?> targetType) {
-        if (value == null) return null;
-        if (targetType.isInstance(value)) return value;
-        if (targetType == int.class || targetType == Integer.class) {
-            if (value instanceof Number n) return n.intValue();
-        } else if (targetType == long.class || targetType == Long.class) {
-            if (value instanceof Number n) return n.longValue();
-        } else if (targetType == double.class || targetType == Double.class) {
-            if (value instanceof Number n) return n.doubleValue();
-        } else if (targetType == float.class || targetType == Float.class) {
-            if (value instanceof Number n) return n.floatValue();
-        } else if (targetType == boolean.class || targetType == Boolean.class) {
-            if (value instanceof Boolean b) return b;
-        } else if (targetType == String.class) {
-            return value.toString();
-        }
-        return value;
-    }
+    // ------------------------------------------------------------------
+    // Result encoding
+    // ------------------------------------------------------------------
 
     private byte[] encodeResult(@Nullable Object value) {
         try {
             MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
-            packValue(packer, value);
+            if (value instanceof Object[] arr) {
+                if (arr.length == 0) {
+                    packer.packNil();
+                } else if (arr.length == 1) {
+                    packValue(packer, arr[0]);
+                } else {
+                    packer.packArrayHeader(arr.length);
+                    for (Object item : arr) packValue(packer, item);
+                }
+            } else {
+                packValue(packer, value);
+            }
             packer.close();
             return packer.toByteArray();
         } catch (IOException e) {
@@ -257,157 +232,15 @@ public class TmRedstonePortPeripheral implements PeripheralType {
                 packValue(p, entry.getKey());
                 packValue(p, entry.getValue());
             }
-        } else if (value instanceof List<?> list) {
-            p.packArrayHeader(list.size());
-            for (Object item : list) packValue(p, item);
         } else if (value instanceof Object[] arr) {
             p.packArrayHeader(arr.length);
             for (Object item : arr) packValue(p, item);
+        } else if (value instanceof List<?> list) {
+            p.packArrayHeader(list.size());
+            for (Object item : list) packValue(p, item);
         } else {
             p.packString(value.toString());
         }
-    }
-
-    @Override
-    public byte[] callImmediate(String methodName, byte[] args,
-                                ServerLevel level, BlockPos pos) throws PeripheralException {
-        if (IMM_METHODS.contains(methodName)) {
-            return callMethod(methodName, args, level, pos);
-        }
-        return null;
-    }
-
-    // ------------------------------------------------------------------
-    // Reflection helpers
-    // ------------------------------------------------------------------
-
-    private int readInput(ServerLevel level, BlockPos pos, byte[] args) {
-        int dir = parseSideArg(args);
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be == null) return 0;
-        try {
-            Method m = be.getClass().getMethod("getInput", net.minecraft.core.Direction.class);
-            return ((Number) m.invoke(be, directionFromOrdinal(dir))).intValue();
-        } catch (Exception e) {
-            LOGGER.warn("TmRedstonePortPeripheral: getInput reflection failed: {}", e.getMessage());
-            return 0;
-        }
-    }
-
-    private int readBundledInput(ServerLevel level, BlockPos pos, byte[] args) {
-        int dir = parseSideArg(args);
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be == null) return 0;
-        try {
-            Method m = be.getClass().getMethod("getBundledInput", net.minecraft.core.Direction.class);
-            return ((Number) m.invoke(be, directionFromOrdinal(dir))).intValue();
-        } catch (Exception e) {
-            LOGGER.warn("TmRedstonePortPeripheral: getBundledInput reflection failed: {}", e.getMessage());
-            return 0;
-        }
-    }
-
-    private int readOutput(ServerLevel level, BlockPos pos, byte[] args) {
-        int dir = parseSideArg(args);
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be == null) return 0;
-        try {
-            Method m = be.getClass().getMethod("getOutput", net.minecraft.core.Direction.class);
-            return ((Number) m.invoke(be, directionFromOrdinal(dir))).intValue();
-        } catch (Exception e) {
-            LOGGER.warn("TmRedstonePortPeripheral: getOutput reflection failed: {}", e.getMessage());
-            return 0;
-        }
-    }
-
-    private int readBundledOutput(ServerLevel level, BlockPos pos, byte[] args) {
-        int dir = parseSideArg(args);
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be == null) return 0;
-        try {
-            Method m = be.getClass().getMethod("getBundledOutput", net.minecraft.core.Direction.class);
-            return ((Number) m.invoke(be, directionFromOrdinal(dir))).intValue();
-        } catch (Exception e) {
-            LOGGER.warn("TmRedstonePortPeripheral: getBundledOutput reflection failed: {}", e.getMessage());
-            return 0;
-        }
-    }
-
-    private boolean testBundledInput(ServerLevel level, BlockPos pos, byte[] args) {
-        if (args == null || args.length == 0) return false;
-        try (MessageUnpacker u = MessagePack.newDefaultUnpacker(args)) {
-            if (u.hasNext()) {
-                var fmt = u.getNextFormat();
-                if (fmt.getValueType().isArrayType()) u.unpackArrayHeader();
-            }
-            String side = u.unpackString();
-            int mask = u.unpackInt();
-            int dir = sideNameToOrdinal(side);
-            int bundled = readBundledInput(level, pos, encodeSideArg(dir));
-            return (bundled & mask) == mask;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Arg parsing
-    // ------------------------------------------------------------------
-
-    private int parseSideArg(byte[] args) {
-        if (args == null || args.length == 0) return 0;
-        try (MessageUnpacker u = MessagePack.newDefaultUnpacker(args)) {
-            if (u.hasNext()) {
-                var fmt = u.getNextFormat();
-                if (fmt.getValueType().isArrayType()) u.unpackArrayHeader();
-            }
-            if (!u.hasNext()) return 0;
-            String side = u.unpackString();
-            return sideNameToOrdinal(side);
-        } catch (IOException e) {
-            return 0;
-        }
-    }
-
-    private byte[] encodeSideArg(int ordinal) {
-        try {
-            MessageBufferPacker p = MessagePack.newDefaultBufferPacker();
-            p.packArrayHeader(1);
-            p.packString(SIDE_NAMES[Math.max(0, Math.min(ordinal, 5))]);
-            p.close();
-            return p.toByteArray();
-        } catch (IOException e) {
-            return new byte[0];
-        }
-    }
-
-    private int sideNameToOrdinal(String name) {
-        for (int i = 0; i < SIDE_NAMES.length; i++) {
-            if (SIDE_NAMES[i].equalsIgnoreCase(name)) return i;
-        }
-        return 0;
-    }
-
-    private net.minecraft.core.Direction directionFromOrdinal(int ordinal) {
-        return net.minecraft.core.Direction.values()[Math.max(0, Math.min(ordinal, 5))];
-    }
-
-    // ------------------------------------------------------------------
-    // Encoders
-    // ------------------------------------------------------------------
-
-    private byte[] encodeBool(boolean v) throws IOException {
-        MessageBufferPacker p = MessagePack.newDefaultBufferPacker();
-        p.packBoolean(v);
-        p.close();
-        return p.toByteArray();
-    }
-
-    private byte[] encodeInt(int v) throws IOException {
-        MessageBufferPacker p = MessagePack.newDefaultBufferPacker();
-        p.packInt(v);
-        p.close();
-        return p.toByteArray();
     }
 
     private byte[] encodeNil() {

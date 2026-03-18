@@ -2,8 +2,6 @@ package com.rustcomputers.peripheral.impl;
 
 import com.rustcomputers.peripheral.PeripheralException;
 import com.rustcomputers.peripheral.PeripheralType;
-import dan200.computercraft.api.lua.LuaFunction;
-import dan200.computercraft.api.peripheral.IPeripheral;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -21,11 +19,19 @@ import java.util.*;
 /**
  * Tom's Peripherals GPU peripheral implementation.
  *
- * <p>Delegates to {@code GPUBlockEntity.getPeripheral()} (IPeripheral) via reflection
- * since Toms-Peripherals is not a compile-time dependency.</p>
+ * <p>Tom's Peripherals uses its own {@code ITMPeripheral} API (not CC:Tweaked's IPeripheral),
+ * with {@code @LuaMethod} annotations and {@code call(IComputer, String, Object[])} dispatch.
+ * We obtain the peripheral via {@code GPUBlockEntity.getPeripheral()} and call it directly.</p>
  *
- * <p>Uses CcBlockEntityBridge pattern for most methods, with custom handling for
- * getSize, getTextLength, createWindow, newImage which need special encoding.</p>
+ * <p>Special cases:
+ * <ul>
+ *   <li>{@code getSize} — decoded from Object[] return value</li>
+ *   <li>{@code getTextLength} — estimated locally (8px/char)</li>
+ *   <li>{@code createWindow} — echoes args back as a map</li>
+ *   <li>{@code newImage} — creates a blank image locally</li>
+ *   <li>{@code decodeImage} — not yet implemented (returns empty image)</li>
+ * </ul>
+ * </p>
  */
 public class TmGpuPeripheral implements PeripheralType {
 
@@ -44,102 +50,103 @@ public class TmGpuPeripheral implements PeripheralType {
     );
 
     @Override
-    public String getTypeName() {
-        return TYPE_NAME;
-    }
+    public String getTypeName() { return TYPE_NAME; }
 
     @Override
-    public String[] getMethodNames() {
-        return METHODS.clone();
-    }
+    public String[] getMethodNames() { return METHODS.clone(); }
 
     @Override
     public byte[] callMethod(String methodName, byte[] args,
-                             ServerLevel level, BlockPos peripheralPos)
-            throws PeripheralException {
+                             ServerLevel level, BlockPos pos) throws PeripheralException {
         try {
-            // Custom encoding for specific methods
             return switch (methodName) {
-                case "getSize"       -> encodeGetSize(level, peripheralPos);
                 case "getTextLength" -> encodeGetTextLength(args);
                 case "createWindow"  -> encodeCreateWindow(args);
                 case "newImage"      -> encodeNewImage(args);
                 case "decodeImage"   -> encodeDecodeImage();
-                default              -> delegateToPeripheral(methodName, args, level, peripheralPos);
+                default              -> delegateToTmPeripheral(methodName, args, level, pos);
             };
         } catch (IOException e) {
-            LOGGER.error("TmGpuPeripheral: failed to encode result for '{}'", methodName, e);
+            LOGGER.error("TmGpuPeripheral: encode failed for '{}'", methodName, e);
             throw new PeripheralException("Failed to encode result: " + e.getMessage());
         }
     }
 
     @Override
     public byte[] callImmediate(String methodName, byte[] args,
-                                ServerLevel level, BlockPos peripheralPos)
-            throws PeripheralException {
+                                ServerLevel level, BlockPos pos) throws PeripheralException {
         if (IMM_METHODS.contains(methodName)) {
-            return callMethod(methodName, args, level, peripheralPos);
+            return callMethod(methodName, args, level, pos);
         }
         return null;
     }
 
     // ------------------------------------------------------------------
-    // Delegate to actual GPU peripheral via reflection
+    // Delegate to ITMPeripheral.call() via reflection
     // ------------------------------------------------------------------
 
-    private byte[] delegateToPeripheral(String methodName, byte[] args,
-                                       ServerLevel level, BlockPos pos) throws IOException {
-        IPeripheral peripheral = getPeripheral(level, pos);
+    private byte[] delegateToTmPeripheral(String methodName, byte[] args,
+                                          ServerLevel level, BlockPos pos) throws IOException {
+        Object peripheral = getTmPeripheral(level, pos);
         if (peripheral == null) {
             LOGGER.warn("TmGpuPeripheral: no peripheral at {}", pos);
             return encodeNil();
         }
 
         try {
-            Method method = findLuaMethod(peripheral, methodName);
-            if (method == null) {
-                LOGGER.debug("TmGpuPeripheral: @LuaFunction '{}' not found", methodName);
+            // ITMPeripheral.call(IComputer computer, String method, Object[] args)
+            Method callMethod = findMethodByArity(peripheral.getClass(), "call", 3);
+            if (callMethod == null) {
+                LOGGER.warn("TmGpuPeripheral: ITMPeripheral.call() not found on {}", peripheral.getClass());
                 return encodeNil();
             }
 
-            Object[] javaArgs = decodeMsgpackArgs(args, method);
-            Object result = method.invoke(peripheral, javaArgs);
+            Object[] javaArgs = decodeMsgpackToObjectArray(args);
+            Object result = callMethod.invoke(peripheral, null, methodName, javaArgs);
             return encodeResult(result);
         } catch (Exception e) {
-            LOGGER.warn("TmGpuPeripheral: callMethod '{}' failed: {}", methodName, e.getMessage());
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            LOGGER.warn("TmGpuPeripheral: '{}' failed: {}", methodName, cause.getMessage());
             return encodeNil();
         }
     }
 
     @Nullable
-    private IPeripheral getPeripheral(ServerLevel level, BlockPos pos) {
+    private Object getTmPeripheral(ServerLevel level, BlockPos pos) {
         BlockEntity be = level.getBlockEntity(pos);
-        if (be == null) return null;
+        if (be == null) {
+            LOGGER.debug("TmGpuPeripheral: no BlockEntity at {}", pos);
+            return null;
+        }
         try {
-            Method getPeripheral = be.getClass().getMethod("getPeripheral");
-            return (IPeripheral) getPeripheral.invoke(be);
+            // getPeripheral() is public on AbstractPeripheralBlockEntity, but returns a private inner class.
+            // Use getDeclaredMethod to ensure we find it even if overridden with a covariant return type.
+            Method getPeripheral = findMethodByArity(be.getClass(), "getPeripheral", 0);
+            if (getPeripheral == null) {
+                LOGGER.warn("TmGpuPeripheral: getPeripheral() not found on {}", be.getClass());
+                return null;
+            }
+            return getPeripheral.invoke(be);
         } catch (Exception e) {
-            LOGGER.debug("TmGpuPeripheral: getPeripheral() failed: {}", e.getMessage());
+            LOGGER.warn("TmGpuPeripheral: getPeripheral() failed at {}: {}", pos, e.getMessage());
             return null;
         }
     }
 
+    /**
+     * Searches for a method by name and parameter count up the class hierarchy.
+     * Uses parameter count only to avoid classloader issues with cross-mod types (IComputer etc.).
+     */
     @Nullable
-    private Method findLuaMethod(IPeripheral peripheral, String methodName) {
-        Class<?> cls = peripheral.getClass();
+    private Method findMethodByArity(Class<?> cls, String name, int paramCount) {
+        // Search interfaces first (ITMPeripheral.call is defined there)
+        for (Class<?> iface : cls.getInterfaces()) {
+            Method m = findMethodByArity(iface, name, paramCount);
+            if (m != null) return m;
+        }
         while (cls != null && cls != Object.class) {
             for (Method m : cls.getDeclaredMethods()) {
-                LuaFunction ann = m.getAnnotation(LuaFunction.class);
-                if (ann == null) continue;
-                String[] names = ann.value();
-                if (names.length > 0) {
-                    for (String name : names) {
-                        if (name.equals(methodName)) {
-                            m.setAccessible(true);
-                            return m;
-                        }
-                    }
-                } else if (m.getName().equals(methodName)) {
+                if (m.getName().equals(name) && m.getParameterCount() == paramCount) {
                     m.setAccessible(true);
                     return m;
                 }
@@ -149,23 +156,15 @@ public class TmGpuPeripheral implements PeripheralType {
         return null;
     }
 
-    private Object[] decodeMsgpackArgs(byte[] data, Method method) {
-        Class<?>[] paramTypes = method.getParameterTypes();
-        if (paramTypes.length == 0) return new Object[0];
+    // ------------------------------------------------------------------
+    // Args decoding: msgpack → Object[]
+    // ------------------------------------------------------------------
 
-        List<Object> rawArgs = decodeMsgpackToList(data);
-        Object[] result = new Object[paramTypes.length];
-        for (int i = 0; i < paramTypes.length && i < rawArgs.size(); i++) {
-            result[i] = coerce(rawArgs.get(i), paramTypes[i]);
-        }
-        return result;
-    }
-
-    private List<Object> decodeMsgpackToList(byte[] data) {
+    private Object[] decodeMsgpackToObjectArray(byte[] data) {
+        if (data == null || data.length == 0) return new Object[0];
         List<Object> list = new ArrayList<>();
-        if (data == null || data.length == 0) return list;
         try (MessageUnpacker u = MessagePack.newDefaultUnpacker(data)) {
-            if (!u.hasNext()) return list;
+            if (!u.hasNext()) return new Object[0];
             var fmt = u.getNextFormat();
             if (fmt.getValueType().isArrayType()) {
                 int count = u.unpackArrayHeader();
@@ -178,7 +177,7 @@ public class TmGpuPeripheral implements PeripheralType {
         } catch (IOException e) {
             LOGGER.debug("TmGpuPeripheral: failed to decode args: {}", e.getMessage());
         }
-        return list;
+        return list.toArray();
     }
 
     private Object unpackValue(MessageUnpacker u) throws IOException {
@@ -196,7 +195,7 @@ public class TmGpuPeripheral implements PeripheralType {
                 int n = u.unpackArrayHeader();
                 List<Object> arr = new ArrayList<>(n);
                 for (int i = 0; i < n; i++) arr.add(unpackValue(u));
-                yield arr;
+                yield arr.toArray();
             }
             case MAP -> {
                 int n = u.unpackMapHeader();
@@ -212,30 +211,26 @@ public class TmGpuPeripheral implements PeripheralType {
         };
     }
 
-    @Nullable
-    private Object coerce(@Nullable Object value, Class<?> targetType) {
-        if (value == null) return null;
-        if (targetType.isInstance(value)) return value;
-        if (targetType == int.class || targetType == Integer.class) {
-            if (value instanceof Number n) return n.intValue();
-        } else if (targetType == long.class || targetType == Long.class) {
-            if (value instanceof Number n) return n.longValue();
-        } else if (targetType == double.class || targetType == Double.class) {
-            if (value instanceof Number n) return n.doubleValue();
-        } else if (targetType == float.class || targetType == Float.class) {
-            if (value instanceof Number n) return n.floatValue();
-        } else if (targetType == boolean.class || targetType == Boolean.class) {
-            if (value instanceof Boolean b) return b;
-        } else if (targetType == String.class) {
-            return value.toString();
-        }
-        return value;
-    }
+    // ------------------------------------------------------------------
+    // Result encoding: Object/Object[] → msgpack
+    // ------------------------------------------------------------------
 
     private byte[] encodeResult(@Nullable Object value) {
         try {
             MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
-            packValue(packer, value);
+            // ITMPeripheral.call() returns Object[] — unwrap single-element arrays
+            if (value instanceof Object[] arr) {
+                if (arr.length == 0) {
+                    packer.packNil();
+                } else if (arr.length == 1) {
+                    packValue(packer, arr[0]);
+                } else {
+                    packer.packArrayHeader(arr.length);
+                    for (Object item : arr) packValue(packer, item);
+                }
+            } else {
+                packValue(packer, value);
+            }
             packer.close();
             return packer.toByteArray();
         } catch (IOException e) {
@@ -271,83 +266,19 @@ public class TmGpuPeripheral implements PeripheralType {
                 packValue(p, entry.getKey());
                 packValue(p, entry.getValue());
             }
-        } else if (value instanceof List<?> list) {
-            p.packArrayHeader(list.size());
-            for (Object item : list) packValue(p, item);
         } else if (value instanceof Object[] arr) {
             p.packArrayHeader(arr.length);
             for (Object item : arr) packValue(p, item);
+        } else if (value instanceof List<?> list) {
+            p.packArrayHeader(list.size());
+            for (Object item : list) packValue(p, item);
         } else {
             p.packString(value.toString());
         }
     }
 
     // ------------------------------------------------------------------
-    // getSize → [pixel_width, pixel_height, monitor_cols, monitor_rows, pixel_size]
-    // ------------------------------------------------------------------
-
-    private byte[] encodeGetSize(ServerLevel level, BlockPos pos) throws IOException, PeripheralException {
-        int[] vals = readSizeFromBlockEntity(level, pos);
-        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
-        packer.packArrayHeader(5);
-        for (int v : vals) packer.packInt(v);
-        packer.close();
-        return packer.toByteArray();
-    }
-
-    /**
-     * Reads size data from GPUBlockEntity via reflection.
-     * Returns {pixel_width, pixel_height, maxX, maxY, size}.
-     */
-    private int[] readSizeFromBlockEntity(ServerLevel level, BlockPos pos) {
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be == null) {
-            LOGGER.warn("TmGpuPeripheral: no BlockEntity at {}", pos);
-            return new int[]{0, 0, 0, 0, 16};
-        }
-        try {
-            // GPUBlockEntity.getPeripheral() → ITMPeripheral (actually GPUPeripheral)
-            Method getPeripheral = be.getClass().getMethod("getPeripheral");
-            Object peripheral = getPeripheral.invoke(be);
-
-            // GPUExt (extends GPUImpl) has getSize() → Object[]
-            // GPUPeripheral delegates to GPUExt via impl.callInt()
-            // Easier: call getWidth() and getHeight() directly on GPUPeripheral (GPUContext)
-            // and read maxX, maxY, size via getDeclaredField on the inner class.
-            Method getWidth  = peripheral.getClass().getMethod("getWidth");
-            Method getHeight = peripheral.getClass().getMethod("getHeight");
-            int width  = ((Number) getWidth.invoke(peripheral)).intValue();
-            int height = ((Number) getHeight.invoke(peripheral)).intValue();
-
-            // maxX, maxY, size are private fields of the inner GPUPeripheral class
-            int maxX = getPrivateInt(peripheral, "maxX");
-            int maxY = getPrivateInt(peripheral, "maxY");
-            int size = getPrivateInt(peripheral, "size");
-
-            return new int[]{width, height, maxX, maxY, size};
-        } catch (Exception e) {
-            LOGGER.warn("TmGpuPeripheral: reflection failed for getSize at {}: {}", pos, e.getMessage());
-            return new int[]{0, 0, 0, 0, 16};
-        }
-    }
-
-    private int getPrivateInt(Object obj, String fieldName) throws Exception {
-        // Try declared fields on the object's class and its superclasses
-        Class<?> cls = obj.getClass();
-        while (cls != null) {
-            try {
-                var field = cls.getDeclaredField(fieldName);
-                field.setAccessible(true);
-                return ((Number) field.get(obj)).intValue();
-            } catch (NoSuchFieldException ignored) {
-                cls = cls.getSuperclass();
-            }
-        }
-        throw new NoSuchFieldException(fieldName + " not found in " + obj.getClass().getName());
-    }
-
-    // ------------------------------------------------------------------
-    // getTextLength → u32 (pixel length estimate, 8px per char)
+    // Local implementations for non-delegatable methods
     // ------------------------------------------------------------------
 
     private byte[] encodeGetTextLength(byte[] args) throws IOException, PeripheralException {
@@ -358,10 +289,6 @@ public class TmGpuPeripheral implements PeripheralType {
         packer.close();
         return packer.toByteArray();
     }
-
-    // ------------------------------------------------------------------
-    // createWindow → {x, y, width, height}
-    // ------------------------------------------------------------------
 
     private byte[] encodeCreateWindow(byte[] args) throws IOException, PeripheralException {
         int[] p = unpackInts(args, 4);
@@ -374,10 +301,6 @@ public class TmGpuPeripheral implements PeripheralType {
         packer.close();
         return packer.toByteArray();
     }
-
-    // ------------------------------------------------------------------
-    // newImage → {width, height, data:[0...]}
-    // ------------------------------------------------------------------
 
     private byte[] encodeNewImage(byte[] args) throws IOException, PeripheralException {
         int[] p = unpackInts(args, 2);
@@ -393,11 +316,8 @@ public class TmGpuPeripheral implements PeripheralType {
         return packer.toByteArray();
     }
 
-    // ------------------------------------------------------------------
-    // decodeImage → stub {width:0, height:0, data:[]}
-    // ------------------------------------------------------------------
-
     private byte[] encodeDecodeImage() throws IOException {
+        // TODO: implement Base64 image decoding
         MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
         packer.packMapHeader(3);
         packer.packString("width");  packer.packInt(0);
@@ -411,10 +331,6 @@ public class TmGpuPeripheral implements PeripheralType {
         return new byte[]{(byte) 0xC0};
     }
 
-    /**
-     * Unpacks the first string from a msgpack array arg.
-     * Handles both bare string and array-wrapped string.
-     */
     private String unpackFirstString(byte[] args) throws PeripheralException {
         if (args == null || args.length == 0) return "";
         try (MessageUnpacker u = MessagePack.newDefaultUnpacker(args)) {
@@ -427,9 +343,6 @@ public class TmGpuPeripheral implements PeripheralType {
         }
     }
 
-    /**
-     * Unpacks {@code count} ints from a msgpack array arg.
-     */
     private int[] unpackInts(byte[] args, int count) throws PeripheralException {
         int[] result = new int[count];
         if (args == null || args.length == 0) return result;
