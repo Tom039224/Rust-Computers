@@ -241,8 +241,8 @@ public final class PeripheralRegistrations {
         regWithImm("cc_vs", "aerodynamics", "vs_aerodynamics", aeroMethods,
                 new HashSet<>(Arrays.asList(aeroMethods)));
 
-        // Drag
-        reg("cc_vs", "drag", "vs_drag",
+        // Drag — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("cc_vs", "drag", "vs_drag",
             new String[]{"enableDrag", "disableDrag", "enableLift", "disableLift",
                 "enableRotDrag", "disableRotDrag", "setWindDirection", "setWindSpeed", "applyWindImpulse"});
     }
@@ -254,17 +254,17 @@ public final class PeripheralRegistrations {
     public static void registerTomsPeripherals() {
         LOGGER.info("Registering Tom's Peripherals (gpu, keyboard, redstone_port, watchdog_timer)");
 
-        // GPU — 専用実装で getSize 等を実際の BlockEntity から取得する
+        // GPU — 専用実装で描画系メソッドを実際の GPUPeripheral に委譲する
         regImpl("toms_peripherals", "gpu", TmGpuPeripheral::new);
 
-        // Keyboard
-        reg("toms_peripherals", "keyboard", "tm_keyboard",
+        // Keyboard — CcBlockEntityBridge で setFireNativeEvents を実際の KeyboardPeripheral に委譲する
+        regBE("toms_peripherals", "keyboard", "tm_keyboard",
             new String[]{"setFireNativeEvents"});
 
-        // Redstone Port — 専用実装で実際の BlockEntity から値を読む
+        // Redstone Port — 専用実装で setter 系を実際の RedstonePortPeripheral に委譲する
         regImpl("toms_peripherals", "redstone_port", TmRedstonePortPeripheral::new);
 
-        // Watchdog Timer — 専用実装で実際の BlockEntity から値を読む
+        // Watchdog Timer — 専用実装で setter 系を実際の WatchdogTimerPeripheral に委譲する
         regImpl("toms_peripherals", "wdt", TmWatchdogTimerPeripheral::new);
     }
 
@@ -375,7 +375,8 @@ public final class PeripheralRegistrations {
     public static void registerCreate() {
         LOGGER.info("Registering Create peripherals (18 types)");
 
-        reg("create", "creative_motor", "Create_CreativeMotor",
+        // Creative Motor — CcBlockEntityBridge で setGeneratedSpeed を実際の peripheral に委譲
+        regBE("create", "creative_motor", "Create_CreativeMotor",
             new String[]{"setGeneratedSpeed"});
 
         // DisplayLink - 専用実装を使用
@@ -385,36 +386,45 @@ public final class PeripheralRegistrations {
             LOGGER.debug("Registered peripheral: create:display_link -> Create_DisplayLink");
         }
 
-        reg("create", "frogport", "Create_Frogport",
+        // Frogport — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "frogport", "Create_Frogport",
             new String[]{"setAddress", "setConfiguration", "getItemDetail",
                 "try_pull_package_received", "try_pull_package_sent"});
 
-        reg("create", "nixie_tube", "Create_NixieTube",
+        // Nixie Tube — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "nixie_tube", "Create_NixieTube",
             new String[]{"setText", "setTextColour", "setSignal"});
 
-        reg("create", "packager", "Create_Packager",
+        // Packager — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "packager", "Create_Packager",
             new String[]{"makePackage", "getItemDetail", "setAddress",
                 "try_pull_package_received", "try_pull_package_sent"});
 
-        reg("create", "postbox", "Create_Postbox",
+        // Postbox — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "postbox", "Create_Postbox",
             new String[]{"setAddress", "getItemDetail", "setConfiguration",
                 "try_pull_package_received", "try_pull_package_sent"});
 
-        reg("create", "redstone_requester", "Create_RedstoneRequester",
+        // Redstone Requester — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "redstone_requester", "Create_RedstoneRequester",
             new String[]{"request", "setRequest", "setCraftingRequest", "getRequest",
                 "setConfiguration", "setAddress"});
 
-        reg("create", "repackager", "Create_Repackager",
+        // Repackager — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "repackager", "Create_Repackager",
             new String[]{"makePackage", "getItemDetail", "setAddress",
                 "try_pull_package_repackaged", "try_pull_package_received", "try_pull_package_sent"});
 
-        reg("create", "rotation_speed_controller", "Create_RotationSpeedController",
+        // Rotation Speed Controller — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "rotation_speed_controller", "Create_RotationSpeedController",
             new String[]{"setTargetSpeed"});
 
-        reg("create", "sequenced_gearshift", "Create_SequencedGearshift",
+        // Sequenced Gearshift — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "sequenced_gearshift", "Create_SequencedGearshift",
             new String[]{"rotate", "moveBy"});
 
-        reg("create", "signal", "Create_Signal",
+        // Signal — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "signal", "Create_Signal",
             new String[]{"setForcedRed", "cycleSignalType", "try_pull_train_signal_state_change"});
 
         // Speedometer — getSpeed() は BlockEntity から直接読む (CcBlockEntityBridge)
@@ -428,20 +438,24 @@ public final class PeripheralRegistrations {
             LOGGER.debug("Registered peripheral: create:station -> create:station");
         }
 
-        reg("create", "sticker", "Create_Sticker",
+        // Sticker — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "sticker", "Create_Sticker",
             new String[]{"extend", "retract", "toggle"});
 
-        reg("create", "stock_ticker", "Create_StockTicker",
+        // Stock Ticker — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "stock_ticker", "Create_StockTicker",
             new String[]{"getStockItemDetail", "requestFiltered", "getItemDetail"});
 
         // Stressometer — getStress()/getStressCapacity() は BlockEntity から直接読む (CcBlockEntityBridge)
         regBE("create", "stressometer", "Create_Stressometer",
             new String[]{"getStress", "getStressCapacity", "try_pull_overstressed", "try_pull_stress_change"});
 
-        reg("create", "tablecloth_shop", "Create_TableClothShop",
+        // Tablecloth Shop — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "tablecloth_shop", "Create_TableClothShop",
             new String[]{"setAddress", "setPriceTagItem", "setPriceTagCount", "setWares"});
 
-        reg("create", "track_observer", "Create_TrainObserver",
+        // Track Observer — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("create", "track_observer", "Create_TrainObserver",
             new String[]{"try_pull_train_passing", "try_pull_train_passed"});
     }
 
@@ -452,7 +466,8 @@ public final class PeripheralRegistrations {
     public static void registerCreateAddition() {
         LOGGER.info("Registering Create Addition peripherals (5 types)");
 
-        reg("createaddition", "digital_adapter", "digital_adapter",
+        // Digital Adapter — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("createaddition", "digital_adapter", "digital_adapter",
             new String[]{
                 "clearLine", "clear", "print", "getLine", "setLine", "getMaxLines",
                 "setTargetSpeed", "getTargetSpeed", "getKineticStress", "getKineticCapacity",
@@ -461,22 +476,26 @@ public final class PeripheralRegistrations {
                 "getElevatorFloorName", "gotoElevatorFloor", "getDurationAngle", "getDurationDistance"
             });
 
-        reg("createaddition", "electric_motor", "electric_motor",
+        // Electric Motor — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("createaddition", "electric_motor", "electric_motor",
             new String[]{
                 "getType", "setSpeed", "stop", "getSpeed", "getStressCapacity",
                 "getEnergyConsumption", "rotate", "translate", "getMaxInsert", "getMaxExtract"
             });
 
-        reg("createaddition", "modular_accumulator", "modular_accumulator",
+        // Modular Accumulator — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("createaddition", "modular_accumulator", "modular_accumulator",
             new String[]{
                 "getEnergy", "getCapacity", "getPercent", "getMaxInsert", "getMaxExtract",
                 "getHeight", "getWidth"
             });
 
-        reg("createaddition", "portable_energy_interface", "portable_energy_interface",
+        // Portable Energy Interface — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("createaddition", "portable_energy_interface", "portable_energy_interface",
             new String[]{"getEnergy", "getCapacity", "isConnected", "getMaxInsert", "getMaxExtract"});
 
-        reg("createaddition", "redstone_relay", "redstone_relay",
+        // Redstone Relay — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("createaddition", "redstone_relay", "redstone_relay",
             new String[]{"getMaxInsert", "getMaxExtract", "getThroughput", "isPowered"});
     }
 
@@ -609,7 +628,8 @@ public final class PeripheralRegistrations {
             LOGGER.debug("Registered peripheral: advancedperipherals:chat_box -> chat_box");
         }
 
-        reg("advancedperipherals", "colony_integrator", "colony_integrator",
+        // Colony Integrator — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("advancedperipherals", "colony_integrator", "colony_integrator",
             new String[]{
                 "isInColony", "getColonyID", "getColonyName", "getColonyStyle", "isActive",
                 "getAmountOfCitizens", "getMaxCitizens", "getHappiness", "getPosition",
@@ -617,10 +637,12 @@ public final class PeripheralRegistrations {
                 "getWorkOrders", "getRequests", "getBuilderResources", "isUnderAttack"
             });
 
-        reg("advancedperipherals", "compass", "compass",
+        // Compass — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("advancedperipherals", "compass", "compass",
             new String[]{"getFacing"});
 
-        reg("advancedperipherals", "energy_detector", "energy_detector",
+        // Energy Detector — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("advancedperipherals", "energy_detector", "energy_detector",
             new String[]{"getTransferRate", "getTransferRateLimit", "setTransferRateLimit"});
 
         // Environment Detector
@@ -640,7 +662,8 @@ public final class PeripheralRegistrations {
             LOGGER.debug("Registered peripheral: advancedperipherals:geo_scanner -> geo_scanner");
         }
 
-        reg("advancedperipherals", "inventory_manager", "inventory_manager",
+        // Inventory Manager — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("advancedperipherals", "inventory_manager", "inventory_manager",
             new String[]{
                 "getOwner", "addItemToPlayer", "removeItemFromPlayer", "list", "getArmor",
                 "isPlayerEquipped", "isWearing", "getItemInHand", "getItemInOffHand",
@@ -654,7 +677,8 @@ public final class PeripheralRegistrations {
             LOGGER.debug("Registered peripheral: advancedperipherals:me_bridge -> me_bridge");
         }
 
-        reg("advancedperipherals", "nbt_storage", "nbt_storage",
+        // NBT Storage — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("advancedperipherals", "nbt_storage", "nbt_storage",
             new String[]{"read", "writeJson", "writeTable"});
 
         // PlayerDetector - 専用実装を使用
@@ -664,8 +688,8 @@ public final class PeripheralRegistrations {
             LOGGER.debug("Registered peripheral: advancedperipherals:player_detector -> player_detector");
         }
 
-        // RS Bridge (same methods as ME Bridge + chemical storage getters)
-        reg("advancedperipherals", "rs_bridge", "rs_bridge",
+        // RS Bridge (same methods as ME Bridge + chemical storage getters) — CcBlockEntityBridge で実際の peripheral に委譲
+        regBE("advancedperipherals", "rs_bridge", "rs_bridge",
             new String[]{
                 "listItems", "getItem", "exportItem", "importItem", "exportItemToPeripheral",
                 "importItemFromPeripheral", "listFluids", "getFluid", "exportFluid", "importFluid",
