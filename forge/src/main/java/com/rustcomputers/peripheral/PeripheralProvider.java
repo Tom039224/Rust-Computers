@@ -213,8 +213,6 @@ public final class PeripheralProvider {
             remotes.addAll(fallbackRemotes);
         }
 
-        LOGGER.info("Wired scan at {}: attachVisible={}, fallback={}, merged={}",
-                computerPos, attachedVisible.size(), fallbackRemotes.size(), remotes.size());
         if (remotes.isEmpty()) return;
 
         appendRemotePeripherals(level, remotes, knownPositions, result, nextPeriphId);
@@ -229,12 +227,7 @@ public final class PeripheralProvider {
 
             Block block = level.getBlockState(pos).getBlock();
             ResourceLocation key = net.minecraftforge.registries.ForgeRegistries.BLOCKS.getKey(block);
-            if (key == null) {
-                LOGGER.info("Wired scan pos {}: key is null for block {}", pos, block);
-                continue;
-            }
-
-            LOGGER.info("Wired scan pos {}: found block {}", pos, key);
+            if (key == null) continue;
 
                 // 有線モデム系ブロックのみ対象
                 // CC:Tweaked では "cable" ブロックにも side modem を装着でき、
@@ -246,23 +239,14 @@ public final class PeripheralProvider {
                 if (!"wired_modem".equals(path)
                     && !"wired_modem_full".equals(path)
                     && !"cable".equals(path)) {
-                LOGGER.info("Wired scan pos {}: ignoring computercraft block: {}", pos, path);
                 continue;
             }
 
             BlockEntity be = level.getBlockEntity(pos);
-            if (be == null) {
-                LOGGER.info("Wired scan pos {}: CC block {} has no BlockEntity", pos, path);
-                continue;
-            }
+            if (be == null) continue;
 
             Object modemPeripheral = getCcPeripheralFromBlockEntity(be);
-            if (!(modemPeripheral instanceof IPeripheral)) {
-                LOGGER.info("Wired scan pos {}: BE {} gave non-IPeripheral capability: {}", pos, be, modemPeripheral);
-                continue;
-            }
-
-            LOGGER.info("Wired scan pos {}: Found valid IPeripheral on {}", pos, path);
+            if (!(modemPeripheral instanceof IPeripheral)) continue;
             extractRemotesFromModemPeripheral(modemPeripheral, result);
         }
 
@@ -303,7 +287,7 @@ public final class PeripheralProvider {
             } catch (Throwable ignored) {
             }
 
-            LOGGER.info("getCcPeripheralFromBlockEntity: no capability found on BE {}", be);
+            LOGGER.debug("getCcPeripheralFromBlockEntity: no capability found on BE {}", be);
             return null;
         } catch (Throwable e) {
             LOGGER.error("getCcPeripheralFromBlockEntity failed on {}, {}", be, e);
@@ -389,6 +373,32 @@ public final class PeripheralProvider {
                                 if (pv instanceof BlockPos bp) hintedPos = bp;
                             }
                         }
+                        // element フィールド (WiredModemElement サブクラス) から BlockPos を取得
+                        if (hintedPos == null) {
+                            Field elementField = findField(wrapper.getClass(), "element");
+                            if (elementField != null) {
+                                elementField.setAccessible(true);
+                                Object elem = elementField.get(wrapper);
+                                if (elem != null) {
+                                    hintedPos = extractBlockPosDeep(elem, 3, new IdentityHashMap<>());
+                                }
+                            }
+                        }
+                        // IPeripheral.getTarget() から BlockPos を取得
+                        if (hintedPos == null) {
+                            try {
+                                Object target = ip.getTarget();
+                                if (target instanceof BlockEntity be) {
+                                    hintedPos = be.getBlockPos();
+                                } else if (target != null) {
+                                    hintedPos = extractBlockPosDeep(target, 3, new IdentityHashMap<>());
+                                }
+                            } catch (Throwable ignored) {}
+                        }
+                        // Tom's Peripherals: CCPeripheral$PeripheralWrapper.p -> ITMPeripheral -> this$0 (BlockEntity)
+                        if (hintedPos == null) {
+                            hintedPos = extractPosFromTmPeripheralWrapper(ip);
+                        }
                         out.add(new RemoteCandidate(ip, hintedPos));
                     }
                 }
@@ -414,6 +424,34 @@ public final class PeripheralProvider {
     }
 
     /**
+     * Tom's Peripherals の CCPeripheral$PeripheralWrapper から BlockPos を取得する。
+     * 経路: PeripheralWrapper.p (ITMPeripheral) -> GPUBlockEntity$GPUPeripheral.this$0 (BlockEntity)
+     */
+    @Nullable
+    private static BlockPos extractPosFromTmPeripheralWrapper(IPeripheral peripheral) {
+        try {
+            // PeripheralWrapper.p フィールドを取得
+            Field pField = findField(peripheral.getClass(), "p");
+            if (pField == null) return null;
+            pField.setAccessible(true);
+            Object tmPeripheral = pField.get(peripheral);
+            if (tmPeripheral == null) return null;
+
+            // ITMPeripheral の実装クラス (例: GPUBlockEntity$GPUPeripheral) から this$0 を取得
+            Field outerField = findField(tmPeripheral.getClass(), "this$0");
+            if (outerField == null) return null;
+            outerField.setAccessible(true);
+            Object outer = outerField.get(tmPeripheral);
+            if (outer instanceof BlockEntity be) {
+                return be.getBlockPos();
+            }
+        } catch (Throwable e) {
+            LOGGER.debug("extractPosFromTmPeripheralWrapper failed: {}", e.toString());
+        }
+        return null;
+    }
+
+    /**
      * remote IPeripheral 群を走査して result に追記する共通処理。
      */
     private static int appendRemotePeripherals(
@@ -433,8 +471,9 @@ public final class PeripheralProvider {
                     ? candidate.hintedPos()
                     : resolvePeripheralPos(peripheral, target);
             if (bp == null) {
-                LOGGER.info("Remote peripheral skipped (no position): type='{}', class='{}'",
-                    safePeripheralType(peripheral), peripheral.getClass().getName());
+                LOGGER.debug("Remote peripheral skipped (no position): type='{}', class='{}', target='{}'",
+                    safePeripheralType(peripheral), peripheral.getClass().getName(),
+                    peripheral.getTarget() != null ? peripheral.getTarget().getClass().getName() : "null");
                 continue;
             }
 
@@ -448,11 +487,11 @@ public final class PeripheralProvider {
             PeripheralType pt = getForBlock(block);
             if (pt != null) {
                 result.put(id, new AttachedPeripheral(pt, null, bp));
-                LOGGER.info("Found wired peripheral '{}' at {} (periph_id={})",
+                LOGGER.debug("Found wired peripheral '{}' at {} (periph_id={})",
                         pt.getTypeName(), bp, id);
                 id++;
             } else {
-                LOGGER.info("Remote peripheral skipped (unregistered block): type='{}', class='{}', pos={}, block={}",
+                LOGGER.debug("Remote peripheral skipped (unregistered block): type='{}', class='{}', pos={}, block={}",
                         safePeripheralType(peripheral), peripheral.getClass().getName(), bp,
                         blockKey != null ? blockKey : block.toString());
             }
@@ -491,14 +530,14 @@ public final class PeripheralProvider {
             var m = obj.getClass().getMethod("getBlockPos");
             Object v = m.invoke(obj);
             if (v instanceof BlockPos bp) return bp;
-        } catch (ReflectiveOperationException ignored) {
+        } catch (Throwable ignored) {
         }
 
         try {
             var m = obj.getClass().getMethod("getPos");
             Object v = m.invoke(obj);
             if (v instanceof BlockPos bp) return bp;
-        } catch (ReflectiveOperationException ignored) {
+        } catch (Throwable ignored) {
         }
 
         // 2) fields (including private)
@@ -510,7 +549,7 @@ public final class PeripheralProvider {
                 f.setAccessible(true);
                 Object v = f.get(obj);
                 if (v instanceof BlockPos bp) return bp;
-            } catch (ReflectiveOperationException ignored) {
+            } catch (Throwable ignored) {
             }
         }
 
@@ -551,10 +590,13 @@ public final class PeripheralProvider {
                                 || v.getClass().getName().toLowerCase().contains("peripheral");
 
                 if (likelyPeripheralWrapper) {
+                    LOGGER.debug("extractBlockPosDeep: depth={} obj={} field={} -> recurse into {}",
+                            depth, obj.getClass().getSimpleName(), f.getName(), v.getClass().getSimpleName());
                     BlockPos nested = extractBlockPosDeep(v, depth - 1, visited);
                     if (nested != null) return nested;
                 }
-            } catch (ReflectiveOperationException ignored) {
+            } catch (Throwable e) {
+                LOGGER.debug("extractBlockPosDeep: field access failed on {}.{}: {}", obj.getClass().getSimpleName(), f.getName(), e.toString());
             }
         }
 
