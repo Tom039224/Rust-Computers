@@ -8,6 +8,65 @@ use crate::error::PeripheralError;
 use crate::msgpack;
 use crate::peripheral::{self, PeriphAddr, Peripheral};
 
+// ---------------------------------------------------------------------------
+// Color
+// ---------------------------------------------------------------------------
+
+/// GPU 描画用 RGBA カラー。各チャンネルは 0–255 の `u32`。
+///
+/// # 例
+/// ```rust
+/// let red   = GpuColor::new(0xFF, 0x00, 0x00, 0xFF);
+/// let white = GpuColor::WHITE;
+/// let semi  = GpuColor::new(0x00, 0xFF, 0x00, 0x80); // 半透明の緑
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct GpuColor {
+    pub r: u32,
+    pub g: u32,
+    pub b: u32,
+    pub a: u32,
+}
+
+impl GpuColor {
+    /// 任意の RGBA 値からカラーを作成する。各値は 0–255 にクランプされる。
+    #[inline]
+    pub const fn new(r: u32, g: u32, b: u32, a: u32) -> Self {
+        Self { r: clamp255(r), g: clamp255(g), b: clamp255(b), a: clamp255(a) }
+    }
+
+    /// 不透明な RGB カラーを作成する (alpha = 0xFF)。
+    #[inline]
+    pub const fn rgb(r: u32, g: u32, b: u32) -> Self {
+        Self::new(r, g, b, 0xFF)
+    }
+
+    pub const WHITE:       Self = Self::rgb(0xFF, 0xFF, 0xFF);
+    pub const BLACK:       Self = Self::rgb(0x00, 0x00, 0x00);
+    pub const RED:         Self = Self::rgb(0xFF, 0x00, 0x00);
+    pub const GREEN:       Self = Self::rgb(0x00, 0xFF, 0x00);
+    pub const BLUE:        Self = Self::rgb(0x00, 0x00, 0xFF);
+    pub const YELLOW:      Self = Self::rgb(0xFF, 0xFF, 0x00);
+    pub const CYAN:        Self = Self::rgb(0x00, 0xFF, 0xFF);
+    pub const MAGENTA:     Self = Self::rgb(0xFF, 0x00, 0xFF);
+    pub const ORANGE:      Self = Self::rgb(0xFF, 0xA5, 0x00);
+    pub const GRAY:        Self = Self::rgb(0x80, 0x80, 0x80);
+    pub const LIGHT_GRAY:  Self = Self::rgb(0xC0, 0xC0, 0xC0);
+    pub const DARK_GRAY:   Self = Self::rgb(0x40, 0x40, 0x40);
+    pub const TRANSPARENT: Self = Self::new(0x00, 0x00, 0x00, 0x00);
+
+    /// 0.0–1.0 の f32 タプルに変換する (GPU API 内部用)。
+    #[inline]
+    pub(crate) fn to_f32(self) -> (f32, f32, f32, f32) {
+        (self.r as f32 / 255.0, self.g as f32 / 255.0,
+         self.b as f32 / 255.0, self.a as f32 / 255.0)
+    }
+}
+
+const fn clamp255(v: u32) -> u32 {
+    if v > 255 { 255 } else { v }
+}
+
 /// GPU 画像データ。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TMImage {
@@ -80,7 +139,8 @@ impl GPU {
     }
 
     /// RGBA で塗りつぶす。
-    pub fn book_next_fill(&mut self, r: f32, g: f32, b: f32, a: f32) {
+    pub fn book_next_fill(&mut self, color: GpuColor) {
+        let (r, g, b, a) = color.to_f32();
         let args = msgpack::array(&[
             msgpack::float64(r as f64),
             msgpack::float64(g as f64),
@@ -110,18 +170,8 @@ impl GPU {
     }
 
     /// 塗りつぶし矩形を描画する。
-    #[allow(clippy::too_many_arguments)]
-    pub fn book_next_filled_rectangle(
-        &mut self,
-        x: u32,
-        y: u32,
-        w: u32,
-        h: u32,
-        r: f32,
-        g: f32,
-        b: f32,
-        a: f32,
-    ) {
+    pub fn book_next_filled_rectangle(&mut self, x: u32, y: u32, w: u32, h: u32, color: GpuColor) {
+        let (r, g, b, a) = color.to_f32();
         let args = msgpack::array(&[
             msgpack::int(x as i32),
             msgpack::int(y as i32),
@@ -160,17 +210,8 @@ impl GPU {
     }
 
     /// テキストを描画する。
-    #[allow(clippy::too_many_arguments)]
-    pub fn book_next_draw_text(
-        &mut self,
-        text: &str,
-        x: u32,
-        y: u32,
-        r: f32,
-        g: f32,
-        b: f32,
-        a: f32,
-    ) {
+    pub fn book_next_draw_text(&mut self, text: &str, x: u32, y: u32, color: GpuColor) {
+        let (r, g, b, a) = color.to_f32();
         let args = msgpack::array(&[
             msgpack::str(text),
             msgpack::int(x as i32),
@@ -191,17 +232,8 @@ impl GPU {
     }
 
     /// 文字を描画する。
-    #[allow(clippy::too_many_arguments)]
-    pub fn book_next_draw_char(
-        &mut self,
-        ch: char,
-        x: u32,
-        y: u32,
-        r: f32,
-        g: f32,
-        b: f32,
-        a: f32,
-    ) {
+    pub fn book_next_draw_char(&mut self, ch: char, x: u32, y: u32, color: GpuColor) {
+        let (r, g, b, a) = color.to_f32();
         let mut buf = [0u8; 4];
         let s = ch.encode_utf8(&mut buf);
         let args = msgpack::array(&[
@@ -366,8 +398,8 @@ impl GPU {
         self.read_last_get_size()
     }
 
-    pub async fn async_fill(&mut self, r: f32, g: f32, b: f32, a: f32) -> Vec<Result<(), PeripheralError>> {
-        self.book_next_fill(r, g, b, a);
+    pub async fn async_fill(&mut self, color: GpuColor) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_fill(color);
         crate::wait_for_next_tick().await;
         self.read_last_fill()
     }
@@ -378,9 +410,8 @@ impl GPU {
         self.read_last_sync()
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub async fn async_filled_rectangle(&mut self, x: u32, y: u32, w: u32, h: u32, r: f32, g: f32, b: f32, a: f32) -> Vec<Result<(), PeripheralError>> {
-        self.book_next_filled_rectangle(x, y, w, h, r, g, b, a);
+    pub async fn async_filled_rectangle(&mut self, x: u32, y: u32, w: u32, h: u32, color: GpuColor) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_filled_rectangle(x, y, w, h, color);
         crate::wait_for_next_tick().await;
         self.read_last_filled_rectangle()
     }
@@ -391,16 +422,14 @@ impl GPU {
         self.read_last_draw_image()
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub async fn async_draw_text(&mut self, text: &str, x: u32, y: u32, r: f32, g: f32, b: f32, a: f32) -> Vec<Result<(), PeripheralError>> {
-        self.book_next_draw_text(text, x, y, r, g, b, a);
+    pub async fn async_draw_text(&mut self, text: &str, x: u32, y: u32, color: GpuColor) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_draw_text(text, x, y, color);
         crate::wait_for_next_tick().await;
         self.read_last_draw_text()
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub async fn async_draw_char(&mut self, ch: char, x: u32, y: u32, r: f32, g: f32, b: f32, a: f32) -> Vec<Result<(), PeripheralError>> {
-        self.book_next_draw_char(ch, x, y, r, g, b, a);
+    pub async fn async_draw_char(&mut self, ch: char, x: u32, y: u32, color: GpuColor) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_draw_char(ch, x, y, color);
         crate::wait_for_next_tick().await;
         self.read_last_draw_char()
     }
@@ -454,8 +483,8 @@ impl GPU {
 
 impl GPU {
     // --- rectangle ---
-    #[allow(clippy::too_many_arguments)]
-    pub fn book_next_rectangle(&mut self, x: u32, y: u32, w: u32, h: u32, r: f32, g: f32, b: f32, a: f32) {
+    pub fn book_next_rectangle(&mut self, x: u32, y: u32, w: u32, h: u32, color: GpuColor) {
+        let (r, g, b, a) = color.to_f32();
         let args = msgpack::array(&[
             msgpack::int(x as i32), msgpack::int(y as i32),
             msgpack::int(w as i32), msgpack::int(h as i32),
@@ -470,8 +499,8 @@ impl GPU {
     }
 
     // --- line ---
-    #[allow(clippy::too_many_arguments)]
-    pub fn book_next_line(&mut self, x1: u32, y1: u32, x2: u32, y2: u32, r: f32, g: f32, b: f32, a: f32) {
+    pub fn book_next_line(&mut self, x1: u32, y1: u32, x2: u32, y2: u32, color: GpuColor) {
+        let (r, g, b, a) = color.to_f32();
         let args = msgpack::array(&[
             msgpack::int(x1 as i32), msgpack::int(y1 as i32),
             msgpack::int(x2 as i32), msgpack::int(y2 as i32),
@@ -486,8 +515,8 @@ impl GPU {
     }
 
     // --- lineS (smooth line) ---
-    #[allow(clippy::too_many_arguments)]
-    pub fn book_next_line_s(&mut self, x1: u32, y1: u32, x2: u32, y2: u32, r: f32, g: f32, b: f32, a: f32) {
+    pub fn book_next_line_s(&mut self, x1: u32, y1: u32, x2: u32, y2: u32, color: GpuColor) {
+        let (r, g, b, a) = color.to_f32();
         let args = msgpack::array(&[
             msgpack::int(x1 as i32), msgpack::int(y1 as i32),
             msgpack::int(x2 as i32), msgpack::int(y2 as i32),
@@ -502,8 +531,8 @@ impl GPU {
     }
 
     // --- drawTextSmart ---
-    #[allow(clippy::too_many_arguments)]
-    pub fn book_next_draw_text_smart(&mut self, text: &str, x: u32, y: u32, r: f32, g: f32, b: f32, a: f32) {
+    pub fn book_next_draw_text_smart(&mut self, text: &str, x: u32, y: u32, color: GpuColor) {
+        let (r, g, b, a) = color.to_f32();
         let args = msgpack::array(&[
             msgpack::str(text),
             msgpack::int(x as i32), msgpack::int(y as i32),
