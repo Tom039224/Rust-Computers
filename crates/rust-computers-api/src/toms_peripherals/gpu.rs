@@ -151,11 +151,10 @@ impl GPU {
             .collect()
     }
 
-    /// 画像を描画する。
-    pub fn book_next_draw_image(&mut self, image: &TMImage, x: u32, y: u32) {
-        let img_encoded = peripheral::encode(image).expect("TMImage encode failed");
+    /// 画像を描画する。image_ref は newImage/decodeImage が返す参照文字列。
+    pub fn book_next_draw_image(&mut self, image_ref: &str, x: u32, y: u32) {
         let args = msgpack::array(&[
-            img_encoded,
+            msgpack::str(image_ref),
             msgpack::int(x as i32),
             msgpack::int(y as i32),
         ]);
@@ -292,6 +291,7 @@ impl GPU {
     }
 
     /// ウィンドウを作成する (imm 対応)。
+    /// 戻り値は BaseGPU オブジェクト（TMLuaObject）。現在は未使用のため () を返す。
     pub fn book_next_create_window(&mut self, x: u32, y: u32, w: u32, h: u32) {
         let args = msgpack::array(&[
             msgpack::int(x as i32),
@@ -302,9 +302,11 @@ impl GPU {
         peripheral::book_request(self.addr, "createWindow", &args);
     }
 
-    pub fn read_last_create_window(&self) -> Result<TMWindow, PeripheralError> {
-        let data = peripheral::read_result(self.addr, "createWindow")?;
-        peripheral::decode(&data)
+    pub fn read_last_create_window(&self) -> Vec<Result<(), PeripheralError>> {
+        peripheral::read_action_results(self.addr, "createWindow")
+            .into_iter()
+            .map(|r| r.map(|_| ()).map_err(PeripheralError::Bridge))
+            .collect()
     }
 
     pub fn create_window_imm(
@@ -313,15 +315,15 @@ impl GPU {
         y: u32,
         w: u32,
         h: u32,
-    ) -> Result<TMWindow, PeripheralError> {
+    ) -> Result<(), PeripheralError> {
         let args = msgpack::array(&[
             msgpack::int(x as i32),
             msgpack::int(y as i32),
             msgpack::int(w as i32),
             msgpack::int(h as i32),
         ]);
-        let data = peripheral::request_info_imm(self.addr, "createWindow", &args)?;
-        peripheral::decode(&data)
+        peripheral::request_info_imm(self.addr, "createWindow", &args)?;
+        Ok(())
     }
 
     /// Base64 文字列から画像をデコードする。
@@ -330,23 +332,24 @@ impl GPU {
         peripheral::book_request(self.addr, "decodeImage", &args);
     }
 
-    pub fn read_last_decode_image(&self) -> Result<TMImage, PeripheralError> {
+    pub fn read_last_decode_image(&self) -> Result<alloc::string::String, PeripheralError> {
         let data = peripheral::read_result(self.addr, "decodeImage")?;
         peripheral::decode(&data)
     }
 
     /// 空の新規画像を作成する (imm 対応)。
+    /// 戻り値は画像への参照文字列。drawImage に渡して使用する。
     pub fn book_next_new_image(&mut self, w: u32, h: u32) {
         let args = msgpack::array(&[msgpack::int(w as i32), msgpack::int(h as i32)]);
         peripheral::book_request(self.addr, "newImage", &args);
     }
 
-    pub fn read_last_new_image(&self) -> Result<TMImage, PeripheralError> {
+    pub fn read_last_new_image(&self) -> Result<alloc::string::String, PeripheralError> {
         let data = peripheral::read_result(self.addr, "newImage")?;
         peripheral::decode(&data)
     }
 
-    pub fn new_image_imm(&self, w: u32, h: u32) -> Result<TMImage, PeripheralError> {
+    pub fn new_image_imm(&self, w: u32, h: u32) -> Result<alloc::string::String, PeripheralError> {
         let args = msgpack::array(&[msgpack::int(w as i32), msgpack::int(h as i32)]);
         let data = peripheral::request_info_imm(self.addr, "newImage", &args)?;
         peripheral::decode(&data)
@@ -391,8 +394,8 @@ impl GPU {
         self.read_last_filled_rectangle()
     }
 
-    pub async fn async_draw_image(&mut self, image: &TMImage, x: u32, y: u32) -> Vec<Result<(), PeripheralError>> {
-        self.book_next_draw_image(image, x, y);
+    pub async fn async_draw_image(&mut self, image_ref: &str, x: u32, y: u32) -> Vec<Result<(), PeripheralError>> {
+        self.book_next_draw_image(image_ref, x, y);
         crate::wait_for_next_tick().await;
         self.read_last_draw_image()
     }
@@ -435,19 +438,19 @@ impl GPU {
         self.read_last_add_new_char()
     }
 
-    pub async fn async_create_window(&mut self, x: u32, y: u32, w: u32, h: u32) -> Result<TMWindow, PeripheralError> {
+    pub async fn async_create_window(&mut self, x: u32, y: u32, w: u32, h: u32) -> Vec<Result<(), PeripheralError>> {
         self.book_next_create_window(x, y, w, h);
         crate::wait_for_next_tick().await;
         self.read_last_create_window()
     }
 
-    pub async fn async_decode_image(&mut self, data: &str) -> Result<TMImage, PeripheralError> {
+    pub async fn async_decode_image(&mut self, data: &str) -> Result<alloc::string::String, PeripheralError> {
         self.book_next_decode_image(data);
         crate::wait_for_next_tick().await;
         self.read_last_decode_image()
     }
 
-    pub async fn async_new_image(&mut self, w: u32, h: u32) -> Result<TMImage, PeripheralError> {
+    pub async fn async_new_image(&mut self, w: u32, h: u32) -> Result<alloc::string::String, PeripheralError> {
         self.book_next_new_image(w, h);
         crate::wait_for_next_tick().await;
         self.read_last_new_image()

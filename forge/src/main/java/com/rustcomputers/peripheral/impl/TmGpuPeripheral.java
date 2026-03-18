@@ -23,13 +23,12 @@ import java.util.*;
  * with {@code @LuaMethod} annotations and {@code call(IComputer, String, Object[])} dispatch.
  * We obtain the peripheral via {@code GPUBlockEntity.getPeripheral()} and call it directly.</p>
  *
- * <p>Special cases:
+ * <p>Argument conversion (Rust → Java):
  * <ul>
- *   <li>{@code getSize} — decoded from Object[] return value</li>
- *   <li>{@code getTextLength} — estimated locally (8px/char)</li>
- *   <li>{@code createWindow} — echoes args back as a map</li>
- *   <li>{@code newImage} — creates a blank image locally</li>
- *   <li>{@code decodeImage} — not yet implemented (returns empty image)</li>
+ *   <li>Coordinates: Rust is 0-indexed, Java BaseGPU is 1-indexed → pass (x+1, y+1)</li>
+ *   <li>Colors for fill/filledRectangle: Rust 0.0-1.0 floats → Java 0-255 Doubles (ParamCheck.toColor)</li>
+ *   <li>Colors for drawText/drawChar: Rust r,g,b,a 0.0-1.0 → packed ARGB int</li>
+ *   <li>Image refs: newImage/decodeImage return a String reference; pass to drawImage as-is</li>
  * </ul>
  * </p>
  */
@@ -47,9 +46,7 @@ public class TmGpuPeripheral implements PeripheralType {
 
     private static final Set<String> IMM_METHODS = Set.of(
         "getSize", "getTextLength", "createWindow", "newImage"
-    );
-
-    @Override
+    );    @Override
     public String getTypeName() { return TYPE_NAME; }
 
     @Override
@@ -60,11 +57,13 @@ public class TmGpuPeripheral implements PeripheralType {
                              ServerLevel level, BlockPos pos) throws PeripheralException {
         try {
             return switch (methodName) {
-                case "getTextLength" -> encodeGetTextLength(args);
-                case "createWindow"  -> encodeCreateWindow(args);
-                case "newImage"      -> encodeNewImage(args);
-                case "decodeImage"   -> encodeDecodeImage();
-                default              -> delegateToTmPeripheral(methodName, args, level, pos);
+                // Methods requiring argument transformation before delegation
+                case "drawText", "drawChar"      -> delegateWithTextArgs(methodName, args, level, pos);
+                case "fill"                      -> delegateWithFillArgs(args, level, pos);
+                case "filledRectangle"           -> delegateWithFilledRectArgs(args, level, pos);
+                case "drawImage"                 -> delegateWithDrawImageArgs(args, level, pos);
+                case "createWindow"              -> delegateWithCreateWindowArgs(args, level, pos);
+                default                          -> delegateToTmPeripheral(methodName, args, level, pos);
             };
         } catch (IOException e) {
             LOGGER.error("TmGpuPeripheral: encode failed for '{}'", methodName, e);
@@ -79,9 +78,7 @@ public class TmGpuPeripheral implements PeripheralType {
             return callMethod(methodName, args, level, pos);
         }
         return null;
-    }
-
-    // ------------------------------------------------------------------
+    }    // ------------------------------------------------------------------
     // Delegate to ITMPeripheral.call() via reflection
     // ------------------------------------------------------------------
 
@@ -273,90 +270,174 @@ public class TmGpuPeripheral implements PeripheralType {
             p.packArrayHeader(list.size());
             for (Object item : list) packValue(p, item);
         } else {
-            p.packString(value.toString());
+            // Tom's Peripherals LuaImage / ReferenceableLuaObject: encode as reference string
+            // so Rust can pass it back to drawImage(x, y, ref_string).
+            String refStr = tryGetRef(value);
+            if (refStr != null) {
+                p.packString(refStr);
+            } else {
+                p.packString(value.toString());
+            }
+        }
+    }
+
+    /** Try to call .ref() on a Tom's Peripherals ReferenceableLuaObject. Returns null if not applicable. */
+    @Nullable
+    private String tryGetRef(Object obj) {
+        try {
+            Method refMethod = findMethodByArity(obj.getClass(), "ref", 0);
+            if (refMethod == null) return null;
+            Object result = refMethod.invoke(obj);
+            return result instanceof String s ? s : null;
+        } catch (Exception e) {
+            return null;
         }
     }
 
     // ------------------------------------------------------------------
-    // Local implementations for non-delegatable methods
+    // Argument transformation helpers
+    //
+    // Coordinate convention: Java BaseGPU uses 1-indexed coords (subtracts 1 internally).
+    // So we pass (x+1, y+1) to Java.
+    //
+    // Color convention:
+    //   - fill/filledRectangle: ParamCheck.toColor() expects 3 or 4 Doubles in 0-255 range.
+    //     Rust sends 0.0-1.0 floats → multiply by 255.
+    //   - drawText/drawChar: text_color is a single ARGB int (packed).
+    //     Rust sends r,g,b,a as 0.0-1.0 → pack into ARGB int.
     // ------------------------------------------------------------------
 
-    private byte[] encodeGetTextLength(byte[] args) throws IOException, PeripheralException {
-        String text = unpackFirstString(args);
-        int len = text.length() * 8;
-        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
-        packer.packInt(len);
-        packer.close();
-        return packer.toByteArray();
+    /** rgba floats (0.0-1.0) → packed ARGB int (as Double for Java) */
+    private static double rgbaToArgbInt(double r, double g, double b, double a) {
+        int ai = (int) Math.round(a * 255) & 0xFF;
+        int ri = (int) Math.round(r * 255) & 0xFF;
+        int gi = (int) Math.round(g * 255) & 0xFF;
+        int bi = (int) Math.round(b * 255) & 0xFF;
+        return (double) ((ai << 24) | (ri << 16) | (gi << 8) | bi);
     }
 
-    private byte[] encodeCreateWindow(byte[] args) throws IOException, PeripheralException {
-        int[] p = unpackInts(args, 4);
-        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
-        packer.packMapHeader(4);
-        packer.packString("x");      packer.packDouble(p[0]);
-        packer.packString("y");      packer.packDouble(p[1]);
-        packer.packString("width");  packer.packInt(p[2]);
-        packer.packString("height"); packer.packInt(p[3]);
-        packer.close();
-        return packer.toByteArray();
+    /** float 0.0-1.0 → Double 0-255 (for ParamCheck.toColor) */
+    private static double toColor255(double v) {
+        return Math.round(v * 255) & 0xFF;
     }
 
-    private byte[] encodeNewImage(byte[] args) throws IOException, PeripheralException {
-        int[] p = unpackInts(args, 2);
-        int w = p[0], h = p[1];
-        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
-        packer.packMapHeader(3);
-        packer.packString("width");  packer.packInt(w);
-        packer.packString("height"); packer.packInt(h);
-        packer.packString("data");
-        packer.packArrayHeader(w * h);
-        for (int i = 0; i < w * h; i++) packer.packInt(0);
-        packer.close();
-        return packer.toByteArray();
+    /**
+     * drawText / drawChar:
+     *   Rust:  [text, x, y, r, g, b, a]   (x,y are 0-indexed, rgba 0.0-1.0)
+     *   Java:  [x+1, y+1, text, argb_int]  (1-indexed, color as packed ARGB Double)
+     */
+    private byte[] delegateWithTextArgs(String methodName, byte[] args,
+                                        ServerLevel level, BlockPos pos) throws IOException {
+        Object[] raw = decodeMsgpackToObjectArray(args);
+        String text = raw.length > 0 ? String.valueOf(raw[0]) : "";
+        double x    = raw.length > 1 ? toDouble(raw[1]) : 0;
+        double y    = raw.length > 2 ? toDouble(raw[2]) : 0;
+        double r    = raw.length > 3 ? toDouble(raw[3]) : 1;
+        double g    = raw.length > 4 ? toDouble(raw[4]) : 1;
+        double b    = raw.length > 5 ? toDouble(raw[5]) : 1;
+        double a    = raw.length > 6 ? toDouble(raw[6]) : 1;
+        double argb = rgbaToArgbInt(r, g, b, a);
+        // Java: (x, y, text, text_color) — x,y are 1-indexed
+        Object[] javaArgs = new Object[]{x + 1, y + 1, text, argb};
+        return delegateWithArgs(methodName, javaArgs, level, pos);
     }
 
-    private byte[] encodeDecodeImage() throws IOException {
-        // TODO: implement Base64 image decoding
-        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
-        packer.packMapHeader(3);
-        packer.packString("width");  packer.packInt(0);
-        packer.packString("height"); packer.packInt(0);
-        packer.packString("data");   packer.packArrayHeader(0);
-        packer.close();
-        return packer.toByteArray();
+    /**
+     * fill:
+     *   Rust:  [r, g, b, a]  (0.0-1.0)
+     *   Java:  [r, g, b, a]  (0-255 as Double, via ParamCheck.toColor(args, 0))
+     */
+    private byte[] delegateWithFillArgs(byte[] args, ServerLevel level, BlockPos pos) throws IOException {
+        Object[] raw = decodeMsgpackToObjectArray(args);
+        double r = raw.length > 0 ? toDouble(raw[0]) : 0;
+        double g = raw.length > 1 ? toDouble(raw[1]) : 0;
+        double b = raw.length > 2 ? toDouble(raw[2]) : 0;
+        double a = raw.length > 3 ? toDouble(raw[3]) : 1;
+        Object[] javaArgs = new Object[]{toColor255(r), toColor255(g), toColor255(b), toColor255(a)};
+        return delegateWithArgs("fill", javaArgs, level, pos);
     }
+
+    /**
+     * filledRectangle:
+     *   Rust:  [x, y, w, h, r, g, b, a]  (x,y 0-indexed, rgba 0.0-1.0)
+     *   Java:  [x+1, y+1, w, h, r, g, b, a]  (1-indexed, color 0-255 Double)
+     */
+    private byte[] delegateWithFilledRectArgs(byte[] args, ServerLevel level, BlockPos pos) throws IOException {
+        Object[] raw = decodeMsgpackToObjectArray(args);
+        double x = raw.length > 0 ? toDouble(raw[0]) : 0;
+        double y = raw.length > 1 ? toDouble(raw[1]) : 0;
+        double w = raw.length > 2 ? toDouble(raw[2]) : 0;
+        double h = raw.length > 3 ? toDouble(raw[3]) : 0;
+        double r = raw.length > 4 ? toDouble(raw[4]) : 0;
+        double g = raw.length > 5 ? toDouble(raw[5]) : 0;
+        double b = raw.length > 6 ? toDouble(raw[6]) : 0;
+        double a = raw.length > 7 ? toDouble(raw[7]) : 1;
+        Object[] javaArgs = new Object[]{x + 1, y + 1, w, h, toColor255(r), toColor255(g), toColor255(b), toColor255(a)};
+        return delegateWithArgs("filledRectangle", javaArgs, level, pos);
+    }
+
+    /**
+     * createWindow:
+     *   Rust:  [x, y, w, h]  (0-indexed)
+     *   Java:  [x+1, y+1, w, h]  (1-indexed)
+     *   Returns: BaseGPU object (TMLuaObject) → encode as ref string
+     */
+    private byte[] delegateWithCreateWindowArgs(byte[] args, ServerLevel level, BlockPos pos) throws IOException {
+        Object[] raw = decodeMsgpackToObjectArray(args);
+        double x = raw.length > 0 ? toDouble(raw[0]) : 0;
+        double y = raw.length > 1 ? toDouble(raw[1]) : 0;
+        double w = raw.length > 2 ? toDouble(raw[2]) : 0;
+        double h = raw.length > 3 ? toDouble(raw[3]) : 0;
+        Object[] javaArgs = new Object[]{x + 1, y + 1, w, h};
+        return delegateWithArgs("createWindow", javaArgs, level, pos);
+    }
+
+    /**
+     * drawImage:
+     *   Rust:  [image_ref(String), x, y]  (x,y 0-indexed, image is a ref string from newImage/decodeImage)
+     *   Java:  [x+1, y+1, image_ref]      (1-indexed, ref string at index 2)
+     */
+    private byte[] delegateWithDrawImageArgs(byte[] args, ServerLevel level, BlockPos pos) throws IOException {
+        Object[] raw = decodeMsgpackToObjectArray(args);
+        Object imageRef = raw.length > 0 ? raw[0] : null;
+        double x        = raw.length > 1 ? toDouble(raw[1]) : 0;
+        double y        = raw.length > 2 ? toDouble(raw[2]) : 0;
+        Object[] javaArgs = new Object[]{x + 1, y + 1, imageRef};
+        return delegateWithArgs("drawImage", javaArgs, level, pos);
+    }
+
+    private byte[] delegateWithArgs(String methodName, Object[] javaArgs,
+                                    ServerLevel level, BlockPos pos) throws IOException {
+        Object peripheral = getTmPeripheral(level, pos);
+        if (peripheral == null) {
+            LOGGER.warn("TmGpuPeripheral: no peripheral at {}", pos);
+            return encodeNil();
+        }
+        try {
+            Method callMethod = findMethodByArity(peripheral.getClass(), "call", 3);
+            if (callMethod == null) {
+                LOGGER.warn("TmGpuPeripheral: ITMPeripheral.call() not found");
+                return encodeNil();
+            }
+            Object result = callMethod.invoke(peripheral, null, methodName, javaArgs);
+            return encodeResult(result);
+        } catch (Exception e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            LOGGER.warn("TmGpuPeripheral: '{}' failed: {}", methodName, cause.getMessage());
+            return encodeNil();
+        }
+    }
+
+    private static double toDouble(Object v) {
+        if (v instanceof Number n) return n.doubleValue();
+        return 0;
+    }
+
+    // ------------------------------------------------------------------
+    // Encode helpers
+    // ------------------------------------------------------------------
 
     private byte[] encodeNil() {
         return new byte[]{(byte) 0xC0};
-    }
-
-    private String unpackFirstString(byte[] args) throws PeripheralException {
-        if (args == null || args.length == 0) return "";
-        try (MessageUnpacker u = MessagePack.newDefaultUnpacker(args)) {
-            if (!u.hasNext()) return "";
-            var fmt = u.getNextFormat();
-            if (fmt.getValueType().isArrayType()) u.unpackArrayHeader();
-            return u.unpackString();
-        } catch (IOException e) {
-            throw new PeripheralException("Failed to unpack string arg: " + e.getMessage());
-        }
-    }
-
-    private int[] unpackInts(byte[] args, int count) throws PeripheralException {
-        int[] result = new int[count];
-        if (args == null || args.length == 0) return result;
-        try (MessageUnpacker u = MessagePack.newDefaultUnpacker(args)) {
-            if (u.hasNext()) {
-                var fmt = u.getNextFormat();
-                if (fmt.getValueType().isArrayType()) u.unpackArrayHeader();
-            }
-            for (int i = 0; i < count && u.hasNext(); i++) {
-                result[i] = u.unpackInt();
-            }
-            return result;
-        } catch (IOException e) {
-            throw new PeripheralException("Failed to unpack int args: " + e.getMessage());
-        }
     }
 }
