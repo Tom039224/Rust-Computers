@@ -444,17 +444,17 @@ public final class PeripheralProvider {
             if (!level.isLoaded(bp)) continue;
 
             Block block = level.getBlockState(bp).getBlock();
+            ResourceLocation blockKey = net.minecraftforge.registries.ForgeRegistries.BLOCKS.getKey(block);
             PeripheralType pt = getForBlock(block);
             if (pt != null) {
                 result.put(id, new AttachedPeripheral(pt, null, bp));
-                LOGGER.debug("Found wired peripheral '{}' at {} (periph_id={})",
+                LOGGER.info("Found wired peripheral '{}' at {} (periph_id={})",
                         pt.getTypeName(), bp, id);
                 id++;
             } else {
-                ResourceLocation key = net.minecraftforge.registries.ForgeRegistries.BLOCKS.getKey(block);
                 LOGGER.info("Remote peripheral skipped (unregistered block): type='{}', class='{}', pos={}, block={}",
                         safePeripheralType(peripheral), peripheral.getClass().getName(), bp,
-                        key != null ? key : block.toString());
+                        blockKey != null ? blockKey : block.toString());
             }
         }
 
@@ -542,10 +542,12 @@ public final class PeripheralProvider {
 
                 boolean likelyPeripheralWrapper =
                         v instanceof IPeripheral
+                                || v instanceof net.minecraft.world.level.block.entity.BlockEntity
                                 || f.getName().equals("peripheral")
                                 || f.getName().equals("delegate")
                                 || f.getName().equals("wrapped")
                                 || f.getName().equals("inner")
+                                || f.getName().startsWith("this$")
                                 || v.getClass().getName().toLowerCase().contains("peripheral");
 
                 if (likelyPeripheralWrapper) {
